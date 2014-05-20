@@ -1,6 +1,6 @@
 AC_CONFIG_MACRO_DIR([m4])
 AC_INIT([shiranui],[0.0.1],[tomo832@gmail.com])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror -Wno-portability])
 # for better message,use https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html#ax_cxx_compile_stdcxx_11
 CXXFLAGS="$CXXFLAGS -std=c++11"
 AC_LANG([C++])
