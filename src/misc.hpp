@@ -5,74 +5,77 @@
 #include <vector>
 #include <utility>
 
-template<typename T,typename IT>
-struct Indexer{
-    struct iterator{
-        typedef IT inner_iterator;
-        typedef typename std::iterator_traits<inner_iterator>::reference inner_reference;
-        struct reference : std::pair<std::size_t,inner_reference>{
-            reference(std::size_t s,inner_reference i) :
-                std::pair<std::size_t,inner_reference>(s,i) {}
-            const std::size_t& index = (*this).first;
-            const inner_reference& value = (*this).second;
+#define repeat(i,n) for(int i=0;i<static_cast<int>(n);i++)
+#define dump(x,to)  to << #x << "=" << (x) << " (L:" << __LINE__ << ")"<< std::endl
+
+namespace shiranui{
+    template<typename T,typename IT>
+    struct Indexer{
+        struct iterator{
+            typedef IT inner_iterator;
+            typedef typename std::iterator_traits<inner_iterator>::reference inner_reference;
+            struct reference : std::pair<std::size_t,inner_reference>{
+                reference(std::size_t s,inner_reference i) :
+                    std::pair<std::size_t,inner_reference>(s,i) {}
+                const std::size_t& index = (*this).first;
+                const inner_reference& value = (*this).second;
+            };
+
+            iterator(inner_iterator i) : pos(0),it(i) {}
+            reference operator*() const {
+                return reference(pos,*it);
+            }
+            iterator& operator++(){
+                ++pos;++it;
+                return *this;
+            }
+            iterator operator++(int){
+                iterator tmp(*this);
+                ++(*this);
+                return tmp;
+            }
+            bool operator==(const iterator& rhs) const{
+                return it == rhs.it;
+            }
+            bool operator!=(const iterator& rhs) const{
+                return !(*this == rhs);
+            }
+
+        private:
+            std::size_t pos;
+            inner_iterator it;
         };
 
-        iterator(inner_iterator i) : pos(0),it(i) {}
-        reference operator*() const {
-            return reference(pos,*it);
+
+        Indexer(T& t): container(t) {};
+        iterator begin() const{
+            return iterator(container.begin());
         }
-        iterator& operator++(){
-            ++pos;++it;
-            return *this;
-        }
-        iterator operator++(int){
-            iterator tmp(*this);
-            ++(*this);
-            return tmp;
-        }
-        bool operator==(const iterator& rhs) const{
-            return it == rhs.it;
-        }
-        bool operator!=(const iterator& rhs) const{
-            return !(*this == rhs);
+        iterator end() const{
+            return iterator(container.end());
         }
 
     private:
-        std::size_t pos;
-        inner_iterator it;
+        T& container;
     };
 
-
-    Indexer(T& t): container(t) {};
-    iterator begin() const{
-        return iterator(container.begin());
+    template<typename T>
+    Indexer<T,typename T::iterator> enumerate(T& t){
+        return Indexer<T,typename T::iterator>(t);
     }
-    iterator end() const{
-        return iterator(container.end());
+    // value will be readonly.
+    template<typename T>
+    Indexer<T,typename T::const_iterator> const_enumerate(T& t){
+        return Indexer<T,typename T::const_iterator>(t);
     }
-
-private:
-    T& container;
-};
-
-template<typename T>
-Indexer<T,typename T::iterator> enumerate(T& t){
-    return Indexer<T,typename T::iterator>(t);
 }
-// value will be readonly.
-template<typename T>
-Indexer<T,typename T::const_iterator> const_enumerate(T& t){
-    return Indexer<T,typename T::const_iterator>(t);
-}
-
 
 // test codes.
 template<typename T>
 std::ostream& operator<<(std::ostream& os,const std::vector<T>& val){
-    os << "[ ";
-    for(typename std::vector<T>::const_iterator it=val.begin();
-        it != val.end();++it){
-        os << *it << " ";
+    os << "[";
+    for(const auto& v : val){
+        os << v << ",";
     }
     os << "]";
     return os;
