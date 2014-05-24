@@ -49,7 +49,6 @@ namespace shiranui{
             }
             template<typename T1,typename T2,typename T3,typename T4>
             result_type operator()(T1 b,T2 e,T3 where,const T4& what) const{
-                std::string actual_remain = std::string(b,e);
                 std::cerr << "Error expecting " << what << " in line " << get_line(where) << ":" << std::endl
                           << std::string(b,e) << std::endl
                           << std::setw(std::distance(b,where)) << "^---- here" << std::endl;
@@ -91,17 +90,32 @@ namespace shiranui{
                 keyword_arrow = lit("->");
                 semicolon = lit(";");
                 one_equal = lit("=");
+                keyword_lambda = lit("\\");
 
-                identifier %= (char_("_") | alpha) >> *(alnum | char_("_"));
+                identifier = as_string[(alpha | char_('_')) >> *(alnum | char_('_'))] ;
+                number = int_;
+                string = lexeme[lit("\"") > *(char_ - "\"") > lit("\"")];
+                variable = identifier;
+
+                function = keyword_lambda >> '(' >> (identifier % ',') >> ')'
+                                          >> '{' >> *statement >> '}';
+
+                function_call = identifier >> lit("(") >> (expression % ",") >> lit(")");
+
                 // change int_ to something to object. change semicolon to eol?
                 // DONOT USE > and >> together.
-                const_definement = keyword_let > identifier > one_equal > int_ > semicolon;
-                var_definement   = keyword_mut > identifier > one_equal > int_ > semicolon;
-                // what qi::eps for?
+                const_definement = keyword_let > identifier > one_equal > expression > semicolon;
+                var_definement   = keyword_mut > identifier > one_equal > expression > semicolon;
 
-
-                source_code = qi::eps >> *(statement);
                 statement = (const_definement | var_definement);
+                expression = (function_call |
+                              number |
+                              string |
+                              function |
+                              variable
+                              );
+                // what qi::eps for?
+                source_code = qi::eps >> *(statement);
 
                 on_error<fail>(var_definement, handler(_1, _2, _3, _4));
                 on_error<fail>(const_definement, handler(_1, _2, _3, _4));
@@ -110,9 +124,29 @@ namespace shiranui{
                 auto set_location_info = annotate(_val,_1,_3);
 
                 on_success(identifier,set_location_info);
+                on_success(number,set_location_info);
+                on_success(string,set_location_info);
+                on_success(function,set_location_info);
+
+                on_success(function_call,set_location_info);
                 on_success(var_definement,set_location_info);
                 on_success(const_definement,set_location_info);
+
+                // cause error.
+                // on_success(expression,set_location_info);
+                // on_success(statement,set_location_info);
                 on_success(source_code,set_location_info);
+
+                identifier.name("identifier");
+                number.name("number");
+                string.name("string");
+                variable.name("variable");
+                function.name("function");
+                function_call.name("function_call");
+                var_definement.name("mut_defiment");
+                const_definement.name("const_defiment");
+                expression.name("expression");
+                statement.name("statement");
 
                 BOOST_SPIRIT_DEBUG_NODES((keyword_let)(keyword_mut)(keyword_arrow)(source_code)
                                          (semicolon)(openbrace)(closebrace)(statement)
@@ -121,16 +155,29 @@ namespace shiranui{
             ph::function<error_handler_f> handler;
             ph::function<annotation_f<Iterator>> annotate;
 
-            qi::rule<Iterator,ast::SourceCode(),Skipper> source_code;
+            // meta
             qi::rule<Iterator,ast::Identifier()> identifier;
+            // immidiate
+            qi::rule<Iterator,ast::Number()> number;
+            qi::rule<Iterator,ast::String()> string;
+            qi::rule<Iterator,ast::Variable()> variable;
+            qi::rule<Iterator,ast::Function(),Skipper> function;
+
+            // expression
+            qi::rule<Iterator,ast::FunctionCall(),Skipper> function_call;
+
+            // statements
             qi::rule<Iterator,ast::VarDefinement(),Skipper> var_definement;
             qi::rule<Iterator,ast::ConstDefinement(),Skipper> const_definement;
 
+            qi::rule<Iterator,ast::Expression(),Skipper> expression;
             qi::rule<Iterator,ast::Statement(),Skipper> statement;
+            qi::rule<Iterator,ast::SourceCode(),Skipper> source_code;
 
             qi::rule<Iterator> keyword_let;
             qi::rule<Iterator> keyword_mut;
             qi::rule<Iterator> keyword_arrow;
+            qi::rule<Iterator> keyword_lambda;
 
             qi::rule<Iterator> one_equal;
             qi::rule<Iterator> semicolon;
