@@ -92,6 +92,7 @@ namespace shiranui{
                     }
                     os << "){";
                     for(size_t i=0;i<body.size();i++){
+                        // compileerror.due to cycle?
                         // os << body[i] << std::endl;
                         os << "hoge" << std::endl;
                     }
