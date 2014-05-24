@@ -1,12 +1,12 @@
 #include <iostream>
+#include <fstream>
 #include <config.hpp>
 #include "misc.hpp"
 #include "syntax/parser.hpp"
 
 
 
-int test(){
-    const std::string content = "let a -> 1;let b -> 2;\nlet c -> 3;";
+void test(const std::string content){
     typedef boost::spirit::line_pos_iterator<std::string::const_iterator>
         pos_iterator_t;
 
@@ -23,8 +23,8 @@ int test(){
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        for(const auto& a : program.assignments){
-            std::cout << "var " << a.id.name << " -> " << a.value << " at L" << a.printLoc() << std::endl;
+        for(const ast::Statement& a : program.statements){
+            std::cout << a << std::endl;
         }
     }else{
         int line = get_line(iter);
@@ -35,7 +35,7 @@ int test(){
         std::cout << "remaining: '" << std::string(iter, last) << "'\n";
         std::cout << "-------------------------\n";
     }
-    return 0;
+    return;
 }
 
 
@@ -43,6 +43,16 @@ int main(int argc,char **argv){
     std::cout << "Hello World" << std::endl;
     std::cout << "This is " << PACKAGE_STRING << std::endl;
 
-    test();
+    if(argc == 2){
+        std::string filename = argv[1];
+        std::ifstream ifs(filename);
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        test(str);
+    }else{
+        std::string str;
+        std::getline(std::cin,str);
+        test(str);
+    }
     return 0;
 }

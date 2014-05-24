@@ -3,7 +3,6 @@
 
 // #define BOOST_SPIRIT_DEBUG
 #define BOOST_SPIRIT_USE_PHOENIX_V3
-
 #include <boost/spirit/include/qi.hpp>
 
 #include <boost/spirit/include/phoenix.hpp>
@@ -91,15 +90,18 @@ namespace shiranui{
                 closebrace = lit("}");
                 keyword_arrow = lit("->");
                 semicolon = lit(";");
+                one_equal = lit("=");
 
                 identifier %= (char_("_") | alpha) >> *(alnum | char_("_"));
                 // change int_ to something to object. change semicolon to eol?
                 // DONOT USE > and >> together.
-                const_definement = keyword_let > identifier > keyword_arrow > int_ > semicolon;
-                var_definement   = keyword_mut > identifier > keyword_arrow > int_ > semicolon;
-                // source_code = (const_definement % char_(',')) >> qi::attr(42);
-                // source_code = qi::eps >> (const_definement % char_(','));
-                source_code = qi::eps >> *(const_definement);
+                const_definement = keyword_let > identifier > one_equal > int_ > semicolon;
+                var_definement   = keyword_mut > identifier > one_equal > int_ > semicolon;
+                // what qi::eps for?
+
+
+                source_code = qi::eps >> *(statement);
+                statement = (const_definement | var_definement);
 
                 on_error<fail>(var_definement, handler(_1, _2, _3, _4));
                 on_error<fail>(const_definement, handler(_1, _2, _3, _4));
@@ -113,7 +115,7 @@ namespace shiranui{
                 on_success(source_code,set_location_info);
 
                 BOOST_SPIRIT_DEBUG_NODES((keyword_let)(keyword_mut)(keyword_arrow)(source_code)
-                                         (semicolon)(openbrace)(closebrace)
+                                         (semicolon)(openbrace)(closebrace)(statement)
                                          (identifier)(var_definement)(const_definement));
             }
             ph::function<error_handler_f> handler;
@@ -124,10 +126,13 @@ namespace shiranui{
             qi::rule<Iterator,ast::VarDefinement(),Skipper> var_definement;
             qi::rule<Iterator,ast::ConstDefinement(),Skipper> const_definement;
 
+            qi::rule<Iterator,ast::Statement(),Skipper> statement;
+
             qi::rule<Iterator> keyword_let;
             qi::rule<Iterator> keyword_mut;
             qi::rule<Iterator> keyword_arrow;
 
+            qi::rule<Iterator> one_equal;
             qi::rule<Iterator> semicolon;
             qi::rule<Iterator> openbrace;
             qi::rule<Iterator> closebrace;
