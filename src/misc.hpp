@@ -3,10 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <utility>
 
 // #define repeat(i,n) for(int i=0;i<static_cast<int>(n);i++)
 #define dump(x,to)  to << #x << "=" << (x) << " (L:" << __LINE__ << ")"<< std::endl
+
+template<typename T>
+using sp = std::shared_ptr<T>;
 
 namespace shiranui{
     template<typename T,typename IT>

@@ -16,15 +16,15 @@ void test(const std::string content){
         iter = first,last(content.end());
     Parser<pos_iterator_t> resolver(first);
     // Parser<pos_iterator_t> p(first);
-    ast::SourceCode program;
+    ast::SourceCode* program;
     bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
     std::cout << "ok: " << ok << std::endl;
     std::cout << "full: " << (iter == last) << std::endl;
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        for(const ast::Statement& a : program.statements){
-            std::cout << a << std::endl;
+        for(const auto& a : program->statements){
+            std::cout << *a << std::endl;
         }
     }else{
         int line = get_line(iter);

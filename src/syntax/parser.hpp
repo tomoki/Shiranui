@@ -12,10 +12,7 @@
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
 
-#include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/io.hpp>
-#include <boost/variant/recursive_variant.hpp>
-#include <boost/foreach.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -66,13 +63,20 @@ namespace shiranui{
                 li.column = get_column(first,f);
                 li.length = distance(f,l);
             }
+            void static do_annotate(ast::LocationInfo*& li,Iterator f,Iterator l,Iterator first){
+                using std::distance;
+                li->line = get_line(f);
+                li->column = get_column(first,f);
+                li->length = distance(f,l);
+            }
+
             static void do_annotate(...){
                 std::cerr << "(not having LocationInfo)" << std::endl;
             }
         };
 
         template<typename Iterator=pos_iterator_t,typename Skipper=qi::space_type>
-        struct Parser : public qi::grammar<Iterator,ast::SourceCode(),Skipper>{
+        struct Parser : public qi::grammar<Iterator,ast::SourceCode*(),Skipper>{
             // change const_definement to sourcecode.
             Parser(Iterator first) : Parser::base_type(source_code),
                                      annotate(first){
@@ -86,23 +90,31 @@ namespace shiranui{
                 one_equal = lit("=");
                 keyword_lambda = lit("\\");
 
-                identifier = as_string[(alpha | char_('_')) >> *(alnum | char_('_'))] ;
-                number = int_;
-                string = lexeme[lit("\"") > *(char_ - "\"") > lit("\"")];
-                variable = identifier;
+                identifier = as_string[(alpha | char_('_')) >> *(alnum | char_('_'))];
+                number = int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
+                string = lexeme[lit("\"") > *(char_ - "\"") > lit("\"")]
+                              [qi::_val = ph::new_<ast::String>(qi::_1)];
 
-                function = keyword_lambda >> '(' >> (identifier % ',') >> ')'
-                                          >> '{' >> *statement >> '}';
+                variable = identifier 
+                    [qi::_val = ph::new_<ast::Variable>(qi::_1)];
 
-                function_call = identifier >> '(' >> (expression % ',') >> ')';
+                function = (keyword_lambda >> '(' >> (identifier % ',') >> ')'
+                                          >> '{' >> *statement >> '}')
+                           [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
+
+                function_call = (identifier >> '(' >> (expression % ',') >> ')')
+                           [qi::_val = ph::new_<ast::FunctionCall>(qi::_1,qi::_2)];
+
                 // if_else_expression = keyword_if >> expression >> "{" >> *statement >> "}"
                 //                                 >> keyword_else >> "{" >> *statement >> "}";
 
-                // change int_ to something to object. change semicolon to eol?
                 // DONOT USE > and >> together.
-                const_definement = keyword_let > identifier > one_equal > expression > semicolon;
-                var_definement   = keyword_mut > identifier > one_equal > expression > semicolon;
-                if_statement = keyword_if >> expression >> '{' >> *statement >> '}';
+                const_definement = (keyword_let > identifier > one_equal > expression > semicolon)
+                                   [qi::_val = ph::new_<ast::ConstDefinement>(qi::_1,qi::_2)];
+                var_definement   = (keyword_mut > identifier > one_equal > expression > semicolon)
+                                   [qi::_val = ph::new_<ast::VarDefinement>(qi::_1,qi::_2)];
+                if_statement = (keyword_if >> expression >> '{' >> *statement >> '}')
+                                   [qi::_val = ph::new_<ast::IfStatement>(qi::_1,qi::_2)];
 
                 statement = (
                              const_definement  |
@@ -117,7 +129,8 @@ namespace shiranui{
                   //            if_else_expression
                               );
                 // what qi::eps for?
-                source_code = qi::eps >> *(statement);
+                source_code = (qi::eps >> *(statement))
+                              [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
 
                 on_error<fail>(var_definement, handler(_1, _2, _3, _4));
                 on_error<fail>(const_definement, handler(_1, _2, _3, _4));
@@ -126,21 +139,22 @@ namespace shiranui{
 
                 auto set_location_info = annotate(_val,_1,_3);
 
-                on_success(identifier,set_location_info);
-                on_success(number,set_location_info);
-                on_success(string,set_location_info);
-                on_success(function,set_location_info);
-
-                on_success(function_call,set_location_info);
-                on_success(var_definement,set_location_info);
-                on_success(const_definement,set_location_info);
-                on_success(if_statement,set_location_info);
-
-                // cause error.
-                // on_success(expression,set_location_info);
-                // on_success(statement,set_location_info);
-                on_success(source_code,set_location_info);
-
+                // cause bug!!
+//                 on_success(identifier,set_location_info);
+//                 on_success(number,set_location_info);
+//                 on_success(string,set_location_info);
+//                 on_success(function,set_location_info);
+// 
+//                 on_success(function_call,set_location_info);
+//                 on_success(var_definement,set_location_info);
+//                 on_success(const_definement,set_location_info);
+//                 on_success(if_statement,set_location_info);
+// 
+//                 // cause error.
+//                 // on_success(expression,set_location_info);
+//                 // on_success(statement,set_location_info);
+//                 on_success(source_code,set_location_info);
+// 
                 identifier.name("identifier");
                 number.name("number");
                 string.name("string");
@@ -164,23 +178,23 @@ namespace shiranui{
             // meta
             qi::rule<Iterator,ast::Identifier()> identifier;
             // immidiate
-            qi::rule<Iterator,ast::Number()> number;
-            qi::rule<Iterator,ast::String()> string;
-            qi::rule<Iterator,ast::Variable()> variable;
-            qi::rule<Iterator,ast::Function(),Skipper> function;
+            qi::rule<Iterator,ast::Number*()> number;
+            qi::rule<Iterator,ast::String*()> string;
+            qi::rule<Iterator,ast::Variable*()> variable;
+            qi::rule<Iterator,ast::Function*(),Skipper> function;
 
             // expression
-            qi::rule<Iterator,ast::FunctionCall(),Skipper> function_call;
+            qi::rule<Iterator,ast::FunctionCall*(),Skipper> function_call;
             // qi::rule<Iterator,ast::IfElseExpression(),Skipper> if_else_expression;
 
             // statements
-            qi::rule<Iterator,ast::VarDefinement(),Skipper> var_definement;
-            qi::rule<Iterator,ast::ConstDefinement(),Skipper> const_definement;
-            qi::rule<Iterator,ast::IfStatement(),Skipper> if_statement;
+            qi::rule<Iterator,ast::VarDefinement*(),Skipper> var_definement;
+            qi::rule<Iterator,ast::ConstDefinement*(),Skipper> const_definement;
+            qi::rule<Iterator,ast::IfStatement*(),Skipper> if_statement;
 
-            qi::rule<Iterator,ast::Expression(),Skipper> expression;
-            qi::rule<Iterator,ast::Statement(),Skipper> statement;
-            qi::rule<Iterator,ast::SourceCode(),Skipper> source_code;
+            qi::rule<Iterator,ast::Expression*(),Skipper> expression;
+            qi::rule<Iterator,ast::Statement*(),Skipper> statement;
+            qi::rule<Iterator,ast::SourceCode*(),Skipper> source_code;
 
             qi::rule<Iterator> keyword_let;
             qi::rule<Iterator> keyword_mut;
