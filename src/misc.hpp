@@ -5,7 +5,7 @@
 #include <vector>
 #include <utility>
 
-#define repeat(i,n) for(int i=0;i<static_cast<int>(n);i++)
+// #define repeat(i,n) for(int i=0;i<static_cast<int>(n);i++)
 #define dump(x,to)  to << #x << "=" << (x) << " (L:" << __LINE__ << ")"<< std::endl
 
 namespace shiranui{

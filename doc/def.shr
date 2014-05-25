@@ -11,3 +11,10 @@ let h_oge = 100;
 let prin = \(n,s){
     mut r = 0;
 };
+
+let f = \(n){
+    if is_zero(n) {
+        let unit = print(a);
+    }
+    let unit = print(n);
+};

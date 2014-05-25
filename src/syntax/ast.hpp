@@ -3,6 +3,7 @@
 
 #include "../misc.hpp"
 #include <iostream>
+#include <memory>
 #include <boost/variant.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
@@ -14,6 +15,8 @@
 namespace shiranui{
     namespace syntax{
         namespace ast{
+            // template<typename T>
+            // using sp = std::shared_ptr<T>;
             namespace qi = boost::spirit::qi;
             namespace ph = boost::phoenix;
 
@@ -30,21 +33,24 @@ namespace shiranui{
 
             // expression
             struct FunctionCall;
+            // struct IfElseExpression;
 
             // statements.
             struct VarDefinement;
             struct ConstDefinement;
-
-
+            struct IfStatement;
 
             typedef boost::variant<Number,
                                    String,
                                    Function,
                                    Variable,
-                                   FunctionCall> Expression;
+                                   FunctionCall
+                                   // IfElseExpression
+                                       > Expression;
 
             typedef boost::variant<VarDefinement,
-                                   ConstDefinement> Statement;
+                                   ConstDefinement,
+                                   IfStatement> Statement;
 
             struct LocationInfo{
                 unsigned int line,column,length;
@@ -115,6 +121,25 @@ namespace shiranui{
                     return os << ")";
                 }
             };
+//             struct IfElseExpression : LocationInfo{
+//                 Expression pred;
+//                 std::vector<Statement> ifblock;
+//                 std::vector<Statement> elseblock;
+// 
+//                 std::ostream& serialize(std::ostream &os) const{
+//                     os << "if " << pred << " then" << std::endl;
+//                     for(const Statement& s : ifblock){
+//                         os << s << ";";
+//                     }
+//                     os << "else" << std::endl;
+//                     for(const Statement& s : elseblock){
+//                         os << s << ";";
+//                     }
+//                     return os;
+//                 }
+//             };
+
+
             // statement.
             struct VarDefinement : LocationInfo{
                 Identifier id;
@@ -128,6 +153,18 @@ namespace shiranui{
                 Expression value;
                 std::ostream& serialize(std::ostream &os) const{
                     return os << "let " << id << "-> " << value;
+                }
+            };
+            struct IfStatement : LocationInfo{
+                Expression pred;
+                std::vector<Statement> ifblock;
+
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "if " << pred << " then" << std::endl;
+                    for(const Statement& s : ifblock){
+                        os << s << ";";
+                    }
+                    return os;
                 }
             };
 
@@ -151,18 +188,20 @@ BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::String,
                           (std::string,value));
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::Variable,
                           (shiranui::syntax::ast::Identifier,value));
-// BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::Function,
-//                           (std::vector<shiranui::syntax::ast::Identifier>,parameters)
-//                           (std::vector<shiranui::syntax::ast::Statement>,body));
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::Function,
                           (std::vector<shiranui::syntax::ast::Identifier>,parameters)
                           (std::vector<shiranui::syntax::ast::Statement>,body));
-                          // );
 
 // expression
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::FunctionCall,
                           (shiranui::syntax::ast::Identifier,function_name)
                           (std::vector<shiranui::syntax::ast::Expression>,arguments));
+// BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::IfElseExpression,
+//                           (shiranui::syntax::ast::Expression,pred)
+//                           (std::vector<shiranui::syntax::ast::Statement>,ifblock)
+//                           (std::vector<shiranui::syntax::ast::Statement>,elseblock));
+
+
 // statements.
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::VarDefinement,
                           (shiranui::syntax::ast::Identifier,id)
@@ -170,6 +209,10 @@ BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::VarDefinement,
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::ConstDefinement,
                           (shiranui::syntax::ast::Identifier,id)
                           (shiranui::syntax::ast::Expression,value));
+BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::IfStatement,
+                          (shiranui::syntax::ast::Expression,pred)
+                          (std::vector<shiranui::syntax::ast::Statement>,ifblock));
+
 
 BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::SourceCode,
                           (std::vector<shiranui::syntax::ast::Statement>,statements)
@@ -179,15 +222,16 @@ BOOST_FUSION_ADAPT_STRUCT(shiranui::syntax::ast::SourceCode,
 namespace shiranui{
     namespace syntax{
         namespace ast{
+            std::ostream& operator<<(std::ostream& os,
+                                     const shiranui::syntax::ast::LocationInfo& s){
+                return s.serialize(os);
+            }
             // struct expression_serializer : boost::static_visitor<std::ostream&>{
             //     std::ostream& operator()(const LocationInfo& s,std::ostream& os) const{
             //         return s.serialize(os);
             //     }
             // };
-            std::ostream& operator<<(std::ostream& os,
-                                     const shiranui::syntax::ast::LocationInfo& s){
-                return s.serialize(os);
-            }
+
             // std::ostream& operator<<(std::ostream& os,
             //                          const shiranui::syntax::ast::Expression& e){
             //     // return e.serialize(os);

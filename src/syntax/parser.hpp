@@ -40,13 +40,7 @@ namespace shiranui{
             // does'nt work currently.(may need space skipping?)
             // get_line,get_column is defined in
             //   http://www.boost.org/doc/libs/1_47_0/boost/spirit/home/support/iterators/line_pos_iterator.hpp
-            template<typename T1,typename T2>
-            T1 goto_line_end(T1 b,T2 e) const {
-                while(b != e and *b != '\n'){
-                    ++b;
-                }
-                return b;
-            }
+
             template<typename T1,typename T2,typename T3,typename T4>
             result_type operator()(T1 b,T2 e,T3 where,const T4& what) const{
                 std::cerr << "Error expecting " << what << " in line " << get_line(where) << ":" << std::endl
@@ -85,8 +79,8 @@ namespace shiranui{
                 using namespace qi;
                 keyword_let = lit("let");
                 keyword_mut = lit("mut");
-                openbrace = lit("{");
-                closebrace = lit("}");
+                keyword_if = lit("if");
+                keyword_else = lit("else");
                 keyword_arrow = lit("->");
                 semicolon = lit(";");
                 one_equal = lit("=");
@@ -100,25 +94,34 @@ namespace shiranui{
                 function = keyword_lambda >> '(' >> (identifier % ',') >> ')'
                                           >> '{' >> *statement >> '}';
 
-                function_call = identifier >> lit("(") >> (expression % ",") >> lit(")");
+                function_call = identifier >> '(' >> (expression % ',') >> ')';
+                // if_else_expression = keyword_if >> expression >> "{" >> *statement >> "}"
+                //                                 >> keyword_else >> "{" >> *statement >> "}";
 
                 // change int_ to something to object. change semicolon to eol?
                 // DONOT USE > and >> together.
                 const_definement = keyword_let > identifier > one_equal > expression > semicolon;
                 var_definement   = keyword_mut > identifier > one_equal > expression > semicolon;
+                if_statement = keyword_if >> expression >> '{' >> *statement >> '}';
 
-                statement = (const_definement | var_definement);
+                statement = (
+                             const_definement  |
+                             var_definement    |
+                             if_statement
+                             );
                 expression = (function_call |
-                              number |
-                              string |
-                              function |
-                              variable
+                              number        |
+                              string        |
+                              function      |
+                              variable   //   |
+                  //            if_else_expression
                               );
                 // what qi::eps for?
                 source_code = qi::eps >> *(statement);
 
                 on_error<fail>(var_definement, handler(_1, _2, _3, _4));
                 on_error<fail>(const_definement, handler(_1, _2, _3, _4));
+                on_error<fail>(if_statement, handler(_1, _2, _3, _4));
                 on_error<fail>(source_code, handler(_1, _2, _3, _4));
 
                 auto set_location_info = annotate(_val,_1,_3);
@@ -131,6 +134,7 @@ namespace shiranui{
                 on_success(function_call,set_location_info);
                 on_success(var_definement,set_location_info);
                 on_success(const_definement,set_location_info);
+                on_success(if_statement,set_location_info);
 
                 // cause error.
                 // on_success(expression,set_location_info);
@@ -145,12 +149,14 @@ namespace shiranui{
                 function_call.name("function_call");
                 var_definement.name("mut_defiment");
                 const_definement.name("const_defiment");
+                if_statement.name("if_statement");
                 expression.name("expression");
                 statement.name("statement");
 
                 BOOST_SPIRIT_DEBUG_NODES((keyword_let)(keyword_mut)(keyword_arrow)(source_code)
-                                         (semicolon)(openbrace)(closebrace)(statement)
-                                         (identifier)(var_definement)(const_definement));
+                                         (semicolon)(statement)
+                                         (identifier)(var_definement)(const_definement)
+                                         (if_statement));
             }
             ph::function<error_handler_f> handler;
             ph::function<annotation_f<Iterator>> annotate;
@@ -165,10 +171,12 @@ namespace shiranui{
 
             // expression
             qi::rule<Iterator,ast::FunctionCall(),Skipper> function_call;
+            // qi::rule<Iterator,ast::IfElseExpression(),Skipper> if_else_expression;
 
             // statements
             qi::rule<Iterator,ast::VarDefinement(),Skipper> var_definement;
             qi::rule<Iterator,ast::ConstDefinement(),Skipper> const_definement;
+            qi::rule<Iterator,ast::IfStatement(),Skipper> if_statement;
 
             qi::rule<Iterator,ast::Expression(),Skipper> expression;
             qi::rule<Iterator,ast::Statement(),Skipper> statement;
@@ -178,11 +186,11 @@ namespace shiranui{
             qi::rule<Iterator> keyword_mut;
             qi::rule<Iterator> keyword_arrow;
             qi::rule<Iterator> keyword_lambda;
+            qi::rule<Iterator> keyword_if;
+            qi::rule<Iterator> keyword_else;
 
             qi::rule<Iterator> one_equal;
             qi::rule<Iterator> semicolon;
-            qi::rule<Iterator> openbrace;
-            qi::rule<Iterator> closebrace;
         };
     }
 }
