@@ -63,7 +63,7 @@ namespace shiranui{
                 li.column = get_column(first,f);
                 li.length = distance(f,l);
             }
-            void static do_annotate(ast::LocationInfo*& li,Iterator f,Iterator l,Iterator first){
+            void static do_annotate(ast::LocationInfo* li,Iterator f,Iterator l,Iterator first){
                 using std::distance;
                 li->line = get_line(f);
                 li->column = get_column(first,f);
@@ -105,8 +105,10 @@ namespace shiranui{
                 function_call = (identifier >> '(' >> (expression % ',') >> ')')
                            [qi::_val = ph::new_<ast::FunctionCall>(qi::_1,qi::_2)];
 
-                // if_else_expression = keyword_if >> expression >> "{" >> *statement >> "}"
-                //                                 >> keyword_else >> "{" >> *statement >> "}";
+                // doesn't work.
+                if_else_expression = (keyword_if >> expression >> '{' >> *statement >> '}'
+                                                >> keyword_else >> '{' >> *statement >> '}')
+                          [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
 
                 // DONOT USE > and >> together.
                 const_definement = (keyword_let > identifier > one_equal > expression > semicolon)
@@ -125,8 +127,8 @@ namespace shiranui{
                               number        |
                               string        |
                               function      |
-                              variable   //   |
-                  //            if_else_expression
+                              variable      |
+                              if_else_expression
                               );
                 // what qi::eps for?
                 source_code = (qi::eps >> *(statement))
@@ -140,16 +142,16 @@ namespace shiranui{
                 auto set_location_info = annotate(_val,_1,_3);
 
                 // cause bug!!
-//                 on_success(identifier,set_location_info);
-//                 on_success(number,set_location_info);
-//                 on_success(string,set_location_info);
-//                 on_success(function,set_location_info);
-// 
-//                 on_success(function_call,set_location_info);
-//                 on_success(var_definement,set_location_info);
-//                 on_success(const_definement,set_location_info);
-//                 on_success(if_statement,set_location_info);
-// 
+                on_success(identifier,set_location_info);
+                on_success(number,set_location_info);
+                on_success(string,set_location_info);
+                on_success(function,set_location_info);
+
+                on_success(function_call,set_location_info);
+                on_success(var_definement,set_location_info);
+                on_success(const_definement,set_location_info);
+                on_success(if_statement,set_location_info);
+
 //                 // cause error.
 //                 // on_success(expression,set_location_info);
 //                 // on_success(statement,set_location_info);
@@ -185,7 +187,7 @@ namespace shiranui{
 
             // expression
             qi::rule<Iterator,ast::FunctionCall*(),Skipper> function_call;
-            // qi::rule<Iterator,ast::IfElseExpression(),Skipper> if_else_expression;
+            qi::rule<Iterator,ast::IfElseExpression*(),Skipper> if_else_expression;
 
             // statements
             qi::rule<Iterator,ast::VarDefinement*(),Skipper> var_definement;

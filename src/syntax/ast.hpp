@@ -135,24 +135,34 @@ namespace shiranui{
                  }
              };
 
-//             struct IfElseExpression : Expression{
-//                 sp<Expression> pred;
-//                 std::vector<sp<Statement>> ifblock;
-//                 std::vector<sp<Statement>> elseblock;
-// 
-//                 std::ostream& serialize(std::ostream &os) const{
-//                     os << "if " << pred << " then" << std::endl;
-//                     for(const Statement& s : ifblock){
-//                         os << s << ";";
-//                     }
-//                     os << "else" << std::endl;
-//                     for(const Statement& s : elseblock){
-//                         os << s << ";";
-//                     }
-//                     return os;
-//                 }
-//             };
-// 
+            struct IfElseExpression : Expression{
+                sp<Expression> pred;
+                std::vector<sp<Statement>> ifblock;
+                std::vector<sp<Statement>> elseblock;
+                IfElseExpression(Expression* p,std::vector<Statement*> ib,
+                                                  std::vector<Statement*> eb)
+                    : pred(p){
+                        for(Statement* i : ib){
+                            ifblock.push_back(sp<Statement>(i));
+                        }
+                        for(Statement* e : eb){
+                            elseblock.push_back(sp<Statement>(e));
+                        }
+                    }
+
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "if " << *pred << " then" << std::endl;
+                    for(const auto& s : ifblock){
+                        os << *s << ";";
+                    }
+                    os << "else" << std::endl;
+                    for(const auto& s : elseblock){
+                        os << *s << ";";
+                    }
+                    return os;
+                }
+            };
+
 
             // statement.
             struct VarDefinement : Statement{
