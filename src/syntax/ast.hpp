@@ -37,7 +37,7 @@ namespace shiranui{
             // statements.
             struct VarDefinement;
             struct ConstDefinement;
-            struct IfStatement;
+            struct IfElseStatement;
 
             struct LocationInfo{
                 unsigned int line,column,length;
@@ -56,8 +56,8 @@ namespace shiranui{
                 std::string name;
                 // whats this?
                 Identifier() : name("") {}
-                Identifier(std::string n) : name(n) {}
-                Identifier(std::vector<char> n) : name(n.begin(),n.end()) {}
+                explicit Identifier(std::string n) : name(n) {}
+                explicit Identifier(std::vector<char> n) : name(n.begin(),n.end()) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << name;
                 }
@@ -66,81 +66,81 @@ namespace shiranui{
             // immediate values.
             struct Variable : Expression{
                 Identifier value;
-                Variable(Identifier v) : value(v) {}
+                explicit Variable(Identifier v) : value(v) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << value;
                 }
             };
-             struct Number : Expression{
-                 int value;
-                 explicit Number(int v):value(v) {}
-                 std::ostream& serialize(std::ostream &os) const{
-                     return os << value;
+            struct Number : Expression{
+                int value;
+                explicit Number(int v):value(v) {}
+                std::ostream& serialize(std::ostream &os) const{
+                    return os << value;
                  }
-             };
-             struct String : Expression{
-                 std::string value;
-                 explicit String(std::string v):value(v) {}
-                 explicit String(std::vector<char> v):value(v.begin(),v.end()) {}
-                 std::ostream& serialize(std::ostream &os) const{
-                     return os << value;
-                 }
-             };
-             struct Function : Expression{
-                 std::vector<Identifier> parameters;
-                 std::vector<sp<Statement>> body;
-                 Function(std::vector<Identifier> params,std::vector<Statement*> ss)
-                     : parameters(params) {
-                         for(Statement* s : ss){
-                             body.push_back(sp<Statement>(s));
-                         }
-                     }
+            };
+            struct String : Expression{
+                std::string value;
+                explicit String(std::string v):value(v) {}
+                explicit String(std::vector<char> v):value(v.begin(),v.end()) {}
+                std::ostream& serialize(std::ostream &os) const{
+                    return os << value;
+                }
+            };
+            struct Function : Expression{
+                std::vector<Identifier> parameters;
+                std::vector<sp<Statement>> body;
+                Function(std::vector<Identifier> params,std::vector<Statement*> ss)
+                    : parameters(params) {
+                        for(Statement* s : ss){
+                            body.push_back(sp<Statement>(s));
+                        }
+                    }
 
-                 std::ostream& serialize(std::ostream &os) const{
-                     os << "\\(";
-                     for(size_t i=0;i<parameters.size();i++){
-                         os << parameters[i];
-                         if(i != parameters.size()-1){
-                             os << ",";
-                         }
-                     }
-                     os << "){";
-                     for(size_t i=0;i<body.size();i++){
-                         // compileerror.due to cycle?
-                         os << *(body[i]) << std::endl;
-                     }
-                     return os << "}";
-                 }
-             };
- 
-             // expression.
-             struct FunctionCall : Expression{
-                 Identifier function_name;
-                 std::vector<sp<Expression>> arguments;
-                 FunctionCall(Identifier i,std::vector<Expression*> as)
-                     : function_name(i){
-                         for(Expression* e : as){
-                             arguments.push_back(sp<Expression>(e));
-                         }
-                 }
-                 std::ostream& serialize(std::ostream &os) const{
-                     os << function_name << "(";
-                     for(size_t i=0;i<arguments.size();i++){
-                         os << *(arguments[i]);
-                         if(i != arguments.size()-1){
-                             os << ",";
-                         }
-                     }
-                     return os << ")";
-                 }
-             };
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "\\(";
+                    for(size_t i=0;i<parameters.size();i++){
+                        os << parameters[i];
+                        if(i != parameters.size()-1){
+                            os << ",";
+                        }
+                    }
+                    os << "){";
+                    for(size_t i=0;i<body.size();i++){
+                        // compileerror.due to cycle?
+                        os << *(body[i]) << std::endl;
+                    }
+                    return os << "}";
+                }
+            };
+
+            // expression.
+            struct FunctionCall : Expression{
+                Identifier function_name;
+                std::vector<sp<Expression>> arguments;
+                FunctionCall(Identifier i,std::vector<Expression*> as)
+                    : function_name(i){
+                        for(Expression* e : as){
+                            arguments.push_back(sp<Expression>(e));
+                        }
+                    }
+                std::ostream& serialize(std::ostream &os) const{
+                    os << function_name << "(";
+                    for(size_t i=0;i<arguments.size();i++){
+                        os << *(arguments[i]);
+                        if(i != arguments.size()-1){
+                            os << ",";
+                        }
+                    }
+                    return os << ")";
+                }
+            };
 
             struct IfElseExpression : Expression{
                 sp<Expression> pred;
                 std::vector<sp<Statement>> ifblock;
                 std::vector<sp<Statement>> elseblock;
                 IfElseExpression(Expression* p,std::vector<Statement*> ib,
-                                                  std::vector<Statement*> eb)
+                        std::vector<Statement*> eb)
                     : pred(p){
                         for(Statement* i : ib){
                             ifblock.push_back(sp<Statement>(i));
@@ -169,7 +169,7 @@ namespace shiranui{
                 Identifier id;
                 sp<Expression> value;
                 VarDefinement(Identifier i,Expression *e)
-                     : id(i),value(e) {}
+                    : id(i),value(e) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << "mut " << id << "-> " << *value;
                 }
@@ -178,24 +178,39 @@ namespace shiranui{
                 Identifier id;
                 sp<Expression> value;
                 ConstDefinement(Identifier i,Expression *e) 
-                     : id(i),value(e) {}
+                    : id(i),value(e) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << "let " << id << "-> " << *value;
                 }
             };
-            struct IfStatement : Statement{
+            struct IfElseStatement : Statement{
                 sp<Expression> pred;
                 std::vector<sp<Statement>> ifblock;
-                IfStatement(Expression* e,std::vector<Statement*> iblock)
+                std::vector<sp<Statement>> elseblock;
+                IfElseStatement(Expression* e,std::vector<Statement*> iblock)
                     : pred(e){
                         for(auto s : iblock){
                             ifblock.push_back(sp<Statement>(s));
                         }
-                }
+                    }
+                IfElseStatement(Expression* e,std::vector<Statement*> iblock,
+                        std::vector<Statement*> eblock)
+                    : pred(e){
+                        for(auto s : iblock){
+                            ifblock.push_back(sp<Statement>(s));
+                        }
+                        for(auto s : eblock){
+                            elseblock.push_back(sp<Statement>(s));
+                        }
+                    }
                 std::ostream& serialize(std::ostream &os) const{
                     os << "if " << *pred << " then" << std::endl;
                     for(const auto& s : ifblock){
-                        os << *s << ";";
+                        os << *s << ";" << std::endl;
+                    }
+                    os << "else" << std::endl;
+                    for(const auto& s : elseblock){
+                        os << *s << ";" << std::endl;
                     }
                     return os;
                 }
@@ -216,7 +231,7 @@ namespace shiranui{
                 }
             };
         }
-     }
+    }
 }
 
 namespace shiranui{
@@ -225,10 +240,6 @@ namespace shiranui{
             std::ostream& operator<<(std::ostream& os,
                                      const shiranui::syntax::ast::LocationInfo& s){
                 return s.serialize(os);
-            }
-            std::ostream& operator<<(std::ostream& os,
-                                     const sp<shiranui::syntax::ast::LocationInfo>& s){
-                return s->serialize(os);
             }
         }
     }

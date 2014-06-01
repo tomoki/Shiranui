@@ -115,13 +115,17 @@ namespace shiranui{
                                    [qi::_val = ph::new_<ast::ConstDefinement>(qi::_1,qi::_2)];
                 var_definement   = (keyword_mut > identifier > one_equal > expression > semicolon)
                                    [qi::_val = ph::new_<ast::VarDefinement>(qi::_1,qi::_2)];
-                if_statement = (keyword_if >> expression >> '{' >> *statement >> '}')
-                                   [qi::_val = ph::new_<ast::IfStatement>(qi::_1,qi::_2)];
 
-                statement = (
-                             const_definement  |
+                if_else_statement = (keyword_if >> expression >> '{' >> *statement >> '}'
+                                  >> keyword_else >> '{' >> *statement >> '}')
+                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
+                                    | (keyword_if >> expression >> '{' >> *statement >> '}')
+                                       [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)];
+
+
+                statement = ( const_definement  |
                              var_definement    |
-                             if_statement
+                             if_else_statement
                              );
                 expression = (function_call |
                               number        |
@@ -136,7 +140,7 @@ namespace shiranui{
 
                 on_error<fail>(var_definement, handler(_1, _2, _3, _4));
                 on_error<fail>(const_definement, handler(_1, _2, _3, _4));
-                on_error<fail>(if_statement, handler(_1, _2, _3, _4));
+                on_error<fail>(if_else_statement, handler(_1, _2, _3, _4));
                 on_error<fail>(source_code, handler(_1, _2, _3, _4));
 
                 auto set_location_info = annotate(_val,_1,_3);
@@ -150,7 +154,7 @@ namespace shiranui{
                 on_success(function_call,set_location_info);
                 on_success(var_definement,set_location_info);
                 on_success(const_definement,set_location_info);
-                on_success(if_statement,set_location_info);
+                on_success(if_else_statement,set_location_info);
 
 //                 // cause error.
 //                 // on_success(expression,set_location_info);
@@ -165,14 +169,14 @@ namespace shiranui{
                 function_call.name("function_call");
                 var_definement.name("mut_defiment");
                 const_definement.name("const_defiment");
-                if_statement.name("if_statement");
+                if_else_statement.name("if_else_statement");
                 expression.name("expression");
                 statement.name("statement");
 
                 BOOST_SPIRIT_DEBUG_NODES((keyword_let)(keyword_mut)(keyword_arrow)(source_code)
                                          (semicolon)(statement)
                                          (identifier)(var_definement)(const_definement)
-                                         (if_statement));
+                                         (if_else_statement));
             }
             ph::function<error_handler_f> handler;
             ph::function<annotation_f<Iterator>> annotate;
@@ -192,7 +196,7 @@ namespace shiranui{
             // statements
             qi::rule<Iterator,ast::VarDefinement*(),Skipper> var_definement;
             qi::rule<Iterator,ast::ConstDefinement*(),Skipper> const_definement;
-            qi::rule<Iterator,ast::IfStatement*(),Skipper> if_statement;
+            qi::rule<Iterator,ast::IfElseStatement*(),Skipper> if_else_statement;
 
             qi::rule<Iterator,ast::Expression*(),Skipper> expression;
             qi::rule<Iterator,ast::Statement*(),Skipper> statement;
