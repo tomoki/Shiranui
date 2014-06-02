@@ -35,8 +35,7 @@ namespace shiranui{
             // struct IfElseExpression;
 
             // statements.
-            struct VarDefinement;
-            struct ConstDefinement;
+            struct Definement;
             struct IfElseStatement;
 
             struct LocationInfo{
@@ -60,6 +59,9 @@ namespace shiranui{
                 explicit Identifier(std::vector<char> n) : name(n.begin(),n.end()) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << name;
+                }
+                bool operator<(const Identifier& id) const{
+                    return name < id.name;
                 }
             };
 
@@ -104,7 +106,7 @@ namespace shiranui{
                             os << ",";
                         }
                     }
-                    os << "){";
+                    os << "){" << std::endl;
                     for(size_t i=0;i<body.size();i++){
                         // compileerror.due to cycle?
                         os << *(body[i]) << std::endl;
@@ -115,16 +117,16 @@ namespace shiranui{
 
             // expression.
             struct FunctionCall : Expression{
-                Identifier function_name;
+                sp<Expression> function;
                 std::vector<sp<Expression>> arguments;
-                FunctionCall(Identifier i,std::vector<Expression*> as)
-                    : function_name(i){
-                        for(Expression* e : as){
-                            arguments.push_back(sp<Expression>(e));
-                        }
+                FunctionCall(Expression* i,std::vector<Expression*> as){
+                    function = sp<Expression>(i);
+                    for(Expression* e : as){
+                        arguments.push_back(sp<Expression>(e));
                     }
+                }
                 std::ostream& serialize(std::ostream &os) const{
-                    os << function_name << "(";
+                    os << *function << "(";
                     for(size_t i=0;i<arguments.size();i++){
                         os << *(arguments[i]);
                         if(i != arguments.size()-1){
@@ -134,6 +136,32 @@ namespace shiranui{
                     return os << ")";
                 }
             };
+            struct BinaryOperator : Expression{
+                std::string op;
+                sp<Expression> left,right;
+                BinaryOperator(std::string o,Expression* l,Expression* r){
+                    left = sp<Expression>(l);
+                    right = sp<Expression>(r);
+                    op = o;
+                }
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "(" << *left << " " << op << " " << *right << ")";
+                    return os;
+                }
+            };
+            struct UnaryOperator : Expression{
+                std::string op;
+                sp<Expression> exp;
+                UnaryOperator(std::string o,Expression* e){
+                    op = o;
+                    exp = sp<Expression>(e);
+                }
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "(" <<  op << "(" << *exp << ")" << ")";
+                    return os;
+                }
+            };
+
 
             struct IfElseExpression : Expression{
                 sp<Expression> pred;
@@ -163,24 +191,15 @@ namespace shiranui{
                 }
             };
 
-
             // statement.
-            struct VarDefinement : Statement{
+            struct Definement : Statement{
                 Identifier id;
                 sp<Expression> value;
-                VarDefinement(Identifier i,Expression *e)
-                    : id(i),value(e) {}
+                bool is_const;
+                Definement(Identifier i,Expression *e,bool isc)
+                    : id(i),value(e),is_const(isc) {}
                 std::ostream& serialize(std::ostream &os) const{
                     return os << "mut " << id << "-> " << *value;
-                }
-            };
-            struct ConstDefinement : Statement{
-                Identifier id;
-                sp<Expression> value;
-                ConstDefinement(Identifier i,Expression *e) 
-                    : id(i),value(e) {}
-                std::ostream& serialize(std::ostream &os) const{
-                    return os << "let " << id << "-> " << *value;
                 }
             };
             struct IfElseStatement : Statement{

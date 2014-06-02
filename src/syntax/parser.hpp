@@ -78,139 +78,119 @@ namespace shiranui{
         template<typename Iterator=pos_iterator_t,typename Skipper=qi::space_type>
         struct Parser : public qi::grammar<Iterator,ast::SourceCode*(),Skipper>{
             // change const_definement to sourcecode.
-            Parser(Iterator first) : Parser::base_type(source_code),
+            Parser(Iterator first) : Parser::base_type(source),
                                      annotate(first){
                 using namespace qi;
-                keyword_let = lit("let");
-                keyword_mut = lit("mut");
-                keyword_if = lit("if");
-                keyword_else = lit("else");
-                keyword_arrow = lit("->");
-                semicolon = lit(";");
-                one_equal = lit("=");
-                keyword_lambda = lit("\\");
+                identifier = as_string[(alpha >> *(alnum | char_('_')))];
+                integer    = int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
+                variable   = identifier [qi::_val = ph::new_<ast::Variable>(qi::_1)];
+                function   = (lit("\\") >> "(" >> (identifier % ",") >> ")"
+                                  >> "{" >> *statement >> "}")
+                              [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
 
-                identifier = as_string[(alpha | char_('_')) >> *(alnum | char_('_'))];
-                number = int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
-                string = lexeme[lit("\"") > *(char_ - "\"") > lit("\"")]
-                              [qi::_val = ph::new_<ast::String>(qi::_1)];
+                definement = ("let" >> identifier >> "=" >> expression)
+                              [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
+                           | ("mut" >> identifier >> "=" >> expression)
+                              [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
+                           ;
+                ifelse_stmt= ("if" >> expression 
+                                   >> "{" >> *statement >> "}"
+                                   >> "else" >> "{" >> *statement >> "}")
+                              [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
+                           | ("if" >> expression
+                                   >> "{" >> *statement >> "}")
+                              [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
+                           ;
+                statement  = (definement >> ";")
+                           | ifelse_stmt
+                           ;
+                expression = test [qi::_val = qi::_1];
 
-                variable = identifier 
-                    [qi::_val = ph::new_<ast::Variable>(qi::_1)];
+                test       = or_test [qi::_val = qi::_1];
+                or_test    = and_test [qi::_val = qi::_1] >>
+                              *(("or" >> and_test)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("or",qi::_val,qi::_1)])
+                           ;
+                and_test   = not_test [qi::_val = qi::_1] >> 
+                             *(("and" >> not_test)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("and",qi::_val,qi::_1)])
+                           ;
+                not_test   = ("not" >> not_test)
+                              [qi::_val = ph::new_<ast::UnaryOperator>("not",qi::_1)]
+                           | comparison [qi::_val = qi::_1]
+                           ;
 
-                function = (keyword_lambda >> '(' >> (identifier % ',') >> ')'
-                                          >> '{' >> *statement >> '}')
-                           [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
+                // TODO add >,<,<=,>=,...
+                comparison = addi [qi::_val = qi::_1] >> 
+                             *(("=" >> addi)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("=",qi::_val,qi::_1)]
+                             | ("/=" >> multi)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
+                              )
+                           ;
 
-                function_call = (identifier >> '(' >> (expression % ',') >> ')')
-                           [qi::_val = ph::new_<ast::FunctionCall>(qi::_1,qi::_2)];
+                addi       = multi [qi::_val = qi::_1] >> 
+                             *(('+' >> addi)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("+",qi::_val,qi::_1)]
+                             | ('-' >> multi)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("-",qi::_val,qi::_1)]
+                              )
+                           ;
 
-                // doesn't work.
-                if_else_expression = (keyword_if >> expression >> '{' >> *statement >> '}'
-                                                >> keyword_else >> '{' >> *statement >> '}')
-                          [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
+                multi      = unary [qi::_val = qi::_1] >>
+                             *(('*' >> unary)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("*",qi::_val,qi::_1)]
+                             | ('/' >> unary)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("/",qi::_val,qi::_1)]
+                              )
+                           ;
+                // .alias() not work.
+                unary      = power [qi::_val = qi::_1]
+                           | ("+" >> unary)
+                              [qi::_val = ph::new_<ast::UnaryOperator>("+",qi::_1)]
+                           | ("-" >> unary)
+                              [qi::_val = ph::new_<ast::UnaryOperator>("-",qi::_1)]
+                           ;
+                power      = atom [qi::_val = qi::_1] >>
+                             *(('^' >> atom)
+                               [qi::_val = ph::new_<ast::BinaryOperator>("^",qi::_val,qi::_1)]
+                             | ('(' >> (expression % ',') >> ')')
+                               [qi::_val = ph::new_<ast::FunctionCall>(qi::_val,qi::_1)]
+                              )
+                           ;
 
-                // DONOT USE > and >> together.
-                const_definement = (keyword_let > identifier > one_equal > expression > semicolon)
-                                   [qi::_val = ph::new_<ast::ConstDefinement>(qi::_1,qi::_2)];
-                var_definement   = (keyword_mut > identifier > one_equal > expression > semicolon)
-                                   [qi::_val = ph::new_<ast::VarDefinement>(qi::_1,qi::_2)];
-
-                if_else_statement = (keyword_if >> expression >> '{' >> *statement >> '}'
-                                  >> keyword_else >> '{' >> *statement >> '}')
-                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
-                                    | (keyword_if >> expression >> '{' >> *statement >> '}')
-                                       [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)];
+                atom       = ("(" >> expression >> ")")
+                           | integer
+                           | variable
+                           | function
+                           ;
+                source     = (qi::eps >> *(statement))
+                             [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
 
 
-                statement = ( const_definement  |
-                             var_definement    |
-                             if_else_statement
-                             );
-                expression = (function_call |
-                              number        |
-                              string        |
-                              function      |
-                              variable      |
-                              if_else_expression
-                              );
-                // what qi::eps for?
-                source_code = (qi::eps >> *(statement))
-                              [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
-
-                on_error<fail>(var_definement, handler(_1, _2, _3, _4));
-                on_error<fail>(const_definement, handler(_1, _2, _3, _4));
-                on_error<fail>(if_else_statement, handler(_1, _2, _3, _4));
-                on_error<fail>(source_code, handler(_1, _2, _3, _4));
-
-                auto set_location_info = annotate(_val,_1,_3);
-
-                // cause bug!!
-                on_success(identifier,set_location_info);
-                on_success(number,set_location_info);
-                on_success(string,set_location_info);
-                on_success(function,set_location_info);
-
-                on_success(function_call,set_location_info);
-                on_success(var_definement,set_location_info);
-                on_success(const_definement,set_location_info);
-                on_success(if_else_statement,set_location_info);
-
-//                 // cause error.
-//                 // on_success(expression,set_location_info);
-//                 // on_success(statement,set_location_info);
-//                 on_success(source_code,set_location_info);
-// 
-                identifier.name("identifier");
-                number.name("number");
-                string.name("string");
-                variable.name("variable");
-                function.name("function");
-                function_call.name("function_call");
-                var_definement.name("mut_defiment");
-                const_definement.name("const_defiment");
-                if_else_statement.name("if_else_statement");
-                expression.name("expression");
-                statement.name("statement");
-
-                BOOST_SPIRIT_DEBUG_NODES((keyword_let)(keyword_mut)(keyword_arrow)(source_code)
-                                         (semicolon)(statement)
-                                         (identifier)(var_definement)(const_definement)
-                                         (if_else_statement));
             }
             ph::function<error_handler_f> handler;
             ph::function<annotation_f<Iterator>> annotate;
 
-            // meta
-            qi::rule<Iterator,ast::Identifier()> identifier;
-            // immidiate
-            qi::rule<Iterator,ast::Number*()> number;
-            qi::rule<Iterator,ast::String*()> string;
-            qi::rule<Iterator,ast::Variable*()> variable;
-            qi::rule<Iterator,ast::Function*(),Skipper> function;
-
-            // expression
-            qi::rule<Iterator,ast::FunctionCall*(),Skipper> function_call;
-            qi::rule<Iterator,ast::IfElseExpression*(),Skipper> if_else_expression;
-
-            // statements
-            qi::rule<Iterator,ast::VarDefinement*(),Skipper> var_definement;
-            qi::rule<Iterator,ast::ConstDefinement*(),Skipper> const_definement;
-            qi::rule<Iterator,ast::IfElseStatement*(),Skipper> if_else_statement;
-
-            qi::rule<Iterator,ast::Expression*(),Skipper> expression;
-            qi::rule<Iterator,ast::Statement*(),Skipper> statement;
-            qi::rule<Iterator,ast::SourceCode*(),Skipper> source_code;
-
-            qi::rule<Iterator> keyword_let;
-            qi::rule<Iterator> keyword_mut;
-            qi::rule<Iterator> keyword_arrow;
-            qi::rule<Iterator> keyword_lambda;
-            qi::rule<Iterator> keyword_if;
-            qi::rule<Iterator> keyword_else;
-
-            qi::rule<Iterator> one_equal;
-            qi::rule<Iterator> semicolon;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       expression;
+            qi::rule<Iterator,ast::Identifier()>                identifier;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       test;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       or_test;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       and_test;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       not_test;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       comparison;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       multi;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       addi;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       unary;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       power;
+            qi::rule<Iterator,ast::Expression*(),Skipper>       atom;
+            qi::rule<Iterator,ast::SourceCode*(),Skipper>       source;
+            qi::rule<Iterator,ast::Number*()>                   integer;
+            qi::rule<Iterator,ast::Function*(),Skipper>         function;
+            qi::rule<Iterator,ast::Variable*()>                 variable;
+            qi::rule<Iterator,ast::Definement*(),Skipper>       definement;
+            qi::rule<Iterator,ast::IfElseStatement*(),Skipper>  ifelse_stmt;
+            qi::rule<Iterator,ast::Statement*(),Skipper>        statement;
         };
     }
 }
