@@ -165,28 +165,17 @@ namespace shiranui{
 
             struct IfElseExpression : Expression{
                 sp<Expression> pred;
-                std::vector<sp<Statement>> ifblock;
-                std::vector<sp<Statement>> elseblock;
-                IfElseExpression(Expression* p,std::vector<Statement*> ib,
-                        std::vector<Statement*> eb)
-                    : pred(p){
-                        for(Statement* i : ib){
-                            ifblock.push_back(sp<Statement>(i));
-                        }
-                        for(Statement* e : eb){
-                            elseblock.push_back(sp<Statement>(e));
-                        }
-                    }
+                sp<Expression> ife;
+                sp<Expression> elsee;
+                IfElseExpression(Expression* p,Expression* ib,Expression* eb){
+                    pred = sp<Expression>(p);
+                    ife  = sp<Expression>(ib);
+                    elsee= sp<Expression>(eb);
+                }
 
                 std::ostream& serialize(std::ostream &os) const{
-                    os << "if " << *pred << " then" << std::endl;
-                    for(const auto& s : ifblock){
-                        os << *s << ";";
-                    }
-                    os << "else" << std::endl;
-                    for(const auto& s : elseblock){
-                        os << *s << ";";
-                    }
+                    os << "(if " << *pred << " then" << std::endl;
+                    os << *ife << " else  " << *elsee << ")" << std::endl;
                     return os;
                 }
             };
@@ -199,7 +188,7 @@ namespace shiranui{
                 Definement(Identifier i,Expression *e,bool isc)
                     : id(i),value(e),is_const(isc) {}
                 std::ostream& serialize(std::ostream &os) const{
-                    return os << "mut " << id << "-> " << *value;
+                    return os << (is_const?"let ":"mut ") << id << "-> " << *value;
                 }
             };
             struct IfElseStatement : Statement{

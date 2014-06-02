@@ -104,8 +104,17 @@ namespace shiranui{
                 statement  = (definement >> ";")
                            | ifelse_stmt
                            ;
-                expression = test [qi::_val = qi::_1];
+//                expression = test [qi::_val = qi::_1]
+//                           | ifelse_expr [qi::_val = qi::_1];
+//                           ;
+                expression = 
+                            ifelse_expr [qi::_val = qi::_1]
+                           | test [qi::_val = qi::_1]
+                           ;
 
+
+                ifelse_expr= ("if" >> expression >> "then" >> expression >> "else" >> expression)
+                             [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
                 test       = or_test [qi::_val = qi::_1];
                 or_test    = and_test [qi::_val = qi::_1] >>
                               *(("or" >> and_test)
@@ -190,6 +199,7 @@ namespace shiranui{
             qi::rule<Iterator,ast::Variable*()>                 variable;
             qi::rule<Iterator,ast::Definement*(),Skipper>       definement;
             qi::rule<Iterator,ast::IfElseStatement*(),Skipper>  ifelse_stmt;
+            qi::rule<Iterator,ast::IfElseExpression*(),Skipper> ifelse_expr;
             qi::rule<Iterator,ast::Statement*(),Skipper>        statement;
         };
     }
