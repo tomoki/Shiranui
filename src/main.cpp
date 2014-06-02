@@ -53,9 +53,12 @@ int main(int argc,char **argv){
                         std::istreambuf_iterator<char>());
         test(str);
     }else{
-        std::string str;
-        std::getline(std::cin,str);
-        test(str);
+        while(true){
+            std::cout << "> ";
+            std::string str;
+            std::getline(std::cin,str);
+            test(str);
+        }
     }
     return 0;
 }

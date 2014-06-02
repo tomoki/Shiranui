@@ -37,6 +37,7 @@ namespace shiranui{
             // statements.
             struct Definement;
             struct IfElseStatement;
+            struct Block;
 
             struct LocationInfo{
                 unsigned int line,column,length;
@@ -88,16 +89,30 @@ namespace shiranui{
                     return os << value;
                 }
             };
+            struct Block : Statement{
+                std::vector<sp<Statement>> statements;
+                Block(std::vector<Statement*> ss){
+                    for(auto s : ss){
+                        statements.push_back(sp<Statement>(s));
+                    }
+                }
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "{" << std::endl;
+                    for(const auto& s : statements){
+                        os << *s << std::endl;
+                    }
+                    os << "}";
+                    return os;
+                }
+            };
+
+
             struct Function : Expression{
                 std::vector<Identifier> parameters;
-                std::vector<sp<Statement>> body;
-                Function(std::vector<Identifier> params,std::vector<Statement*> ss)
-                    : parameters(params) {
-                        for(Statement* s : ss){
-                            body.push_back(sp<Statement>(s));
-                        }
-                    }
-
+                sp<Block>               body;
+                Function(std::vector<Identifier> params,Block* ss)
+                    : parameters(params),body(ss){
+                }
                 std::ostream& serialize(std::ostream &os) const{
                     os << "\\(";
                     for(size_t i=0;i<parameters.size();i++){
@@ -106,12 +121,9 @@ namespace shiranui{
                             os << ",";
                         }
                     }
-                    os << "){" << std::endl;
-                    for(size_t i=0;i<body.size();i++){
-                        // compileerror.due to cycle?
-                        os << *(body[i]) << std::endl;
-                    }
-                    return os << "}";
+                    os << ")" << std::endl;
+                    os << *body;
+                    return os ;
                 }
             };
 
@@ -193,37 +205,22 @@ namespace shiranui{
             };
             struct IfElseStatement : Statement{
                 sp<Expression> pred;
-                std::vector<sp<Statement>> ifblock;
-                std::vector<sp<Statement>> elseblock;
-                IfElseStatement(Expression* e,std::vector<Statement*> iblock)
-                    : pred(e){
-                        for(auto s : iblock){
-                            ifblock.push_back(sp<Statement>(s));
-                        }
-                    }
-                IfElseStatement(Expression* e,std::vector<Statement*> iblock,
-                        std::vector<Statement*> eblock)
-                    : pred(e){
-                        for(auto s : iblock){
-                            ifblock.push_back(sp<Statement>(s));
-                        }
-                        for(auto s : eblock){
-                            elseblock.push_back(sp<Statement>(s));
-                        }
-                    }
+                sp<Block> ifblock;
+                sp<Block> elseblock;
+                IfElseStatement(Expression* e,Block* iblock)
+                    : pred(e),ifblock(iblock),elseblock(new Block({})){
+                }
+                IfElseStatement(Expression* e,Block* iblock,Block* eblock)
+                    : pred(e),ifblock(iblock),elseblock(eblock){
+                }
                 std::ostream& serialize(std::ostream &os) const{
                     os << "if " << *pred << " then" << std::endl;
-                    for(const auto& s : ifblock){
-                        os << *s << ";" << std::endl;
-                    }
+                    os << *ifblock << std::endl;
                     os << "else" << std::endl;
-                    for(const auto& s : elseblock){
-                        os << *s << ";" << std::endl;
-                    }
+                    os << *elseblock << std::endl;
                     return os;
                 }
             };
-
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 explicit SourceCode(std::vector<Statement*> ss){

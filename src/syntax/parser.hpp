@@ -102,37 +102,46 @@ namespace shiranui{
                 {
                     function.name("function");
                     on_success(function,set_location_info);
-                    function   = (lit("\\") > "(" > (identifier % ",") > ")"
-                                            > "{" > *statement > "}")
-                                  [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
+                    function   = (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
+                                  [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)]
+                               | (lit("\\") >> "(" >> ")" >> block)
+                                  [qi::_val = ph::new_<ast::Function>(
+                                              std::vector<ast::Identifier>(),qi::_1)]
+                               ;
+
                 }
 
                 {
                     definement.name("definement");
                     on_success(definement,set_location_info);
-                    definement = ("let" > identifier > "=" > expression)
+                    definement = ("let" >> identifier >> "=" >> expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
-                               | ("mut" > identifier > "=" > expression)
+                               | ("mut" >> identifier >> "=" >> expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
                                ;
                 }
                 {
                     ifelse_stmt.name("if_else_statement");
                     on_success(ifelse_stmt,set_location_info);
-                    ifelse_stmt= ("if" >> expression 
-                                       >> "{" >> *statement >> "}"
-                                       >> "else" >> "{" >> *statement >> "}")
+                    ifelse_stmt= ("if" >> expression >> block >> "else" >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
-                               | ("if" >> expression
-                                       >> "{" >> *statement >> "}")
+                               | ("if" >> expression >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
                                ;
+                }
+                {
+                    block.name("block");
+                    on_success(block,set_location_info);
+                    block = ("{" >> *statement >> "}")
+                             [qi::_val = ph::new_<ast::Block>(qi::_1)]
+                          ;
                 }
                 {
                     statement.name("statement");
                     on_success(statement,set_location_info);
                     statement  = (definement >> ";")
                                | ifelse_stmt
+                               | block
                                ;
                 }
 
@@ -214,6 +223,9 @@ namespace shiranui{
                                    [qi::_val = ph::new_<ast::BinaryOperator>("*",qi::_val,qi::_1)]
                                  | ('/' >> unary)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("/",qi::_val,qi::_1)]
+                                 | ('%' >> unary)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("%",qi::_val,qi::_1)]
+
                                   )
                                ;
                 }
@@ -236,6 +248,9 @@ namespace shiranui{
                                    [qi::_val = ph::new_<ast::BinaryOperator>("^",qi::_val,qi::_1)]
                                  | ('(' >> (expression % ',') >> ')')
                                    [qi::_val = ph::new_<ast::FunctionCall>(qi::_val,qi::_1)]
+                                 | (lit('(') >> ')')
+                                   [qi::_val = ph::new_<ast::FunctionCall>(
+                                                        qi::_val,std::vector<ast::Expression*>())]
                                   )
                                ;
                 }
@@ -280,6 +295,7 @@ namespace shiranui{
             qi::rule<Iterator,ast::Definement*(),Skipper>       definement;
             qi::rule<Iterator,ast::IfElseStatement*(),Skipper>  ifelse_stmt;
             qi::rule<Iterator,ast::IfElseExpression*(),Skipper> ifelse_expr;
+            qi::rule<Iterator,ast::Block*(),Skipper>            block;
             qi::rule<Iterator,ast::Statement*(),Skipper>        statement;
         };
     }
