@@ -81,100 +81,180 @@ namespace shiranui{
             Parser(Iterator first) : Parser::base_type(source),
                                      annotate(first){
                 using namespace qi;
-                identifier = as_string[(alpha >> *(alnum | char_('_')))];
-                integer    = int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
-                variable   = identifier [qi::_val = ph::new_<ast::Variable>(qi::_1)];
-                function   = (lit("\\") >> "(" >> (identifier % ",") >> ")"
-                                  >> "{" >> *statement >> "}")
-                              [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
+                auto set_location_info = annotate(_val,_1,_3);
+                {
+                    identifier.name("identifier");
+                    on_success(identifier,set_location_info);
+                    identifier = as_string[(alpha >> *(alnum | char_('_')))];
+                }
 
-                definement = ("let" >> identifier >> "=" >> expression)
-                              [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
-                           | ("mut" >> identifier >> "=" >> expression)
-                              [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
-                           ;
-                ifelse_stmt= ("if" >> expression 
-                                   >> "{" >> *statement >> "}"
-                                   >> "else" >> "{" >> *statement >> "}")
-                              [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
-                           | ("if" >> expression
-                                   >> "{" >> *statement >> "}")
-                              [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
-                           ;
-                statement  = (definement >> ";")
-                           | ifelse_stmt
-                           ;
-//                expression = test [qi::_val = qi::_1]
-//                           | ifelse_expr [qi::_val = qi::_1];
-//                           ;
-                expression = 
-                            ifelse_expr [qi::_val = qi::_1]
-                           | test [qi::_val = qi::_1]
-                           ;
+                {
+                    integer.name("integer");
+                    on_success(integer,set_location_info);
+                    integer    = int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
+                }
 
+                {
+                    variable.name("variable");
+                    on_success(variable,set_location_info);
+                    variable   = identifier [qi::_val = ph::new_<ast::Variable>(qi::_1)];
+                }
+                {
+                    function.name("function");
+                    on_success(function,set_location_info);
+                    function   = (lit("\\") > "(" > (identifier % ",") > ")"
+                                            > "{" > *statement > "}")
+                                  [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)];
+                }
 
-                ifelse_expr= ("if" >> expression >> "then" >> expression >> "else" >> expression)
-                             [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
-                test       = or_test [qi::_val = qi::_1];
-                or_test    = and_test [qi::_val = qi::_1] >>
-                              *(("or" >> and_test)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("or",qi::_val,qi::_1)])
-                           ;
-                and_test   = not_test [qi::_val = qi::_1] >> 
-                             *(("and" >> not_test)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("and",qi::_val,qi::_1)])
-                           ;
-                not_test   = ("not" >> not_test)
-                              [qi::_val = ph::new_<ast::UnaryOperator>("not",qi::_1)]
-                           | comparison [qi::_val = qi::_1]
-                           ;
+                {
+                    definement.name("definement");
+                    on_success(definement,set_location_info);
+                    definement = ("let" > identifier > "=" > expression)
+                                  [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
+                               | ("mut" > identifier > "=" > expression)
+                                  [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
+                               ;
+                }
+                {
+                    ifelse_stmt.name("if_else_statement");
+                    on_success(ifelse_stmt,set_location_info);
+                    ifelse_stmt= ("if" >> expression 
+                                       >> "{" >> *statement >> "}"
+                                       >> "else" >> "{" >> *statement >> "}")
+                                  [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
+                               | ("if" >> expression
+                                       >> "{" >> *statement >> "}")
+                                  [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
+                               ;
+                }
+                {
+                    statement.name("statement");
+                    on_success(statement,set_location_info);
+                    statement  = (definement >> ";")
+                               | ifelse_stmt
+                               ;
+                }
 
-                // TODO add >,<,<=,>=,...
-                comparison = addi [qi::_val = qi::_1] >> 
-                             *(("=" >> addi)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("=",qi::_val,qi::_1)]
-                             | ("/=" >> multi)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
-                              )
-                           ;
+                {
+                    expression.name("expression");
+                    on_success(expression,set_location_info);
+                    expression = ifelse_expr [qi::_val = qi::_1]
+                               | test [qi::_val = qi::_1]
+                               ;
+                }
 
-                addi       = multi [qi::_val = qi::_1] >> 
-                             *(('+' >> addi)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("+",qi::_val,qi::_1)]
-                             | ('-' >> multi)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("-",qi::_val,qi::_1)]
-                              )
-                           ;
+                {
+                    ifelse_expr.name("if_else_expression");
+                    on_success(ifelse_expr,set_location_info);
+                    ifelse_expr= ("if" >> expression >> "then" 
+                                       >> expression >> "else" >> expression)
+                                 [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
+                }
+                {
+                    test.name("test");
+                    on_success(test,set_location_info);
+                    test       = or_test [qi::_val = qi::_1];
+                }
+                {
+                    or_test.name("or_test");
+                    on_success(or_test,set_location_info);
+                    or_test    = and_test [qi::_val = qi::_1] >>
+                                  *(("or" >> and_test)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("or",qi::_val,qi::_1)])
+                               ;
+                }
+                {
+                    and_test.name("and_test");
+                    on_success(and_test,set_location_info);
+                    and_test   = not_test [qi::_val = qi::_1] >> 
+                                 *(("and" >> not_test)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("and",qi::_val,qi::_1)])
+                               ;
+                }
+                {
+                    not_test.name("not_test");
+                    on_success(not_test,set_location_info);
+                    not_test   = ("not" >> not_test)
+                                  [qi::_val = ph::new_<ast::UnaryOperator>("not",qi::_1)]
+                               | comparison [qi::_val = qi::_1]
+                               ;
+                }
 
-                multi      = unary [qi::_val = qi::_1] >>
-                             *(('*' >> unary)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("*",qi::_val,qi::_1)]
-                             | ('/' >> unary)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("/",qi::_val,qi::_1)]
-                              )
-                           ;
-                // .alias() not work.
-                unary      = power [qi::_val = qi::_1]
-                           | ("+" >> unary)
-                              [qi::_val = ph::new_<ast::UnaryOperator>("+",qi::_1)]
-                           | ("-" >> unary)
-                              [qi::_val = ph::new_<ast::UnaryOperator>("-",qi::_1)]
-                           ;
-                power      = atom [qi::_val = qi::_1] >>
-                             *(('^' >> atom)
-                               [qi::_val = ph::new_<ast::BinaryOperator>("^",qi::_val,qi::_1)]
-                             | ('(' >> (expression % ',') >> ')')
-                               [qi::_val = ph::new_<ast::FunctionCall>(qi::_val,qi::_1)]
-                              )
-                           ;
+                {
+                    comparison.name("comparison");
+                    on_success(comparison,set_location_info);
+                    // TODO add >,<,<=,>=,...
+                    comparison = addi [qi::_val = qi::_1] >> 
+                                 *(("=" >> addi)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("=",qi::_val,qi::_1)]
+                                 | ("/=" >> multi)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
+                                  )
+                               ;
+                }
 
-                atom       = ("(" >> expression >> ")")
-                           | integer
-                           | variable
-                           | function
-                           ;
-                source     = (qi::eps >> *(statement))
-                             [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
+                {
+                    addi.name("addi");
+                    on_success(addi,set_location_info);
+                    addi       = multi [qi::_val = qi::_1] >> 
+                                 *(('+' >> addi)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("+",qi::_val,qi::_1)]
+                                 | ('-' >> multi)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("-",qi::_val,qi::_1)]
+                                  )
+                               ;
+                }
+
+                {
+                    multi.name("multi");
+                    on_success(multi,set_location_info);
+                    multi      = unary [qi::_val = qi::_1] >>
+                                 *(('*' >> unary)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("*",qi::_val,qi::_1)]
+                                 | ('/' >> unary)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("/",qi::_val,qi::_1)]
+                                  )
+                               ;
+                }
+                {
+                    unary.name("unary");
+                    on_success(unary,set_location_info);
+                    // .alias() not work.
+                    unary      = power [qi::_val = qi::_1]
+                               | ("+" >> unary)
+                                  [qi::_val = ph::new_<ast::UnaryOperator>("+",qi::_1)]
+                               | ("-" >> unary)
+                                  [qi::_val = ph::new_<ast::UnaryOperator>("-",qi::_1)]
+                               ;
+                }
+                {
+                    power.name("power");
+                    on_success(power,set_location_info);
+                    power      = atom [qi::_val = qi::_1] >>
+                                 *(('^' >> atom)
+                                   [qi::_val = ph::new_<ast::BinaryOperator>("^",qi::_val,qi::_1)]
+                                 | ('(' >> (expression % ',') >> ')')
+                                   [qi::_val = ph::new_<ast::FunctionCall>(qi::_val,qi::_1)]
+                                  )
+                               ;
+                }
+
+                {
+                    atom.name("atom");
+                    on_success(atom,set_location_info);
+                    atom       = ("(" >> expression >> ")")
+                               | integer
+                               | variable
+                               | function
+                               ;
+                }
+                {
+                    source.name("source");
+                    on_success(source,set_location_info);
+                    source     = (qi::eps >> *(statement))
+                                 [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
+                }
 
 
             }

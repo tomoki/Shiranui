@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <config.hpp>
+#include <chrono>
 #include "misc.hpp"
 #include "syntax/parser.hpp"
 
@@ -9,17 +10,19 @@
 void test(const std::string content){
     typedef boost::spirit::line_pos_iterator<std::string::const_iterator>
         pos_iterator_t;
-
     using namespace shiranui;
     using namespace shiranui::syntax;
+    const auto start_time = std::chrono::system_clock::now();
     pos_iterator_t first(content.begin()),
         iter = first,last(content.end());
     Parser<pos_iterator_t> resolver(first);
-    // Parser<pos_iterator_t> p(first);
     ast::SourceCode* program;
     bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
+    const auto end_time = std::chrono::system_clock::now();
+    const auto timespan = end_time - start_time;
     std::cout << "ok: " << ok << std::endl;
     std::cout << "full: " << (iter == last) << std::endl;
+    std::cout << "time: " << std::chrono::duration_cast<std::chrono::milliseconds>(timespan).count() << "[ms]" << std::endl;
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
