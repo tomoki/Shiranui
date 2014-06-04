@@ -4,13 +4,13 @@ namespace shiranui{
     namespace value{
         // Integer
         Integer::Integer(int v) : value(v) {};
-        std::ostream& Integer::serialize(std::ostream& os) const{
+        std::ostream& Integer::serialize(std::ostream& os) {
             return os << value;
         }
 
         // String
         String::String(std::string v) : value(v) {}
-        std::ostream& String::serialize(std::ostream& os) const{
+        std::ostream& String::serialize(std::ostream& os) {
             return os << value;
         }
 
@@ -18,7 +18,7 @@ namespace shiranui{
         Function::Function(std::vector<ast::Identifier> ps,
                            ast::Block*                  b)
             : parameters(ps),body(b) {}
-        std::ostream& Function::serialize(std::ostream &os) const{
+        std::ostream& Function::serialize(std::ostream &os) {
             os << "\\(";
             for(size_t i=0;i<parameters.size();i++){
                 os << parameters[i];
@@ -34,11 +34,11 @@ namespace shiranui{
         // Return
         Return::Return(Value* v)
             : value(v) {}
-        std::ostream& Return::serialize(std::ostream& os) const{
+        std::ostream& Return::serialize(std::ostream& os) {
             return os << "return " << *value;
         }
         // Value
-        std::ostream& operator<<(std::ostream& os, const Value& s){
+        std::ostream& operator<<(std::ostream& os, Value& s){
             return s.serialize(os);
         }
     }

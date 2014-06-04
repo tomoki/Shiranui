@@ -6,31 +6,19 @@ namespace shiranui{
             // Identifier
             Identifier::Identifier(std::string n) : name(n) {};
             Identifier::Identifier(std::vector<char> n) : name(n.begin(),n.end()) {}
-            std::ostream& Identifier::serialize(std::ostream &os) const{
-               return os << name;
-            }
             bool Identifier::operator<(const Identifier& id) const{
                 return name < id.name;
             }
 
             // Variable
             Variable::Variable(Identifier v) : value(v) {}
-            std::ostream& Variable::serialize(std::ostream &os) const{
-                return os << value;
-            }
 
             // Number
             Number::Number(int v):value(v) {}
-            std::ostream& Number::serialize(std::ostream &os) const{
-                return os << value;
-            }
 
             // String
             String::String(std::string v):value(v) {}
             String::String(std::vector<char> v):value(v.begin(),v.end()) {}
-            std::ostream& String::serialize(std::ostream &os) const{
-                return os << value;
-            }
 
             // Block
             Block::Block(std::vector<Statement*> ss){
@@ -38,30 +26,9 @@ namespace shiranui{
                     statements.push_back(sp<Statement>(s));
                 }
             }
-            std::ostream& Block::serialize(std::ostream &os) const{
-                os << "{" << std::endl;
-                for(const auto& s : statements){
-                    os << *s << std::endl;
-                }
-                os << "}";
-                return os;
-            }
-
             // Function
             Function::Function(std::vector<Identifier> params,Block* ss)
                 : parameters(params),body(ss){
-            }
-            std::ostream& Function::serialize(std::ostream &os) const{
-                os << "\\(";
-                for(size_t i=0;i<parameters.size();i++){
-                    os << parameters[i];
-                    if(i != parameters.size()-1){
-                        os << ",";
-                    }
-                }
-                os << ")" << std::endl;
-                os << *body;
-                return os ;
             }
 
             // FunctionCall
@@ -71,16 +38,6 @@ namespace shiranui{
                     arguments.push_back(sp<Expression>(e));
                 }
             }
-            std::ostream& FunctionCall::serialize(std::ostream &os) const{
-                os << *function << "(";
-                for(size_t i=0;i<arguments.size();i++){
-                    os << *(arguments[i]);
-                    if(i != arguments.size()-1){
-                        os << ",";
-                    }
-                }
-                return os << ")";
-            }
 
             // BinaryOperator
             BinaryOperator::BinaryOperator(std::string o,Expression* l,Expression* r){
@@ -88,19 +45,10 @@ namespace shiranui{
                 right = sp<Expression>(r);
                 op = o;
             }
-            std::ostream& BinaryOperator::serialize(std::ostream &os) const{
-                os << "(" << *left << " " << op << " " << *right << ")";
-                return os;
-            }
-
             // UnaryOperator
             UnaryOperator::UnaryOperator(std::string o,Expression* e){
                 op = o;
                 exp = sp<Expression>(e);
-            }
-            std::ostream& UnaryOperator::serialize(std::ostream &os) const{
-                os << "(" <<  op << "(" << *exp << ")" << ")";
-                return os;
             }
 
             // IfElseExpression
@@ -110,18 +58,9 @@ namespace shiranui{
                 elsee= sp<Expression>(eb);
             }
 
-            std::ostream& IfElseExpression::serialize(std::ostream &os) const{
-                os << "(if " << *pred << " then" << std::endl;
-                os << *ife << " else  " << *elsee << ")" << std::endl;
-                return os;
-            }
-
             // Definement
             Definement::Definement(Identifier i,Expression *e,bool isc)
                 : id(i),value(e),is_const(isc) {}
-            std::ostream& Definement::serialize(std::ostream &os) const{
-                return os << (is_const?"let ":"mut ") << id << "-> " << *value;
-            }
 
             // IfElseStatement
             IfElseStatement::IfElseStatement(Expression* e,Block* iblock)
@@ -130,21 +69,10 @@ namespace shiranui{
             IfElseStatement::IfElseStatement(Expression* e,Block* iblock,Block* eblock)
                 : pred(e),ifblock(iblock),elseblock(eblock){
             }
-            std::ostream& IfElseStatement::serialize(std::ostream &os) const{
-                os << "if " << *pred << " then" << std::endl;
-                os << *ifblock << std::endl;
-                os << "else" << std::endl;
-                os << *elseblock << std::endl;
-                return os;
-            }
 
             // ReturnStatement
             ReturnStatement::ReturnStatement(Expression* e)
                 : val(e){
-            }
-            std::ostream& ReturnStatement::serialize(std::ostream &os) const{
-                os << "return " << *val;
-                return os;
             }
 
             // SourceCode
@@ -153,19 +81,137 @@ namespace shiranui{
                     statements.push_back(sp<Statement>(s));
                 }
             }
-            std::ostream& SourceCode::serialize(std::ostream &os) const{
-                for(const auto& s : statements){
-                    os << *s << std::endl;
-                }
-                return os;
-            }
-
 
             // LocationInfo
-            std::ostream& operator<<(std::ostream& os,
-                                     const shiranui::syntax::ast::LocationInfo& s){
-                return s.serialize(os);
+        }
+    }
+}
+
+// PrettyPrinter.
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            std::ostream& Identifier      ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& Variable        ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& Number          ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& String          ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& Block           ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& Function        ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& FunctionCall    ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& BinaryOperator  ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& UnaryOperator   ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& IfElseExpression::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& Definement      ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& ReturnStatement ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+            std::ostream& IfElseStatement::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
+            }
+
+            std::ostream& SourceCode      ::accept(VisitorForAST<std::ostream&>& visitor){
+                return visitor.visit(*this);
             }
         }
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Identifier& id){
+        return os << id.name;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Variable& var){
+        return os << var.value;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Number& num){
+        return os << num.value;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::String& str){
+        return os << str.value;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Block& block){
+        os << "{" << std::endl;
+        for(const auto& s : block.statements){
+            os << *s << std::endl;
+        }
+        os << "}";
+        return os;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Function& func){
+        os << "\\(";
+        for(size_t i=0;i<func.parameters.size();i++){
+            os << func.parameters[i];
+            if(i != func.parameters.size()-1){
+                os << ",";
+            }
+        }
+        os << ")" << std::endl;
+        os << *(func.body);
+        return os ;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::FunctionCall& call){
+        os << *(call.function) << "(";
+        for(size_t i=0;i<call.arguments.size();i++){
+            os << *(call.arguments[i]);
+            if(i != call.arguments.size()-1){
+                os << ",";
+            }
+        }
+        return os << ")";
+
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::BinaryOperator& bop){
+        os << "(" << *(bop.left) << " " << bop.op << " " << *(bop.right) << ")";
+        return os;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::UnaryOperator& uop){
+        os << "(" << uop.op << "(" << *(uop.exp) << ")" << ")";
+        return os;
+
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::IfElseExpression& iee){
+        os << "if " << *(iee.pred) << " then" << std::endl;
+        os << *(iee.ife) << std::endl;
+        os << "else" << std::endl;
+        os << *(iee.elsee) << std::endl;
+        return os;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::IfElseStatement& ies){
+        os << "if " << *(ies.pred) << " then" << std::endl;
+        os << *(ies.ifblock) << std::endl;
+        os << "else" << std::endl;
+        os << *(ies.elseblock) << std::endl;
+        return os;
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::Definement& def){
+        return os << (def.is_const?"let ":"mut ") << def.id << "-> " << *(def.value);
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::ReturnStatement& ret){
+        return os << "return " << *(ret.val);
+    }
+    std::ostream& PrettyPrinter::visit(syntax::ast::SourceCode& sc){
+        for(auto& s : sc.statements){
+            os << *s << std::endl;
+        }
+        return os;
     }
 }

@@ -26,7 +26,7 @@ void test(const std::string content){
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        for(const auto& a : program->statements){
+        for(const sp<ast::Statement>& a : program->statements){
             std::cout << *a << std::endl;
         }
     }else{
