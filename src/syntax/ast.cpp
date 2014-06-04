@@ -91,71 +91,70 @@ namespace shiranui{
 namespace shiranui{
     namespace syntax{
         namespace ast{
-            std::ostream& Identifier      ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Identifier      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& Variable        ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Variable        ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& Number          ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Number          ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& String          ::accept(VisitorForAST<std::ostream&>& visitor){
+            void String          ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& Block           ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Block           ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& Function        ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Function        ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& FunctionCall    ::accept(VisitorForAST<std::ostream&>& visitor){
+            void FunctionCall    ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& BinaryOperator  ::accept(VisitorForAST<std::ostream&>& visitor){
+            void BinaryOperator  ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& UnaryOperator   ::accept(VisitorForAST<std::ostream&>& visitor){
+            void UnaryOperator   ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& IfElseExpression::accept(VisitorForAST<std::ostream&>& visitor){
+            void IfElseExpression::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& Definement      ::accept(VisitorForAST<std::ostream&>& visitor){
+            void Definement      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& ReturnStatement ::accept(VisitorForAST<std::ostream&>& visitor){
+            void ReturnStatement ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& IfElseStatement::accept(VisitorForAST<std::ostream&>& visitor){
+            void IfElseStatement ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            std::ostream& SourceCode      ::accept(VisitorForAST<std::ostream&>& visitor){
+            void SourceCode      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
         }
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Identifier& id){
-        return os << id.name;
+    void PrettyPrinter::visit(syntax::ast::Identifier& id){
+        os << id.name;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Variable& var){
-        return os << var.value;
+    void PrettyPrinter::visit(syntax::ast::Variable& var){
+        os << var.value;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Number& num){
-        return os << num.value;
+    void PrettyPrinter::visit(syntax::ast::Number& num){
+        os << num.value;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::String& str){
-        return os << str.value;
+    void PrettyPrinter::visit(syntax::ast::String& str){
+        os << str.value;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Block& block){
+    void PrettyPrinter::visit(syntax::ast::Block& block){
         os << "{" << std::endl;
         for(const auto& s : block.statements){
             os << *s << std::endl;
         }
         os << "}";
-        return os;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Function& func){
+    void PrettyPrinter::visit(syntax::ast::Function& func){
         os << "\\(";
         for(size_t i=0;i<func.parameters.size();i++){
             os << func.parameters[i];
@@ -165,9 +164,8 @@ namespace shiranui{
         }
         os << ")" << std::endl;
         os << *(func.body);
-        return os ;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::FunctionCall& call){
+    void PrettyPrinter::visit(syntax::ast::FunctionCall& call){
         os << *(call.function) << "(";
         for(size_t i=0;i<call.arguments.size();i++){
             os << *(call.arguments[i]);
@@ -175,90 +173,36 @@ namespace shiranui{
                 os << ",";
             }
         }
-        return os << ")";
+        os << ")";
 
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::BinaryOperator& bop){
+    void PrettyPrinter::visit(syntax::ast::BinaryOperator& bop){
         os << "(" << *(bop.left) << " " << bop.op << " " << *(bop.right) << ")";
-        return os;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::UnaryOperator& uop){
+    void PrettyPrinter::visit(syntax::ast::UnaryOperator& uop){
         os << "(" << uop.op << "(" << *(uop.exp) << ")" << ")";
-        return os;
-
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::IfElseExpression& iee){
+    void PrettyPrinter::visit(syntax::ast::IfElseExpression& iee){
         os << "if " << *(iee.pred) << " then" << std::endl;
         os << *(iee.ife) << std::endl;
         os << "else" << std::endl;
         os << *(iee.elsee) << std::endl;
-        return os;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::IfElseStatement& ies){
+    void PrettyPrinter::visit(syntax::ast::IfElseStatement& ies){
         os << "if " << *(ies.pred) << " then" << std::endl;
         os << *(ies.ifblock) << std::endl;
         os << "else" << std::endl;
         os << *(ies.elseblock) << std::endl;
-        return os;
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::Definement& def){
-        return os << (def.is_const?"let ":"mut ") << def.id << "-> " << *(def.value);
+    void PrettyPrinter::visit(syntax::ast::Definement& def){
+        os << (def.is_const?"let ":"mut ") << def.id << "-> " << *(def.value);
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::ReturnStatement& ret){
-        return os << "return " << *(ret.val);
+    void PrettyPrinter::visit(syntax::ast::ReturnStatement& ret){
+        os << "return " << *(ret.val);
     }
-    std::ostream& PrettyPrinter::visit(syntax::ast::SourceCode& sc){
+    void PrettyPrinter::visit(syntax::ast::SourceCode& sc){
         for(auto& s : sc.statements){
             os << *s << std::endl;
-        }
-        return os;
-    }
-}
-namespace shiranui{
-    namespace syntax{
-        namespace ast{
-            sp<ValEnv> Identifier      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> Variable        ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> Number          ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> String          ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> Block           ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> Function        ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> FunctionCall    ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> BinaryOperator  ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> UnaryOperator   ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> IfElseExpression::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> Definement      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> ReturnStatement ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> IfElseStatement::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
-            sp<ValEnv> SourceCode      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
-                return visitor.visit(*this);
-            }
         }
     }
 }

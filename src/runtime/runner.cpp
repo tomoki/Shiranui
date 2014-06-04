@@ -1,95 +1,96 @@
 #include "runner.hpp"
 #include <iostream>
+#include <memory>
 
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::value::Integer;
         using shiranui::runtime::value::String;
         using shiranui::runtime::value::Function;
-        Runner::Runner(ValEnv* e) : prev(e) {}
-        Runner::Runner(sp<ValEnv> e) : prev(e) {}
-        Runner::Runner() : prev(new ValEnv()) {}
-        sp<ValEnv> Runner::visit(syntax::ast::Identifier& id){
+        Runner::Runner() {}
+        void Runner::visit(syntax::ast::Identifier& id){
             std::cerr << "no eval identifier" << std::endl;
-            return prev;
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::Variable& var){
-            if(prev->e.has(var)){
-                return prev->set_value(prev->e.get(var));
+        void Runner::visit(syntax::ast::Variable& var){
+            if(prev.e.has(var)){
+                prev = prev.set_value(prev.e.get(var));
+                return;
+            }else{
+                std::cerr << "there is no such variable" << var << std::endl;
             }
-            std::cerr << "there is no such variable" << var << std::endl;
-            return prev;
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::Number& num){
-            return prev->set_value(new Integer(num.value));
+        void Runner::visit(syntax::ast::Number& num){
+            prev = prev.set_value(std::make_shared<Integer>(num.value));
         }
-        sp<ValEnv> Runner::visit(syntax::ast::String& s){
-            return prev->set_value(new String(s.value));
+        void Runner::visit(syntax::ast::String& s){
+            prev = prev.set_value(std::make_shared<String>(s.value));
         }
-        sp<ValEnv> Runner::visit(syntax::ast::Block& block){
+        void Runner::visit(syntax::ast::Block& block){
+            // TODO: do scoping
             for(auto& st : block.statements){
-                prev = st->accept(*this);
+                st->accept(*this);
             }
-            // do scope.
-            return prev;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::Function& f){
-            return prev->set_value(new Function(f.parameters,f.body));
+        void Runner::visit(syntax::ast::Function& f){
+            prev = prev.set_value(std::make_shared<Function>(f.parameters,f.body));
         }
-        sp<ValEnv> Runner::visit(syntax::ast::FunctionCall& fc){
-            sp<ValEnv> before_call = prev->backup();;
-            sp<ValEnv> func = fc.function->accept(*this);
+        void Runner::visit(syntax::ast::FunctionCall& fc){
+            ValEnv before_call = prev;
+            fc.function->accept(*this);
+            sp<Value> func = prev.v;
             // check func.v is really function.
             //  rewrite.
-            sp<Function> f = std::dynamic_pointer_cast<Function>(func->v);
+            sp<Function> f = std::dynamic_pointer_cast<Function>(func);
             if(f == NULL){
-                std::cerr << "it is not function" << std::endl;
-                return before_call;
+                std::cerr << "It is not function" << std::endl;
+                return;
             }
             // TODO:complete it.
             std::vector<sp<Value>> arguments;
             for(auto arg : fc.arguments){
-                sp<ValEnv> a = arg->accept(*this);
-                arguments.push_back(a->v);
+                arg->accept(*this);
+                arguments.push_back(prev.v);
             }
             if(arguments.size() != f->parameters.size()){
                 std::cerr << "arguments mismatch" << std::endl;
-                // TODO tekitou
-                return prev;
+                return;
             }else{
                 for(int i=0;i<arguments.size();i++){
-                    prev->e.set(f->parameters[i],arguments[i]);
+                    prev.e.set(f->parameters[i],arguments[i]);
                 }
                 // use new runner.
-                sp<ValEnv> after_call = f->body->accept(*this);
-                return before_call->set_value(after_call->v);
+                f->body->accept(*this);
+                prev = before_call.set_value(prev.v);
             }
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::BinaryOperator&){
-            return prev;
+        void Runner::visit(syntax::ast::BinaryOperator&){
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::UnaryOperator&){
-            return prev;
+        void Runner::visit(syntax::ast::UnaryOperator&){
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::IfElseExpression&){
-            return prev;
+        void Runner::visit(syntax::ast::IfElseExpression&){
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::Definement& def){
-            sp<ValEnv> s = def.value->accept(*this);
-            prev->e.set(def.id,s->v);
-            return prev;
+        void Runner::visit(syntax::ast::Definement& def){
+            def.value->accept(*this);
+            prev.e.set(def.id,prev.v);
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::ReturnStatement&){
-            return prev;
+        void Runner::visit(syntax::ast::ReturnStatement&){
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::IfElseStatement&){
-            return prev;
+        void Runner::visit(syntax::ast::IfElseStatement&){
+            return;
         }
-        sp<ValEnv> Runner::visit(syntax::ast::SourceCode& sc){
+        void Runner::visit(syntax::ast::SourceCode& sc){
             for(auto s : sc.statements){
-                prev = s->accept(*this);
+                s->accept(*this);
             }
-            return prev;
+            return;
         }
 
     }

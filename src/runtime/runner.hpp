@@ -11,45 +11,33 @@ namespace shiranui{
         struct ValEnv{
             sp<Value> v;
             Environment e;
-            sp<ValEnv> set_value(Value* val){
-                sp<ValEnv> nve = sp<ValEnv>(new ValEnv());
-                nve->e = e;
-                nve->v = sp<Value>(val);
-                return nve;
+            ValEnv set_value(Value* val){
+                return set_value(sp<Value>(val));
             }
-            sp<ValEnv> set_value(sp<Value> val){
-                sp<ValEnv> nve = sp<ValEnv>(new ValEnv());
-                nve->e = e;
-                nve->v = val;
-                return nve;
-            }
-            sp<ValEnv> backup(){
-                sp<ValEnv> nve = sp<ValEnv>(new ValEnv());
-                nve->e = e;
-                nve->v = v;
+            ValEnv set_value(sp<Value> val){
+                ValEnv nve = *this;
+                nve.v = val;
                 return nve;
             }
 
         };
-        struct Runner : VisitorForAST<sp<ValEnv>>{
-            sp<ValEnv> prev;
-            Runner(sp<ValEnv> e);
-            Runner(ValEnv* e);
+        struct Runner : VisitorForAST{
+            ValEnv prev;
             Runner();
-            sp<ValEnv> visit(syntax::ast::Identifier&);
-            sp<ValEnv> visit(syntax::ast::Variable&);
-            sp<ValEnv> visit(syntax::ast::Number&);
-            sp<ValEnv> visit(syntax::ast::String&);
-            sp<ValEnv> visit(syntax::ast::Block&);
-            sp<ValEnv> visit(syntax::ast::Function&);
-            sp<ValEnv> visit(syntax::ast::FunctionCall&);
-            sp<ValEnv> visit(syntax::ast::BinaryOperator&);
-            sp<ValEnv> visit(syntax::ast::UnaryOperator&);
-            sp<ValEnv> visit(syntax::ast::IfElseExpression&);
-            sp<ValEnv> visit(syntax::ast::Definement&);
-            sp<ValEnv> visit(syntax::ast::ReturnStatement&);
-            sp<ValEnv> visit(syntax::ast::IfElseStatement&);
-            sp<ValEnv> visit(syntax::ast::SourceCode&);
+            void visit(syntax::ast::Identifier&);
+            void visit(syntax::ast::Variable&);
+            void visit(syntax::ast::Number&);
+            void visit(syntax::ast::String&);
+            void visit(syntax::ast::Block&);
+            void visit(syntax::ast::Function&);
+            void visit(syntax::ast::FunctionCall&);
+            void visit(syntax::ast::BinaryOperator&);
+            void visit(syntax::ast::UnaryOperator&);
+            void visit(syntax::ast::IfElseExpression&);
+            void visit(syntax::ast::Definement&);
+            void visit(syntax::ast::ReturnStatement&);
+            void visit(syntax::ast::IfElseStatement&);
+            void visit(syntax::ast::SourceCode&);
         };
     }
 }

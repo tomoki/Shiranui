@@ -10,9 +10,9 @@ void run_runner(shiranui::syntax::ast::SourceCode* program){
     using namespace shiranui::runtime;
     using namespace shiranui::syntax;
     Runner r;
-    sp<ValEnv> p = program->accept(r);
-    std::cout << p->v << std::endl;
-    for(auto pp : p->e.map){
+    program->accept(r);
+    std::cout << r.prev.v << std::endl;
+    for(auto pp : r.prev.e.map){
         // prevent const.
         auto f = pp.first;
         std::cout << f << " -> " << *pp.second << std::endl;
