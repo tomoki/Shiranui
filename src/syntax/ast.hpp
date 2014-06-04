@@ -37,6 +37,7 @@ namespace shiranui{
             // statements.
             struct Definement;
             struct IfElseStatement;
+            struct ReturnStatement;
             struct Block;
 
             struct LocationInfo{
@@ -218,6 +219,16 @@ namespace shiranui{
                     os << *ifblock << std::endl;
                     os << "else" << std::endl;
                     os << *elseblock << std::endl;
+                    return os;
+                }
+            };
+            struct ReturnStatement : Statement{
+                sp<Expression> val;
+                ReturnStatement(Expression* e)
+                    : val(e){
+                }
+                std::ostream& serialize(std::ostream &os) const{
+                    os << "return " << *val;
                     return os;
                 }
             };

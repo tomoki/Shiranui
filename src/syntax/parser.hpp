@@ -130,6 +130,13 @@ namespace shiranui{
                                ;
                 }
                 {
+                    return_stmt.name("return_statement");
+                    on_success(return_stmt,set_location_info);
+                    return_stmt = ("return" >> expression)
+                                 [qi::_val = ph::new_<ast::ReturnStatement>(qi::_1)]
+                                ;
+                }
+                {
                     block.name("block");
                     on_success(block,set_location_info);
                     block = ("{" >> *statement >> "}")
@@ -142,6 +149,7 @@ namespace shiranui{
                     statement  = (definement >> ";")
                                | ifelse_stmt
                                | block
+                               | return_stmt >> ";"
                                ;
                 }
 
@@ -294,6 +302,7 @@ namespace shiranui{
             qi::rule<Iterator,ast::Variable*()>                 variable;
             qi::rule<Iterator,ast::Definement*(),Skipper>       definement;
             qi::rule<Iterator,ast::IfElseStatement*(),Skipper>  ifelse_stmt;
+            qi::rule<Iterator,ast::ReturnStatement*(),Skipper>  return_stmt;
             qi::rule<Iterator,ast::IfElseExpression*(),Skipper> ifelse_expr;
             qi::rule<Iterator,ast::Block*(),Skipper>            block;
             qi::rule<Iterator,ast::Statement*(),Skipper>        statement;
