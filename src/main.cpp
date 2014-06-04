@@ -4,8 +4,20 @@
 #include <chrono>
 #include "misc.hpp"
 #include "syntax/parser.hpp"
+#include "runtime/runner.hpp"
 
-
+void run_runner(shiranui::syntax::ast::SourceCode* program){
+    using namespace shiranui::runtime;
+    using namespace shiranui::syntax;
+    Runner r;
+    sp<ValEnv> p = program->accept(r);
+    std::cout << p->v << std::endl;
+    for(auto pp : p->e.map){
+        // prevent const.
+        auto f = pp.first;
+        std::cout << f << " -> " << *pp.second << std::endl;
+    }
+}
 
 void test(const std::string content){
     typedef boost::spirit::line_pos_iterator<std::string::const_iterator>
@@ -26,9 +38,10 @@ void test(const std::string content){
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        for(const sp<ast::Statement>& a : program->statements){
+        for(const auto& a : program->statements){
             std::cout << *a << std::endl;
         }
+        run_runner(program);
     }else{
         int line = get_line(iter);
         int column = get_column(first,iter);
@@ -40,8 +53,6 @@ void test(const std::string content){
     }
     return;
 }
-
-
 int main(int argc,char **argv){
     std::cout << "Hello World" << std::endl;
     std::cout << "This is " << PACKAGE_STRING << std::endl;

@@ -2,7 +2,7 @@
 #define AST_HPP_INCLUDED
 
 #include "../misc.hpp"
-#include "../runtime/value.hpp"
+// #include "../runtime/runner.hpp"
 #include <iostream>
 #include <memory>
 #include <boost/spirit/include/qi.hpp>
@@ -16,46 +16,29 @@ namespace shiranui{
     template<typename T>
     struct VisitorForAST;
 }
+namespace shiranui{
+    namespace runtime{
+        struct ValEnv;
+    }
+}
+
 
 namespace shiranui{
     namespace syntax{
         namespace ast{
             namespace qi = boost::spirit::qi;
             namespace ph = boost::phoenix;
-            // meta struct
-//            struct LocationInfo;
-//            struct Identifier; // should not use.
-//            struct SourceCode;
-//            struct Expression;
-//            struct Statement;
-//            // immediate value.
-//
-//            struct Number;
-//            struct String;
-//            struct Function;
-//            struct Variable;
-//
-//            // expression
-//            struct FunctionCall;
-//            // struct IfElseExpression;
-//
-//            // statements.
-//            struct Definement;
-//            struct IfElseStatement;
-//            struct ReturnStatement;
-//            struct Block;
-//
+            using shiranui::runtime::ValEnv;
             struct LocationInfo{
                 unsigned int line,column,length;
                 virtual std::ostream& accept(VisitorForAST<std::ostream&>& visitor) = 0;
+                virtual sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor) = 0;
             };
             struct Expression : LocationInfo{
                 virtual ~Expression() {};
-                virtual std::ostream& accept(VisitorForAST<std::ostream&>& visitor) = 0;
             };
             struct Statement : LocationInfo{
                 virtual ~Statement() {};
-                virtual std::ostream& accept(VisitorForAST<std::ostream&>& visitor) = 0;
             };
 
             // metaelement.
@@ -67,6 +50,7 @@ namespace shiranui{
                 explicit Identifier(std::vector<char> n);
                 bool operator<(const Identifier& id) const;
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
                 // Why can't use template...
             };
 
@@ -75,22 +59,26 @@ namespace shiranui{
                 Identifier value;
                 explicit Variable(Identifier v);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct Number : Expression{
                 int value;
                 explicit Number(int v);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct String : Expression{
                 std::string value;
                 explicit String(std::string v);
                 explicit String(std::vector<char> v);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct Block : Statement{
                 std::vector<sp<Statement>> statements;
                 Block(std::vector<Statement*> ss);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
 
             struct Function : Expression{
@@ -98,6 +86,7 @@ namespace shiranui{
                 sp<Block>               body;
                 Function(std::vector<Identifier> params,Block* ss);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
 
             // expression.
@@ -106,6 +95,7 @@ namespace shiranui{
                 std::vector<sp<Expression>> arguments;
                 FunctionCall(Expression* i,std::vector<Expression*> as);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
 
             struct BinaryOperator : Expression{
@@ -113,12 +103,14 @@ namespace shiranui{
                 sp<Expression> left,right;
                 BinaryOperator(std::string o,Expression* l,Expression* r);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct UnaryOperator : Expression{
                 std::string op;
                 sp<Expression> exp;
                 UnaryOperator(std::string o,Expression* e);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
 
 
@@ -128,6 +120,7 @@ namespace shiranui{
                 sp<Expression> elsee;
                 IfElseExpression(Expression* p,Expression* ib,Expression* eb);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
 
             // statement.
@@ -137,6 +130,7 @@ namespace shiranui{
                 bool is_const;
                 Definement(Identifier i,Expression *e,bool isc);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct IfElseStatement : Statement{
                 sp<Expression> pred;
@@ -145,16 +139,19 @@ namespace shiranui{
                 IfElseStatement(Expression* e,Block* iblock);
                 IfElseStatement(Expression* e,Block* iblock,Block* eblock);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct ReturnStatement : Statement{
                 sp<Expression> val;
                 ReturnStatement(Expression* e);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 explicit SourceCode(std::vector<Statement*> ss);
                 std::ostream& accept(VisitorForAST<std::ostream&>& visitor);
+                sp<ValEnv> accept(VisitorForAST<sp<ValEnv>>& visitor);
             };
         }
     }

@@ -130,7 +130,6 @@ namespace shiranui{
             std::ostream& IfElseStatement::accept(VisitorForAST<std::ostream&>& visitor){
                 return visitor.visit(*this);
             }
-
             std::ostream& SourceCode      ::accept(VisitorForAST<std::ostream&>& visitor){
                 return visitor.visit(*this);
             }
@@ -213,5 +212,53 @@ namespace shiranui{
             os << *s << std::endl;
         }
         return os;
+    }
+}
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            sp<ValEnv> Identifier      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> Variable        ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> Number          ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> String          ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> Block           ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> Function        ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> FunctionCall    ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> BinaryOperator  ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> UnaryOperator   ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> IfElseExpression::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> Definement      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> ReturnStatement ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> IfElseStatement::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+            sp<ValEnv> SourceCode      ::accept(VisitorForAST<sp<ValEnv>>& visitor){
+                return visitor.visit(*this);
+            }
+        }
     }
 }
