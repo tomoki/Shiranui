@@ -1,7 +1,8 @@
 *.o
 install-sh
 missing
-src/.deps
+.deps
+.dirstamp
 Makefile
 Makefile.in
 stamp-h1
