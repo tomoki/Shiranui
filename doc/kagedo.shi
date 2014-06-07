@@ -1,2 +1,13 @@
 let true = 1=1;
 let false = 1/=1;
+let is_zero = \(n){
+    return n = 0;
+};
+let plus = \(a,b){
+    if a = 0 then{
+        return b;
+    }else{
+        return plus(a-1,b) + 1;
+    }
+};
+

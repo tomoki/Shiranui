@@ -123,9 +123,9 @@ namespace shiranui{
                 {
                     ifelse_stmt.name("if_else_statement");
                     on_success(ifelse_stmt,set_location_info);
-                    ifelse_stmt= ("if" >> expression >> block >> "else" >> block)
+                    ifelse_stmt= ("if" >> expression >> "then" >> block >> "else" >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
-                               | ("if" >> expression >> block)
+                               | ("if" >> expression >> "then" >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
                                ;
                 }

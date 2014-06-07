@@ -37,7 +37,7 @@ namespace shiranui{
         }
         void Runner::visit(syntax::ast::Variable& var){
             if(cur.e->has(var.value)){
-                cur.set_value(cur.e->get(var.value));
+                cur.v = cur.e->get(var.value);
                 return;
             }else{
                 // is it really ok?
@@ -45,10 +45,10 @@ namespace shiranui{
             }
         }
         void Runner::visit(syntax::ast::Number& num){
-            cur.set_value(std::make_shared<Integer>(num.value));
+            cur.v = std::make_shared<Integer>(num.value);
         }
         void Runner::visit(syntax::ast::String& s){
-            cur.set_value(std::make_shared<String>(s.value));
+            cur.v = std::make_shared<String>(s.value);
         }
         void Runner::visit(syntax::ast::Block& block){
             Runner br(this);
@@ -68,14 +68,32 @@ namespace shiranui{
             fc.function->accept(*this);
             sp<Value> func = cur.v;
             // check func.v is really function.
-            sp<UserFunction> f = std::dynamic_pointer_cast<UserFunction>(func);
-            if(f != nullptr){
-                return;
+            {
+                sp<UserFunction> f = std::dynamic_pointer_cast<UserFunction>(func);
+                if(f != nullptr){
+                    if(fc.arguments.size() != f->parameters.size()){
+                        throw ConvertException(sp<syntax::ast::FunctionCall>(&fc));
+                    }
+                    Runner inner(this);
+                    for(int i=0;i<f->parameters.size();i++){
+                        fc.arguments[i]->accept(*this);
+                        // it is not const.
+                        inner.cur.e->define(f->parameters[i],cur.v,false);
+                    }
+                    f->body->accept(inner);
+                    sp<Return> ret = std::dynamic_pointer_cast<Return>(inner.cur.v);
+                    if(ret == nullptr){
+                        std::cerr << "WARN: this is not return value." << std::endl;
+                    }else{
+                        cur.v = ret->value;
+                    }
+                    return;
+                }
             }
 //            f = std::dynamic_pointer_cast<BuiltinFunction>(func);
-            if(f != nullptr){
-                return;
-            }
+//             if(f != nullptr){
+//                 return;
+//             }
             throw ConvertException(sp<syntax::ast::FunctionCall>(&fc));
         }
         void Runner::visit(syntax::ast::BinaryOperator& bop){
@@ -163,7 +181,17 @@ namespace shiranui{
             cur.v = std::make_shared<Return>(cur.v);
             return;
         }
-        void Runner::visit(syntax::ast::IfElseStatement&){
+        void Runner::visit(syntax::ast::IfElseStatement& ies){
+            ies.pred->accept(*this);
+            sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur.v);
+            if(bp == nullptr){
+                throw ConvertException(ies.pred);
+            }
+            if(bp->value){
+                ies.ifblock->accept(*this);
+            }else{
+                ies.elseblock->accept(*this);
+            }
             return;
         }
         void Runner::visit(syntax::ast::SourceCode& sc){
