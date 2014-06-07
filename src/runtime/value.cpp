@@ -13,6 +13,10 @@ namespace shiranui{
             void String::accept(VisitorForValue& v){
                 v.visit(*this);
             }
+            Boolean::Boolean(bool v) : value(v) {}
+            void Boolean::accept(VisitorForValue& v){
+                v.visit(*this);
+            }
 
             // Function
             UserFunction::UserFunction(std::vector<ast::Identifier> ps,
@@ -45,6 +49,9 @@ namespace shiranui{
             }
             void PrettyPrinterForValue::visit(String& s){
                 os << '"' << s.value << '"';
+            }
+            void PrettyPrinterForValue::visit(Boolean& b){
+                os << (b.value?"true":"false");
             }
             void PrettyPrinterForValue::visit(UserFunction& f){
                 using shiranui::syntax::ast::PrettyPrinterForAST;

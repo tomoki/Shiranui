@@ -1,13 +1,16 @@
 #include "runner.hpp"
 #include <iostream>
+#include <typeinfo>
 #include <memory>
 
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::value::Integer;
         using shiranui::runtime::value::String;
+        using shiranui::runtime::value::Boolean;
         using shiranui::runtime::value::Function;
         using shiranui::runtime::value::UserFunction;
+//        using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::Return;
         ValEnv::ValEnv(){
             v = std::make_shared<Integer>(0);
@@ -52,28 +55,80 @@ namespace shiranui{
             for(auto& st : block.statements){
                 st->accept(br);
                 cur.v = br.cur.v;
-                // check return
+                sp<Return> r = std::dynamic_pointer_cast<Return>(cur.v);
+                if(r != nullptr){
+                    return;
+                }
             }
         }
         void Runner::visit(syntax::ast::Function& f){
             cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body));
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
-//            fc.function->accept(*this);
-//            sp<Value> func = cur.v;
-//            // check func.v is really function.
-//            sp<Function> f = std::dynamic_pointer_cast<Function>(func);
-//            if(f == NULL){
-//                std::cerr << "It is not function" << std::endl;
-//                return;
-//            }
-//            f->apply(*this,fc.arguments);
-//            return;
+            fc.function->accept(*this);
+            sp<Value> func = cur.v;
+            // check func.v is really function.
+            sp<UserFunction> f = std::dynamic_pointer_cast<UserFunction>(func);
+            if(f != nullptr){
+                return;
+            }
+//            f = std::dynamic_pointer_cast<BuiltinFunction>(func);
+            if(f != nullptr){
+                return;
+            }
+            throw ConvertException(sp<syntax::ast::FunctionCall>(&fc));
         }
-        void Runner::visit(syntax::ast::BinaryOperator&){
+        void Runner::visit(syntax::ast::BinaryOperator& bop){
+            bop.left->accept(*this);
+            sp<Value> left = cur.v;
+            bop.right->accept(*this);
+            sp<Value> right = cur.v;
+            if(typeid(*left) != typeid(*right)){
+                throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+            }
+            {
+                sp<Integer> l = std::dynamic_pointer_cast<Integer>(left);
+                sp<Integer> r = std::dynamic_pointer_cast<Integer>(right);
+                if(l != nullptr){
+                    if(bop.op == "="){
+                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                    }else if(bop.op == "/="){
+                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                    }else if(bop.op == "+"){
+                        cur.v = std::make_shared<Integer>(l->value+r->value);
+                    }else if(bop.op == "-"){
+                        cur.v = std::make_shared<Integer>(l->value-r->value);
+                    }else if(bop.op == "*"){
+                        cur.v = std::make_shared<Integer>(l->value*r->value);
+                    }else if(bop.op == "/"){
+                        cur.v = std::make_shared<Integer>(l->value/r->value);
+                    }else if(bop.op == "%"){
+                        cur.v = std::make_shared<Integer>(l->value%r->value);
+                    }else if(bop.op == "^"){
+                    }else{
+                        throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+                    }
+                    return;
+                }
+            }
+            if(bop.op == "="){
+            }else if(bop.op == "/="){
+            }else if(bop.op == "+"){
+            }else if(bop.op == "-"){
+            }else if(bop.op == "*"){
+            }else if(bop.op == "/"){
+            }else if(bop.op == "%"){
+            }else if(bop.op == "^"){
+            }else if(bop.op == "and"){
+            }else if(bop.op == "or"){
+            }
             return;
         }
-        void Runner::visit(syntax::ast::UnaryOperator&){
+        void Runner::visit(syntax::ast::UnaryOperator& uop){
+                  if(uop.op == "not"){
+            }else if(uop.op == "+"){
+            }else if(uop.op == "-"){
+            }
             return;
         }
         void Runner::visit(syntax::ast::IfElseExpression&){

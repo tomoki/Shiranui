@@ -38,6 +38,11 @@ namespace shiranui{
                 explicit String(std::string);
                 void accept(VisitorForValue&);
             };
+            struct Boolean : Value{
+                bool value;
+                explicit Boolean(bool);
+                void accept(VisitorForValue&);
+            };
             struct Function : Value{
                 std::vector<ast::Identifier> parameters;
             };
@@ -63,6 +68,7 @@ namespace shiranui{
                 virtual ~VisitorForValue(){}
                 virtual void visit(Integer&)      = 0;
                 virtual void visit(String&)       = 0;
+                virtual void visit(Boolean&)      = 0;
                 virtual void visit(UserFunction&) = 0;
                 virtual void visit(Return&)       = 0;
             };
@@ -71,6 +77,7 @@ namespace shiranui{
                 PrettyPrinterForValue(std::ostream& os);
                 void visit(Integer&);
                 void visit(String&);
+                void visit(Boolean&);
                 void visit(UserFunction&);
                 void visit(Return&);
             };
