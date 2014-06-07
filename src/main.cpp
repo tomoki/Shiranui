@@ -6,27 +6,15 @@
 #include "syntax/parser.hpp"
 #include "runtime/runner.hpp"
 
-void run_runner(shiranui::syntax::ast::SourceCode* program){
-    using namespace shiranui::runtime;
-    using namespace shiranui::syntax;
-    Runner r;
-    program->accept(r);
-    std::cout << r.prev.v << std::endl;
-    for(auto pp : r.prev.e.map){
-        // prevent const.
-        auto f = pp.first;
-        std::cout << f << " -> " << *pp.second << std::endl;
-    }
-}
 
 void test(const std::string content){
     typedef boost::spirit::line_pos_iterator<std::string::const_iterator>
         pos_iterator_t;
     using namespace shiranui;
     using namespace shiranui::syntax;
+    using namespace shiranui::runtime;
     const auto start_time = std::chrono::system_clock::now();
-    pos_iterator_t first(content.begin()),
-        iter = first,last(content.end());
+    pos_iterator_t first(content.begin()),iter = first,last(content.end());
     Parser<pos_iterator_t> resolver(first);
     ast::SourceCode* program;
     bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
@@ -38,10 +26,9 @@ void test(const std::string content){
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        for(const auto& a : program->statements){
-            std::cout << *a << std::endl;
-        }
-        run_runner(program);
+        std::cout << *program << std::endl;
+        Runner r;
+        program->accept(r);
     }else{
         int line = get_line(iter);
         int column = get_column(first,iter);
@@ -53,6 +40,40 @@ void test(const std::string content){
     }
     return;
 }
+
+void repl(){
+    using namespace shiranui;
+    using namespace shiranui::syntax;
+    using namespace shiranui::runtime;
+    shiranui::runtime::Runner r;
+    while(true){
+        std::cout << "> ";
+        std::string str;
+        std::getline(std::cin,str);
+        if(std::cin.eof()==1) {
+            std::cout << "good bye shirei" << std::endl;
+            return;
+        }
+        pos_iterator_t first(str.begin()),last(str.end());
+        pos_iterator_t iter = first;
+        ast::SourceCode* program;
+        Parser<pos_iterator_t> resolver(first);
+        bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
+        if(ok and iter == last){
+            program->accept(r);
+            std::cout << *(r.cur.v) << std::endl;
+        }else{
+            int line = get_line(iter);
+            int column = get_column(first,iter);
+            std::cout << "-------------------------\n";
+            std::cout << "ERROR: Parsing failed or not complete\n";
+            std::cout << "stopped at: " << line  << ":" << column << "\n";
+            std::cout << "remaining: '" << std::string(iter, last) << "'\n";
+            std::cout << "-------------------------\n";
+        }
+    }
+}
+
 int main(int argc,char **argv){
     std::cout << "Hello World" << std::endl;
     std::cout << "This is " << PACKAGE_STRING << std::endl;
@@ -64,12 +85,7 @@ int main(int argc,char **argv){
                         std::istreambuf_iterator<char>());
         test(str);
     }else{
-        while(true){
-            std::cout << "> ";
-            std::string str;
-            std::getline(std::cin,str);
-            test(str);
-        }
+        repl();
     }
     return 0;
 }

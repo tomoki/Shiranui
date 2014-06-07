@@ -119,7 +119,7 @@ namespace shiranui{
                 void accept(VisitorForAST&);
             };
             struct ReturnStatement : Statement{
-                sp<Expression> val;
+                sp<Expression> value;
                 ReturnStatement(Expression* e);
                 void accept(VisitorForAST&);
             };

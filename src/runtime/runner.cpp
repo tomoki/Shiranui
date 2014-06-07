@@ -7,14 +7,34 @@ namespace shiranui{
         using shiranui::runtime::value::Integer;
         using shiranui::runtime::value::String;
         using shiranui::runtime::value::Function;
+        using shiranui::runtime::value::UserFunction;
+        using shiranui::runtime::value::Return;
+        ValEnv::ValEnv(){
+            v = std::make_shared<Integer>(0);
+            e = std::make_shared<Environment>();
+        }
+        ValEnv::ValEnv(Environment* e_){
+            v = std::make_shared<Integer>(0);
+            e = std::make_shared<Environment>(e_);
+        }
+        ValEnv::ValEnv(sp<Environment> e_){
+            v = std::make_shared<Integer>(0);
+            e = std::make_shared<Environment>(e_);
+        }
+        void ValEnv::set_value(sp<Value> v_){
+            v = v_;
+        }
         Runner::Runner() {}
+        Runner::Runner(Runner* outer)
+            : cur(outer->cur.e){
+        }
         void Runner::visit(syntax::ast::Identifier& id){
             std::cerr << "no eval identifier" << std::endl;
             return;
         }
         void Runner::visit(syntax::ast::Variable& var){
-            if(prev.e.has(var)){
-                prev = prev.set_value(prev.e.get(var));
+            if(cur.e->has(var.value)){
+                cur.set_value(cur.e->get(var.value));
                 return;
             }else{
                 std::cerr << "there is no such variable" << var << std::endl;
@@ -22,49 +42,33 @@ namespace shiranui{
             return;
         }
         void Runner::visit(syntax::ast::Number& num){
-            prev = prev.set_value(std::make_shared<Integer>(num.value));
+            cur.set_value(std::make_shared<Integer>(num.value));
         }
         void Runner::visit(syntax::ast::String& s){
-            prev = prev.set_value(std::make_shared<String>(s.value));
+            cur.set_value(std::make_shared<String>(s.value));
         }
         void Runner::visit(syntax::ast::Block& block){
-            // TODO: do scoping
+            Runner br(this);
             for(auto& st : block.statements){
-                st->accept(*this);
+                st->accept(br);
+                cur.v = br.cur.v;
+                // check return
             }
         }
         void Runner::visit(syntax::ast::Function& f){
-            prev = prev.set_value(std::make_shared<Function>(f.parameters,f.body));
+            cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body));
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
-            ValEnv before_call = prev;
-            fc.function->accept(*this);
-            sp<Value> func = prev.v;
-            // check func.v is really function.
-            //  rewrite.
-            sp<Function> f = std::dynamic_pointer_cast<Function>(func);
-            if(f == NULL){
-                std::cerr << "It is not function" << std::endl;
-                return;
-            }
-            // TODO:complete it.
-            std::vector<sp<Value>> arguments;
-            for(auto arg : fc.arguments){
-                arg->accept(*this);
-                arguments.push_back(prev.v);
-            }
-            if(arguments.size() != f->parameters.size()){
-                std::cerr << "arguments mismatch" << std::endl;
-                return;
-            }else{
-                for(int i=0;i<arguments.size();i++){
-                    prev.e.set(f->parameters[i],arguments[i]);
-                }
-                // use new runner.
-                f->body->accept(*this);
-                prev = before_call.set_value(prev.v);
-            }
-            return;
+//            fc.function->accept(*this);
+//            sp<Value> func = cur.v;
+//            // check func.v is really function.
+//            sp<Function> f = std::dynamic_pointer_cast<Function>(func);
+//            if(f == NULL){
+//                std::cerr << "It is not function" << std::endl;
+//                return;
+//            }
+//            f->apply(*this,fc.arguments);
+//            return;
         }
         void Runner::visit(syntax::ast::BinaryOperator&){
             return;
@@ -77,10 +81,12 @@ namespace shiranui{
         }
         void Runner::visit(syntax::ast::Definement& def){
             def.value->accept(*this);
-            prev.e.set(def.id,prev.v);
+            cur.e->define(def.id,cur.v,def.is_const);
             return;
         }
-        void Runner::visit(syntax::ast::ReturnStatement&){
+        void Runner::visit(syntax::ast::ReturnStatement& ret){
+            ret.value->accept(*this);
+            cur.v = std::make_shared<Return>(cur.v);
             return;
         }
         void Runner::visit(syntax::ast::IfElseStatement&){

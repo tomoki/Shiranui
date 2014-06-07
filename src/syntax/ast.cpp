@@ -72,7 +72,7 @@ namespace shiranui{
 
             // ReturnStatement
             ReturnStatement::ReturnStatement(Expression* e)
-                : val(e){
+                : value(e){
             }
 
             // SourceCode
@@ -198,7 +198,7 @@ namespace shiranui{
         os << (def.is_const?"let ":"mut ") << def.id << "-> " << *(def.value);
     }
     void PrettyPrinter::visit(syntax::ast::ReturnStatement& ret){
-        os << "return " << *(ret.val);
+        os << "return " << *(ret.value);
     }
     void PrettyPrinter::visit(syntax::ast::SourceCode& sc){
         for(auto& s : sc.statements){

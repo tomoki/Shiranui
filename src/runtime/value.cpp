@@ -1,4 +1,5 @@
 #include "value.hpp"
+#include "runner.hpp"
 
 namespace shiranui{
     namespace runtime{
@@ -16,14 +17,13 @@ namespace shiranui{
             }
 
             // Function
-            Function::Function(std::vector<ast::Identifier> ps,
-                               ast::Block*                  b)
-                : parameters(ps),body(b) {}
-            Function::Function(std::vector<ast::Identifier> ps,
-                               sp<ast::Block>               b)
-                : parameters(ps),body(b) {}
+            UserFunction::UserFunction(std::vector<ast::Identifier> ps,
+                                       sp<ast::Block>               b)
+                : body(b) {
+                    parameters = ps;
+            }
 
-            std::ostream& Function::serialize(std::ostream &os) {
+            std::ostream& UserFunction::serialize(std::ostream &os) {
                 os << "\\(";
                 for(size_t i=0;i<parameters.size();i++){
                     os << parameters[i];
@@ -38,6 +38,7 @@ namespace shiranui{
 
             // Return
             Return::Return(Value* v) : value(v) {}
+            Return::Return(sp<Value> v) : value(v) {}
             std::ostream& Return::serialize(std::ostream& os) {
                 return os << "return " << *value;
             }

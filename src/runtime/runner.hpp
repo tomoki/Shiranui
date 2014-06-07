@@ -6,24 +6,20 @@
 
 namespace shiranui{
     namespace runtime{
-        using shiranui::environment::Environment;
+        using shiranui::runtime::environment::Environment;
         using shiranui::runtime::value::Value;
         struct ValEnv{
             sp<Value> v;
-            Environment e;
-            ValEnv set_value(Value* val){
-                return set_value(sp<Value>(val));
-            }
-            ValEnv set_value(sp<Value> val){
-                ValEnv nve = *this;
-                nve.v = val;
-                return nve;
-            }
-
+            sp<Environment> e;
+            ValEnv();
+            ValEnv(Environment*);
+            ValEnv(sp<Environment>);
+            void set_value(sp<Value>);
         };
         struct Runner : VisitorForAST{
-            ValEnv prev;
+            ValEnv cur;
             Runner();
+            Runner(Runner*); // for block
             void visit(syntax::ast::Identifier&);
             void visit(syntax::ast::Variable&);
             void visit(syntax::ast::Number&);
