@@ -11,3 +11,15 @@ let plus = \(a,b){
     }
 };
 
+let pow = \(x,n){
+    if n = 0 then{
+        return 1;
+    }else{
+        let r = pow(x*x,n/2);
+        if n % 2 = 1 then{
+            return r * x;
+        }else{
+            return r;
+        }
+    }
+};
