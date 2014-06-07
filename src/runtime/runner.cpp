@@ -29,7 +29,7 @@ namespace shiranui{
             : cur(outer->cur.e){
         }
         void Runner::visit(syntax::ast::Identifier& id){
-            std::cerr << "no eval identifier" << std::endl;
+            throw RuntimeException(); // never occur.
             return;
         }
         void Runner::visit(syntax::ast::Variable& var){
@@ -37,9 +37,9 @@ namespace shiranui{
                 cur.set_value(cur.e->get(var.value));
                 return;
             }else{
-                std::cerr << "there is no such variable" << var << std::endl;
+                // is it really ok?
+                throw NoSuchVariableException(sp<syntax::ast::Variable>(&var));
             }
-            return;
         }
         void Runner::visit(syntax::ast::Number& num){
             cur.set_value(std::make_shared<Integer>(num.value));

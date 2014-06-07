@@ -4,16 +4,14 @@
 namespace shiranui{
     namespace runtime{
         namespace value{
-            // Integer
             Integer::Integer(int v) : value(v) {};
-            std::ostream& Integer::serialize(std::ostream& os) {
-                return os << value;
+            void Integer::accept(VisitorForValue& v){
+                v.visit(*this);
             }
-
             // String
             String::String(std::string v) : value(v) {}
-            std::ostream& String::serialize(std::ostream& os) {
-                return os << value;
+            void String::accept(VisitorForValue& v){
+                v.visit(*this);
             }
 
             // Function
@@ -22,29 +20,49 @@ namespace shiranui{
                 : body(b) {
                     parameters = ps;
             }
-
-            std::ostream& UserFunction::serialize(std::ostream &os) {
-                os << "\\(";
-                for(size_t i=0;i<parameters.size();i++){
-                    os << parameters[i];
-                    if(i != parameters.size()-1){
-                        os << ",";
-                    }
-                }
-                os << ")" << std::endl;
-                os << *body;
-                return os ;
+            void UserFunction::accept(VisitorForValue& v){
+                v.visit(*this);
             }
 
             // Return
             Return::Return(Value* v) : value(v) {}
             Return::Return(sp<Value> v) : value(v) {}
-            std::ostream& Return::serialize(std::ostream& os) {
-                return os << "return " << *value;
+            void Return::accept(VisitorForValue& v){
+                v.visit(*this);
             }
-            // Value
-            std::ostream& operator<<(std::ostream& os, Value& s){
-                return s.serialize(os);
+        }
+    }
+}
+
+namespace shiranui{
+    namespace runtime{
+        namespace value{
+            PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_)
+                : os(os_){
+            }
+            void PrettyPrinterForValue::visit(Integer& i){
+                os << i.value;
+            }
+            void PrettyPrinterForValue::visit(String& s){
+                os << '"' << s.value << '"';
+            }
+            void PrettyPrinterForValue::visit(UserFunction& f){
+                using shiranui::syntax::ast::PrettyPrinterForAST;
+                PrettyPrinterForAST printer_for_ast(os);
+                os << "\\(";
+                for(size_t i=0;i<f.parameters.size();i++){
+                    f.parameters[i].accept(printer_for_ast);
+                    if(i != f.parameters.size()-1){
+                        os << ",";
+                    }
+                }
+                os << ")" << std::endl;
+                f.body->accept(printer_for_ast);
+            }
+            void PrettyPrinterForValue::visit(Return& r){
+                os << "(return ";
+                r.value->accept(*this);
+                os << ")";
             }
         }
     }

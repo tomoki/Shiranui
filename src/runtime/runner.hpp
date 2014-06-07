@@ -3,11 +3,25 @@
 
 #include "value.hpp"
 #include "environment.hpp"
+#include <exception>
 
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::environment::Environment;
         using shiranui::runtime::value::Value;
+        struct RuntimeException : std::exception{
+            sp<syntax::ast::LocationInfo> where;
+        };
+        struct NoSuchVariableException : RuntimeException{
+            NoSuchVariableException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
+        struct ConvertException : RuntimeException{
+            ConvertException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct ValEnv{
             sp<Value> v;
             sp<Environment> e;
@@ -16,7 +30,7 @@ namespace shiranui{
             ValEnv(sp<Environment>);
             void set_value(sp<Value>);
         };
-        struct Runner : VisitorForAST{
+        struct Runner : shiranui::syntax::ast::VisitorForAST{
             ValEnv cur;
             Runner();
             Runner(Runner*); // for block

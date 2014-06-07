@@ -26,7 +26,8 @@ void test(const std::string content){
 
     if(ok and iter == last){
         std::cout << "OK: parsing success" << std::endl;
-        std::cout << *program << std::endl;
+        ast::PrettyPrinterForAST pp(std::cout);
+        program->accept(pp);
         Runner r;
         program->accept(r);
     }else{
@@ -46,6 +47,8 @@ void repl(){
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
     shiranui::runtime::Runner r;
+    shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
+    shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
     while(true){
         std::cout << "> ";
         std::string str;
@@ -60,8 +63,24 @@ void repl(){
         Parser<pos_iterator_t> resolver(first);
         bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
         if(ok and iter == last){
-            program->accept(r);
-            std::cout << *(r.cur.v) << std::endl;
+            program->accept(printer);
+            try{
+                program->accept(r);
+                r.cur.v->accept(printer_for_value);
+                std::cerr << std::endl;
+            }catch(NoSuchVariableException e){
+                std::cerr << "No such variable: ";
+                e.where->accept(printer);
+                std::cerr << std::endl;
+            }catch(ConvertException e){
+                std::cerr << "Convert Error: ";
+                e.where->accept(printer);
+                std::cerr << std::endl;
+            }catch(RuntimeException e){
+                std::cerr << "Something RuntimeException: ";
+                e.where->accept(printer);
+                std::cerr << std::endl;
+            }
         }else{
             int line = get_line(iter);
             int column = get_column(first,iter);

@@ -87,7 +87,6 @@ namespace shiranui{
     }
 }
 
-// PrettyPrinter.
 namespace shiranui{
     namespace syntax{
         namespace ast{
@@ -135,74 +134,102 @@ namespace shiranui{
             }
         }
     }
-    void PrettyPrinter::visit(syntax::ast::Identifier& id){
-        os << id.name;
-    }
-    void PrettyPrinter::visit(syntax::ast::Variable& var){
-        os << var.value;
-    }
-    void PrettyPrinter::visit(syntax::ast::Number& num){
-        os << num.value;
-    }
-    void PrettyPrinter::visit(syntax::ast::String& str){
-        os << str.value;
-    }
-    void PrettyPrinter::visit(syntax::ast::Block& block){
-        os << "{" << std::endl;
-        for(const auto& s : block.statements){
-            os << *s << std::endl;
-        }
-        os << "}";
-    }
-    void PrettyPrinter::visit(syntax::ast::Function& func){
-        os << "\\(";
-        for(size_t i=0;i<func.parameters.size();i++){
-            os << func.parameters[i];
-            if(i != func.parameters.size()-1){
-                os << ",";
-            }
-        }
-        os << ")" << std::endl;
-        os << *(func.body);
-    }
-    void PrettyPrinter::visit(syntax::ast::FunctionCall& call){
-        os << *(call.function) << "(";
-        for(size_t i=0;i<call.arguments.size();i++){
-            os << *(call.arguments[i]);
-            if(i != call.arguments.size()-1){
-                os << ",";
-            }
-        }
-        os << ")";
+}
 
-    }
-    void PrettyPrinter::visit(syntax::ast::BinaryOperator& bop){
-        os << "(" << *(bop.left) << " " << bop.op << " " << *(bop.right) << ")";
-    }
-    void PrettyPrinter::visit(syntax::ast::UnaryOperator& uop){
-        os << "(" << uop.op << "(" << *(uop.exp) << ")" << ")";
-    }
-    void PrettyPrinter::visit(syntax::ast::IfElseExpression& iee){
-        os << "if " << *(iee.pred) << " then" << std::endl;
-        os << *(iee.ife) << std::endl;
-        os << "else" << std::endl;
-        os << *(iee.elsee) << std::endl;
-    }
-    void PrettyPrinter::visit(syntax::ast::IfElseStatement& ies){
-        os << "if " << *(ies.pred) << " then" << std::endl;
-        os << *(ies.ifblock) << std::endl;
-        os << "else" << std::endl;
-        os << *(ies.elseblock) << std::endl;
-    }
-    void PrettyPrinter::visit(syntax::ast::Definement& def){
-        os << (def.is_const?"let ":"mut ") << def.id << "-> " << *(def.value);
-    }
-    void PrettyPrinter::visit(syntax::ast::ReturnStatement& ret){
-        os << "return " << *(ret.value);
-    }
-    void PrettyPrinter::visit(syntax::ast::SourceCode& sc){
-        for(auto& s : sc.statements){
-            os << *s << std::endl;
+// PrettyPrinterForAST.
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            void PrettyPrinterForAST::visit(syntax::ast::Identifier& id){
+                os << id.name;
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Variable& var){
+                var.value.accept(*this);
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Number& num){
+                os << num.value;
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::String& str){
+                os << str.value;
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Block& block){
+                os << "{" << std::endl;
+                for(auto& s : block.statements){
+                    s->accept(*this);
+                    os << std::endl;
+                }
+                os << "}";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Function& func){
+                os << "\\(";
+                for(size_t i=0;i<func.parameters.size();i++){
+                    func.parameters[i].accept(*this);
+                    if(i != func.parameters.size()-1){
+                        os << ",";
+                    }
+                }
+                os << ")" << std::endl;
+                func.body->accept(*this);
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::FunctionCall& call){
+                call.function->accept(*this);
+                os << "(";
+                for(size_t i=0;i<call.arguments.size();i++){
+                    call.arguments[i]->accept(*this);
+                    if(i != call.arguments.size()-1){
+                        os << ",";
+                    }
+                }
+                os << ")";
+
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::BinaryOperator& bop){
+                os << "(";
+                bop.left->accept(*this);
+                os << " " << bop.op << " " ;
+                bop.right->accept(*this);
+                os << ")";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::UnaryOperator& uop){
+                os << "(" << uop.op;
+                uop.exp->accept(*this);
+                os << ")";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::IfElseExpression& iee){
+                os << "if ";
+                iee.pred->accept(*this);
+                os << " then" << std::endl;
+                iee.ife->accept(*this);
+                os << std::endl;
+                os << "else" << std::endl;
+                iee.elsee->accept(*this);
+                os << std::endl;
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::IfElseStatement& ies){
+                os << "if ";
+                ies.pred->accept(*this);
+                os << " then ";
+                ies.ifblock->accept(*this);
+                os << " else " << std::endl;
+                ies.elseblock->accept(*this);
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Definement& def){
+                os << (def.is_const?"let ":"mut ");
+                def.id.accept(*this);
+                os << " -> ";
+                def.value->accept(*this);
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::ReturnStatement& ret){
+                os << "return ";
+                ret.value->accept(*this);
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::SourceCode& sc){
+                for(auto& s : sc.statements){
+                    s->accept(*this);
+                    os << std::endl;
+                }
+            }
+
         }
     }
 }

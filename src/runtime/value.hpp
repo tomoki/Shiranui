@@ -12,23 +12,31 @@ namespace shiranui{
         }
     }
 }
+
+namespace shiranui{
+    namespace runtime{
+        namespace value{
+            struct VisitorForValue;
+        }
+    }
+}
 namespace shiranui{
     namespace runtime{
         namespace value{
             namespace ast = shiranui::syntax::ast;
             struct Value{
                 virtual ~Value() {};
-                virtual std::ostream& serialize(std::ostream&)  = 0;
+                virtual void accept(VisitorForValue&) = 0;
             };
             struct Integer : Value{
                 int value;
                 explicit Integer(int v);
-                std::ostream& serialize(std::ostream&);
+                void accept(VisitorForValue&);
             };
             struct String : Value{
                 std::string value;
                 explicit String(std::string);
-                std::ostream& serialize(std::ostream&);
+                void accept(VisitorForValue&);
             };
             struct Function : Value{
                 std::vector<ast::Identifier> parameters;
@@ -36,25 +44,36 @@ namespace shiranui{
             struct UserFunction : Function{
                 sp<ast::Block> body;
                 UserFunction(std::vector<ast::Identifier>,sp<ast::Block>);
-                std::ostream& serialize(std::ostream&);
+                void accept(VisitorForValue&);
             };
-//            struct BuiltinFunction : Function{
-//                // virtual apply(Runner& r,std::vector<ast::Expression> arguments) = ;
-//                std::ostream& serialize(std::ostream&);
-//            };
             struct Return : Value{
                 sp<Value> value;
                 Return(Value*);
                 Return(sp<Value>);
-                std::ostream& serialize(std::ostream&);
+                void accept(VisitorForValue&);
             };
         }
     }
 }
+
 namespace shiranui{
     namespace runtime{
         namespace value{
-            std::ostream& operator<<(std::ostream&,Value&);
+            struct VisitorForValue{
+                virtual ~VisitorForValue(){}
+                virtual void visit(Integer&)      = 0;
+                virtual void visit(String&)       = 0;
+                virtual void visit(UserFunction&) = 0;
+                virtual void visit(Return&)       = 0;
+            };
+            struct PrettyPrinterForValue : VisitorForValue{
+                std::ostream& os;
+                PrettyPrinterForValue(std::ostream& os);
+                void visit(Integer&);
+                void visit(String&);
+                void visit(UserFunction&);
+                void visit(Return&);
+            };
         }
     }
 }

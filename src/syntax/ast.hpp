@@ -12,7 +12,11 @@
 #include <vector>
 
 namespace shiranui{
-    struct VisitorForAST;
+    namespace syntax{
+        namespace ast{
+            struct VisitorForAST;
+        }
+    }
 }
 
 namespace shiranui{
@@ -132,54 +136,46 @@ namespace shiranui{
     }
 }
 namespace shiranui{
-    struct VisitorForAST{
-        virtual ~VisitorForAST(){};
-        virtual void visit(syntax::ast::Identifier&)       = 0;
-        virtual void visit(syntax::ast::Variable&)         = 0;
-        virtual void visit(syntax::ast::Number&)           = 0;
-        virtual void visit(syntax::ast::String&)           = 0;
-        virtual void visit(syntax::ast::Block&)            = 0;
-        virtual void visit(syntax::ast::Function&)         = 0;
-        virtual void visit(syntax::ast::FunctionCall&)     = 0;
-        virtual void visit(syntax::ast::BinaryOperator&)   = 0;
-        virtual void visit(syntax::ast::UnaryOperator&)    = 0;
-        virtual void visit(syntax::ast::IfElseExpression&) = 0;
-        virtual void visit(syntax::ast::Definement&)       = 0;
-        virtual void visit(syntax::ast::ReturnStatement&)  = 0;
-        virtual void visit(syntax::ast::IfElseStatement&)  = 0;
-        virtual void visit(syntax::ast::SourceCode&)       = 0;
-    };
-    struct PrettyPrinter : VisitorForAST{
-        std::ostream& os;
-        PrettyPrinter(std::ostream& o) : os(o) {};
-        void visit(syntax::ast::Identifier&);
-        void visit(syntax::ast::Variable&);
-        void visit(syntax::ast::Number&);
-        void visit(syntax::ast::String&);
-        void visit(syntax::ast::Block&);
-        void visit(syntax::ast::Function&);
-        void visit(syntax::ast::FunctionCall&);
-        void visit(syntax::ast::BinaryOperator&);
-        void visit(syntax::ast::UnaryOperator&);
-        void visit(syntax::ast::IfElseExpression&);
-        void visit(syntax::ast::Definement&);
-        void visit(syntax::ast::ReturnStatement&);
-        void visit(syntax::ast::IfElseStatement&);
-        void visit(syntax::ast::SourceCode&);
-    };
-}
-
-
-namespace shiranui{
     namespace syntax{
         namespace ast{
-            template<typename T>
-            std::ostream& operator<<(std::ostream& os,T& s){
-                PrettyPrinter p(os);
-                s.accept(p);
-                return os;
-            }
+            struct VisitorForAST{
+                virtual ~VisitorForAST() {};
+                virtual void visit(Identifier&)       = 0;
+                virtual void visit(Variable&)         = 0;
+                virtual void visit(Number&)           = 0;
+                virtual void visit(String&)           = 0;
+                virtual void visit(Block&)            = 0;
+                virtual void visit(Function&)         = 0;
+                virtual void visit(FunctionCall&)     = 0;
+                virtual void visit(BinaryOperator&)   = 0;
+                virtual void visit(UnaryOperator&)    = 0;
+                virtual void visit(IfElseExpression&) = 0;
+                virtual void visit(Definement&)       = 0;
+                virtual void visit(ReturnStatement&)  = 0;
+                virtual void visit(IfElseStatement&)  = 0;
+                virtual void visit(SourceCode&)       = 0;
+            };
+            struct PrettyPrinterForAST : VisitorForAST{
+                std::ostream& os;
+                PrettyPrinterForAST(std::ostream& o) : os(o) {};
+                void visit(Identifier&);
+                void visit(Variable&);
+                void visit(Number&);
+                void visit(String&);
+                void visit(Block&);
+                void visit(Function&);
+                void visit(FunctionCall&);
+                void visit(BinaryOperator&);
+                void visit(UnaryOperator&);
+                void visit(IfElseExpression&);
+                void visit(Definement&);
+                void visit(ReturnStatement&);
+                void visit(IfElseStatement&);
+                void visit(SourceCode&);
+            };
+
         }
     }
 }
+
 #endif
