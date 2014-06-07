@@ -89,7 +89,7 @@ namespace shiranui{
             {
                 sp<Integer> l = std::dynamic_pointer_cast<Integer>(left);
                 sp<Integer> r = std::dynamic_pointer_cast<Integer>(right);
-                if(l != nullptr){
+                if(l != nullptr and r != nullptr){
                     if(bop.op == "="){
                         cur.v = std::make_shared<Boolean>(l->value == r->value);
                     }else if(bop.op == "/="){
@@ -111,6 +111,25 @@ namespace shiranui{
                     return;
                 }
             }
+            {
+                sp<Boolean> l = std::dynamic_pointer_cast<Boolean>(left);
+                sp<Boolean> r = std::dynamic_pointer_cast<Boolean>(right);
+                if(l != nullptr and r != nullptr){
+                    if(bop.op == "="){
+                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                    }else if(bop.op == "/="){
+                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                    }else if(bop.op == "and"){
+                        cur.v = std::make_shared<Boolean>(l->value and r->value);
+                    }else if(bop.op == "or"){
+                        cur.v = std::make_shared<Boolean>(l->value or r->value);
+                    }else{
+                        throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+                    }
+                    return;
+                }
+            }
+            throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
             if(bop.op == "="){
             }else if(bop.op == "/="){
             }else if(bop.op == "+"){
@@ -122,7 +141,7 @@ namespace shiranui{
             }else if(bop.op == "and"){
             }else if(bop.op == "or"){
             }
-            return;
+
         }
         void Runner::visit(syntax::ast::UnaryOperator& uop){
                   if(uop.op == "not"){
