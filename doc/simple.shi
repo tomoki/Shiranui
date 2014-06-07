@@ -1,4 +1,0 @@
-let main = \(){
-    return unit;
-};
-let unit = main();
