@@ -1,15 +1,5 @@
 let true = 1=1;
 let false = 1/=1;
-let is_zero = \(n){
-    return n = 0;
-};
-let plus = \(a,b){
-    if a = 0 then{
-        return b;
-    }else{
-        return plus(a-1,b) + 1;
-    }
-};
 
 let pow = \(x,n){
     if n = 0 then{
@@ -22,4 +12,14 @@ let pow = \(x,n){
             return r;
         }
     }
+};
+let gcd = \(a,b){
+    if b = 0 then{
+        return a;
+    }else{
+        return gcd(b,a%b);
+    }
+};
+let lcm = \(a,b){
+    return a*b / gcd(a,b);
 };
