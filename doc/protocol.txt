@@ -1,0 +1,42 @@
+Following protocol is used in between Shiranui and TextEditor.
+
+Generally,message is following format.
+~~~~~~
+N command
+line_{1}
+...
+line_{N}
+~~~~~~
+
+# TextEditor to Shiranui
+## Load
+It send all program's string to Shiranui.
+Shiranui will re-eval it.
+~~~~~~
+3 load
+let f = \(n){
+    return n;
+};
+~~~~~~
+
+## Accept
+## Decline
+TODO:write here.
+
+# Shiranui to TextEditor
+## Finish
+It means "I've done all works :)"
+~~~~~~
+0 finish
+~~~~~~
+
+## Syntaxerror
+It sends where syntax error occured.
+If there is extra info like expectation,send it too.
+~~~~~~
+2 syntaxerror
+2 10
+~~~~~~
+
+## flytest
+TODO: write here.
