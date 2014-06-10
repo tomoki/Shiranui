@@ -15,12 +15,13 @@ void repl(){
     shiranui::runtime::Runner r;
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
     shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
+    std::cerr << "This is " << PACKAGE_STRING << std::endl;
     while(true){
         std::cout << "> ";
         std::string str;
         std::getline(std::cin,str);
         if(std::cin.eof()==1) {
-            std::cout << "good bye shirei" << std::endl;
+            std::cerr << "good bye shirei" << std::endl;
             return;
         }
         pos_iterator_t first(str.begin()),last(str.end());
@@ -61,10 +62,8 @@ void repl(){
 }
 
 void start_server(){
-    std::cerr << "Run in server mode" << std::endl;
     shiranui::server::PipeServer server(std::cin,std::cout);
     server.start();
-    std::cerr << "Goodbye Shirei" << std::endl;
 }
 
 int main(int argc,char **argv){
@@ -77,7 +76,6 @@ int main(int argc,char **argv){
     po::variables_map vm;
     po::store(po::parse_command_line(argc,argv,opt),vm);
     po::notify(vm);
-    std::cerr << "This is " << PACKAGE_STRING << std::endl;
     if (vm.count("help")){
         std::cout << opt << std::endl;
         return 1;
