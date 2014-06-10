@@ -21,7 +21,7 @@
   (list
    '("let[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-function-name-face)
    '("mut[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-variable-name-face)
-   ;; overwrite for let.
+   ;; overwrite for let,mut.
    '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\)\\>" 0 font-lock-keyword-face t)
    '("\\(\\\\\\)" 0 font-lock-constant-face)
    '("\\<\\(and\\|or\\)\\>" 0 font-lock-builtin-face)
