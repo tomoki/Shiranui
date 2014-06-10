@@ -4,6 +4,8 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include "../runtime/runner.hpp"
+#include "../syntax/parser.hpp"
 
 namespace shiranui{
     namespace server{
@@ -12,11 +14,13 @@ namespace shiranui{
             std::istream& is;
             std::ostream& os;
             std::mutex send_lock;
+            syntax::ast::SourceCode* program;
             PipeServer(std::istream&,std::ostream&);
             void start();
             void send_command(const std::string&,const std::string&);
             void receive_command();
             virtual void on_receive_command(const std::string&,const std::string&);
+            void on_receive_load_command(std::string);
         };
     }
 }

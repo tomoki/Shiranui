@@ -27,7 +27,7 @@ void repl(){
         pos_iterator_t iter = first;
         ast::SourceCode* program;
         Parser<pos_iterator_t> resolver(first);
-        bool ok = qi::phrase_parse(iter,last,resolver,qi::space,program);
+        bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
         if(ok and iter == last){
             program->accept(printer);
             try{

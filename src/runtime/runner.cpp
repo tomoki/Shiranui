@@ -5,12 +5,13 @@
 
 namespace shiranui{
     namespace runtime{
+        using shiranui::runtime::environment::Environment;
+        using shiranui::runtime::value::Value;
         using shiranui::runtime::value::Integer;
         using shiranui::runtime::value::String;
         using shiranui::runtime::value::Boolean;
         using shiranui::runtime::value::Function;
         using shiranui::runtime::value::UserFunction;
-//        using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::Return;
         ValEnv::ValEnv(){
             v = std::make_shared<Integer>(0);

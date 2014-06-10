@@ -4,9 +4,6 @@
 #include "../misc.hpp"
 #include <iostream>
 #include <memory>
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix_fusion.hpp>
-#include <boost/fusion/include/adapt_struct.hpp>
 
 #include <string>
 #include <vector>
@@ -22,8 +19,6 @@ namespace shiranui{
 namespace shiranui{
     namespace syntax{
         namespace ast{
-            namespace qi = boost::spirit::qi;
-            namespace ph = boost::phoenix;
             struct LocationInfo{
                 unsigned int line,column,length;
                 virtual void accept(VisitorForAST&) = 0;

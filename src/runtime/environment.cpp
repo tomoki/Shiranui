@@ -1,5 +1,7 @@
 #include "environment.hpp"
 
+using shiranui::runtime::value::Value;
+using shiranui::syntax::ast::Identifier;
 namespace shiranui{
     namespace runtime{
         namespace environment{

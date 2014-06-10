@@ -8,22 +8,19 @@
 namespace shiranui{
     namespace runtime{
         namespace environment{
-            using shiranui::syntax::ast::Identifier;
-            using shiranui::syntax::ast::Variable;
-            using shiranui::runtime::value::Value;
             struct Environment{
                 Environment();
                 Environment(sp<Environment> parent);
                 Environment(Environment *parent);
                 sp<Environment> parent;
-                std::map<Identifier,sp<Value>> vars;
-                std::map<Identifier,sp<Value>> consts;
-                bool is_here(Identifier id) const;
-                bool has(Identifier id) const;
-                bool is_const(Identifier) const;
-                sp<Value> get(Identifier);
-                void set(Identifier,sp<Value>);
-                void define(Identifier,sp<Value>,bool);
+                std::map<syntax::ast::Identifier,sp<value::Value>> vars;
+                std::map<syntax::ast::Identifier,sp<value::Value>> consts;
+                bool is_here(syntax::ast::Identifier id) const;
+                bool has(syntax::ast::Identifier id) const;
+                bool is_const(syntax::ast::Identifier) const;
+                sp<value::Value> get(syntax::ast::Identifier);
+                void set(syntax::ast::Identifier,sp<value::Value>);
+                void define(syntax::ast::Identifier,sp<value::Value>,bool);
             };
         }
     }

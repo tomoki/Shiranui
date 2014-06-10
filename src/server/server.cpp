@@ -2,6 +2,8 @@
 
 namespace shiranui{
     namespace server{
+        const std::string COMMAND_LOAD = "load";
+        const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
             int cnt = 1;
@@ -26,10 +28,11 @@ namespace shiranui{
         }
         // call from thread.
         void PipeServer::receive_command(){
-            while(true){
+            while(not is.eof()){
                 int line;
                 std::string command,value;
                 is >> line >> command;
+                is.ignore(); // ignore newline.
                 for(int i=0;i<line;i++){
                     std::string s;
                     std::getline(is,s);
@@ -40,6 +43,48 @@ namespace shiranui{
         }
         void PipeServer::on_receive_command(const std::string& command,
                                             const std::string& value){
+            // std::cerr << command << "<-> " << value << std::endl;
+            if(command == COMMAND_LOAD){
+                on_receive_load_command(value);
+            }
+        }
+        // copy string because pos_iterator_t needs its reference.
+        void PipeServer::on_receive_load_command(std::string source){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            Runner r;
+            ast::PrettyPrinterForAST printer(std::cerr);
+            value::PrettyPrinterForValue printer_for_value(std::cerr);
+
+            pos_iterator_t first(source.begin()),last(source.end());
+            pos_iterator_t iter = first;
+            Parser<pos_iterator_t> resolver(first);
+            bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+                                                      boost::spirit::qi::space,program);
+            if(ok and iter == last){
+                // there is no syntax error.
+                // first path,shiranui doesn't eval flytestline.
+                try{
+                    program->accept(r);
+                    r.cur.v->accept(printer_for_value);
+                    std::cerr << std::endl;
+                }catch(NoSuchVariableException e){
+                    std::cerr << "No such variable: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }catch(ConvertException e){
+                    std::cerr << "Convert Error: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }catch(RuntimeException e){
+                    std::cerr << "Something RuntimeException: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }
+            }else{
+                send_command(COMMAND_SYNTAXEROR,"");
+            }
         }
     }
 }

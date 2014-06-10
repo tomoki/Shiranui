@@ -7,8 +7,6 @@
 
 namespace shiranui{
     namespace runtime{
-        using shiranui::runtime::environment::Environment;
-        using shiranui::runtime::value::Value;
         struct RuntimeException : std::exception{
             sp<syntax::ast::LocationInfo> where;
         };
@@ -23,12 +21,12 @@ namespace shiranui{
             }
         };
         struct ValEnv{
-            sp<Value> v;
-            sp<Environment> e;
+            sp<value::Value> v;
+            sp<environment::Environment> e;
             ValEnv();
-            ValEnv(Environment*);
-            ValEnv(sp<Environment>);
-            void set_value(sp<Value>);
+            ValEnv(environment::Environment*);
+            ValEnv(sp<environment::Environment>);
+            void set_value(sp<value::Value>);
         };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             ValEnv cur;
