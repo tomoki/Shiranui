@@ -12,9 +12,12 @@ namespace shiranui{
         }
         PipeServer::PipeServer(std::istream& is_,std::ostream& os_)
             : is(is_),os(os_){}
+
         void PipeServer::start(){
             std::thread receive_thread(&PipeServer::receive_command,this);
+            receive_thread.join();
         }
+
         void PipeServer::send_command(const std::string& command,const std::string& value){
             send_lock.lock();
             os << how_many_lines(value) << " " << command << std::endl

@@ -2,10 +2,11 @@
 #include <fstream>
 #include <config.hpp>
 #include <chrono>
+#include <boost/program_options.hpp>
 #include "misc.hpp"
 #include "syntax/parser.hpp"
 #include "runtime/runner.hpp"
-#include <boost/program_options.hpp>
+#include "server/server.hpp"
 
 void repl(){
     using namespace shiranui;
@@ -60,14 +61,18 @@ void repl(){
 }
 
 void start_server(){
+    std::cerr << "Run in server mode" << std::endl;
+    shiranui::server::PipeServer server(std::cin,std::cout);
+    server.start();
+    std::cerr << "Goodbye Shirei" << std::endl;
 }
 
 int main(int argc,char **argv){
     namespace po = boost::program_options;
     po::options_description opt("Allowed options");
     opt.add_options()
-        ("help","print help message")
-        ("server","run Shiranui in server mode")
+        ("help,h","print help message")
+        ("server,s","run Shiranui in server mode")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc,argv,opt),vm);
