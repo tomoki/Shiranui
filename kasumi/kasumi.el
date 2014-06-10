@@ -19,12 +19,14 @@
 
 (defconst kasumi-font-lock-keywords
   (list
-   (cons "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\)\\>" 'font-lock-keyword-face)
-   (cons "\\(\\\\\\)" 'font-lock-constant-face)
-   (cons "\\<\\(and\\|or\\)\\>" 'font-lock-builtin-face)
-   (cons "not\\>" 'font-lock-builtin-face)
-   ;; (cons "let[ \t\n]*[a-zA-Z]+[0-9]*" 'font-lock-variable-name-face)
-   (cons "\\<[\\-+]*[0-9]*\\.?[0-9]+\\>" font-lock-constant-face)
+   '("let[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-function-name-face)
+   '("mut[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-variable-name-face)
+   ;; overwrite for let.
+   '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\)\\>" 0 font-lock-keyword-face t)
+   '("\\(\\\\\\)" 0 font-lock-constant-face)
+   '("\\<\\(and\\|or\\)\\>" 0 font-lock-builtin-face)
+   '("not\\>" 0 font-lock-builtin-face)
+   '("\\<[\\-+]*[0-9]*\\.?[0-9]+\\>" 0 font-lock-constant-face)
    ))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
