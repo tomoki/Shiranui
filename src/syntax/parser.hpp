@@ -104,7 +104,7 @@ namespace shiranui{
                     on_success(function,set_location_info);
                     function   = (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
                                   [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)]
-                               | (lit("\\") >> "(" >> ")" >> block)
+                               | (lit("\\") > "(" > ")" > block)
                                   [qi::_val = ph::new_<ast::Function>(
                                               std::vector<ast::Identifier>(),qi::_1)]
                                ;
@@ -114,9 +114,9 @@ namespace shiranui{
                 {
                     definement.name("definement");
                     on_success(definement,set_location_info);
-                    definement = ("let" >> identifier >> "=" >> expression)
+                    definement = ("let" > identifier > "=" > expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
-                               | ("mut" >> identifier >> "=" >> expression)
+                               | ("mut" > identifier > "=" > expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
                                ;
                 }
@@ -132,7 +132,7 @@ namespace shiranui{
                 {
                     return_stmt.name("return_statement");
                     on_success(return_stmt,set_location_info);
-                    return_stmt = ("return" >> expression)
+                    return_stmt = ("return" > expression)
                                  [qi::_val = ph::new_<ast::ReturnStatement>(qi::_1)]
                                 ;
                 }
@@ -146,10 +146,10 @@ namespace shiranui{
                 {
                     statement.name("statement");
                     on_success(statement,set_location_info);
-                    statement  = (definement >> ";")
+                    statement  = (definement > ";")
                                | ifelse_stmt
                                | block
-                               | return_stmt >> ";"
+                               | (return_stmt > ";")
                                ;
                 }
 

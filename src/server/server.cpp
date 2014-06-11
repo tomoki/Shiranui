@@ -65,9 +65,16 @@ namespace shiranui{
 
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
+            bool ok = false;
             Parser<pos_iterator_t> resolver(first);
-            bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
-                                                      boost::spirit::qi::space,program);
+            try{
+                ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+                        boost::spirit::qi::space,program);
+            }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
+                send_command(COMMAND_SYNTAXEROR,"");
+                return;
+            }
+
             if(ok and iter == last){
                 // there is no syntax error.
                 // first path,shiranui doesn't eval flytestline.

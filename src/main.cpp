@@ -27,8 +27,16 @@ void repl(){
         pos_iterator_t first(str.begin()),last(str.end());
         pos_iterator_t iter = first;
         ast::SourceCode* program;
-        Parser<pos_iterator_t> resolver(first);
-        bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
+        bool ok = false;
+        try{
+            Parser<pos_iterator_t> resolver(first);
+            ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
+        }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
+            std::cerr << "expected: ";
+            std::cerr << x.what_ << std::endl;
+            std::cerr << "got: \"" << std::string(x.first, x.last) << '"' << std::endl;
+            continue;
+        }
         if(ok and iter == last){
             program->accept(printer);
             try{
