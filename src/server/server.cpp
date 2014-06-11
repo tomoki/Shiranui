@@ -22,28 +22,34 @@ namespace shiranui{
 
         void PipeServer::send_command(const std::string& command,const std::string& value){
             send_lock.lock();
-            os << how_many_lines(value) << " " << command << std::endl
-                << value << std::endl;
+            if(value != ""){
+                os << how_many_lines(value) << " " << command << std::endl
+                   << value << std::endl;
+            }else{
+                os << how_many_lines(value) << " " << command << std::endl;
+            }
             send_lock.unlock();
         }
         // call from thread.
         void PipeServer::receive_command(){
-            while(not is.eof()){
+            while(true){
                 int line;
-                std::string command,value;
-                is >> line >> command;
-                is.ignore(); // ignore newline.
-                for(int i=0;i<line;i++){
-                    std::string s;
-                    std::getline(is,s);
-                    value += s;
+                std::string command;
+                while(is >> line >> command){
+                    is.ignore(); // ignore newline.
+                    std::string value;
+                    for(int i=0;i<line;i++){
+                        std::string s;
+                        std::getline(is,s);
+                        value += s;
+                    }
+                    on_receive_command(command,value);
                 }
-                on_receive_command(command,value);
+                is.clear(); // remove eof flag 
             }
         }
         void PipeServer::on_receive_command(const std::string& command,
                                             const std::string& value){
-            // std::cerr << command << "<-> " << value << std::endl;
             if(command == COMMAND_LOAD){
                 on_receive_load_command(value);
             }
@@ -67,20 +73,20 @@ namespace shiranui{
                 // first path,shiranui doesn't eval flytestline.
                 try{
                     program->accept(r);
-                    r.cur.v->accept(printer_for_value);
-                    std::cerr << std::endl;
+                    //r.cur.v->accept(printer_for_value);
+                    //std::cerr << std::endl;
                 }catch(NoSuchVariableException e){
-                    std::cerr << "No such variable: ";
-                    e.where->accept(printer);
-                    std::cerr << std::endl;
+                    //std::cerr << "No such variable: ";
+                    //e.where->accept(printer);
+                    //std::cerr << std::endl;
                 }catch(ConvertException e){
-                    std::cerr << "Convert Error: ";
-                    e.where->accept(printer);
-                    std::cerr << std::endl;
+                    //std::cerr << "Convert Error: ";
+                    //e.where->accept(printer);
+                    //std::cerr << std::endl;
                 }catch(RuntimeException e){
-                    std::cerr << "Something RuntimeException: ";
-                    e.where->accept(printer);
-                    std::cerr << std::endl;
+                    //std::cerr << "Something RuntimeException: ";
+                    //e.where->accept(printer);
+                    //std::cerr << std::endl;
                 }
             }else{
                 send_command(COMMAND_SYNTAXEROR,"");

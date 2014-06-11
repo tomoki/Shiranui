@@ -5,6 +5,26 @@
     map)
   "Keymap for Kasumi Major mode")
 
+(defcustom kasumi-where-is-shiranui nil
+  "Path where shiranui locates.")
+
+(defconst kasumi-font-lock-keywords
+  (list
+   '("let[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-function-name-face)
+   '("mut[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-variable-name-face)
+   ;; overwrite for let,mut.
+   '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\)\\>" 0 font-lock-keyword-face t)
+   '("\\(\\\\\\)" 0 font-lock-constant-face)
+   '("\\<\\(and\\|or\\)\\>" 0 font-lock-builtin-face)
+   '("not\\>" 0 font-lock-builtin-face)
+   '("\\<[\\-+]*[0-9]*\\.?[0-9]+\\>" 0 font-lock-constant-face)
+   ))
+
+(defconst kasumi-command-load
+  "load")
+(defconst kasumi-command-syntaxerror
+  "syntaxerror")
+
 ;; getline needs newline("\n")
 (defun buffer-string-no-properties ()
   (buffer-substring-no-properties (point-min) (point-max)))
@@ -27,35 +47,11 @@
 (defun string-join (lis sep)
   (mapconcat 'identity lis sep))
 
-(defcustom kasumi-where-is-shiranui nil
-  "Path where shiranui locates.")
-
 ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Asynchronous-Processes.html#Asynchronous-Processes
 (defun kasumi-start-shiranui (program)
   (let ((process-connection-type nil)) ;; start in pipe
     ;; start-process needs absolute path?
-    (start-process "shiranui" "shiranui" (file-truename program) "--server")
-    ))
-
-(defconst kasumi-font-lock-keywords
-  (list
-   '("let[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-function-name-face)
-   '("mut[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-variable-name-face)
-   ;; overwrite for let,mut.
-   '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\)\\>" 0 font-lock-keyword-face t)
-   '("\\(\\\\\\)" 0 font-lock-constant-face)
-   '("\\<\\(and\\|or\\)\\>" 0 font-lock-builtin-face)
-   '("not\\>" 0 font-lock-builtin-face)
-   '("\\<[\\-+]*[0-9]*\\.?[0-9]+\\>" 0 font-lock-constant-face)
-   ))
-
-(defconst kasumi-command-load
-  "load")
-
-(defun kasumi-send-command (command value)
-  (process-send-string shiranui-process
-   (concat (number-to-string (count-line-string value)) " " command "\n" value)
-   ))
+  (apply 'start-process "shiranui" "shiranui" (file-truename program) '("--server"))))
 
 ;; string -> (command value rest)
 (defun kasumi-parse-sub (str)
@@ -76,9 +72,36 @@
             (kasumi-parse (caddr command-value-rest))))))
 
 
-;; need parsing?
+(defun kasumi-send-command (command value)
+  (process-send-string shiranui-process
+   (concat (number-to-string (count-line-string value)) " " command "\n" value "\n")
+   ))
+
 (defun kasumi-process-filter (process str)
-  (let ((pairs-command-value (kasumi-parse str)))))
+  (let ((pairs-command-value (kasumi-parse (string-strip str))))
+    (progn
+      (kasumi-process-pairs pairs-command-value))))
+
+(defun kasumi-process-sentinel (process stat)
+  (message "something occured in shiranui"))
+
+(defun kasumi-process-pair (pair-command-value)
+  (let ((command (car pair-command-value))
+        (value   (cdr pair-command-value)))
+    (cond ((string= command kasumi-command-syntaxerror)
+           (kasumi-receive-syntaxerror value))
+          (t (message "unknown command:%s " command))
+          )))
+
+(defun kasumi-process-pairs (pairs-command-value)
+  (if (null pairs-command-value)
+      '()
+    (cons (kasumi-process-pair (car pairs-command-value))
+          (kasumi-process-pairs (cdr pairs-command-value)))))
+
+(defun kasumi-receive-syntaxerror (value)
+  (message "there is syntaxerror: %s" value)
+  )
 
 (defun kasumi-send-load ()
   (interactive)
@@ -99,6 +122,7 @@
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
            (kasumi-start-shiranui kasumi-where-is-shiranui)))
   (set-process-filter shiranui-process 'kasumi-process-filter)
+  (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
   (setq major-mode 'kasumi-mode)
   (setq mode-name "Kasumi")
