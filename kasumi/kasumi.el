@@ -35,6 +35,14 @@
     (+ 1 (count-if (lambda (x) (= x ?\n)) s))
     ))
 
+(defun calc-point (row col)
+  (save-excursion
+    (progn
+      (goto-line row)
+      (move-to-column (- col 1))
+      (point)
+      )))
+
 (defun take-nth-sub (lis n one)
   (if (= n 0)
       (cons (reverse one) lis)
@@ -104,9 +112,10 @@
   (message "there is syntaxerror")
   (if (not (= (length value) 0))
       (let ((beg-end-list (split-string value " ")))
-        (kasumi-put-syntaxerror (string-to-number (car beg-end-list))
-                                (string-to-number (cadr beg-end-list))))))
-
+        (kasumi-put-syntaxerror (calc-point (string-to-number (nth 0 beg-end-list))
+                                            (string-to-number (nth 1 beg-end-list)))
+                                (calc-point (string-to-number (nth 2 beg-end-list))
+                                            (string-to-number (nth 3 beg-end-list)))))))
 (defun kasumi-send-load ()
   (interactive)
   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))

@@ -41,8 +41,9 @@ namespace shiranui{
                     std::string value;
                     for(int i=0;i<line;i++){
                         std::string s;
+                        // getline doesn't have newline.
                         std::getline(is,s);
-                        value += s;
+                        value += s + "\n";
                     }
                     on_receive_command(command,value);
                 }
@@ -72,7 +73,11 @@ namespace shiranui{
                 ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
                         boost::spirit::qi::space,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
-                send_command(COMMAND_SYNTAXEROR,"");
+                std::stringstream ss;
+                ss << get_line(x.first) << " " << get_column(first,x.first) << " "
+                   << get_line(x.last) << " "  << get_column(first,x.last);
+                send_command(COMMAND_SYNTAXEROR,ss.str());
+
                 return;
             }
 
@@ -97,10 +102,9 @@ namespace shiranui{
                     //std::cerr << std::endl;
                 }
             }else{
-                int from  = std::distance(first,iter),
-                    to    = std::distance(first,last);
                 std::stringstream ss;
-                ss << from << " " << to;
+                ss << get_line(iter) << " " << get_column(first,iter) << " "
+                   << get_line(last) << " " << get_column(first,last);
                 send_command(COMMAND_SYNTAXEROR,ss.str());
             }
         }
