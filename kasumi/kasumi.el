@@ -72,6 +72,7 @@
             (kasumi-parse (caddr command-value-rest))))))
 
 
+;; need newline end of string?
 (defun kasumi-send-command (command value)
   (process-send-string shiranui-process
    (concat (number-to-string (count-line-string value)) " " command "\n" value "\n")
@@ -124,6 +125,7 @@
   (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
+  (add-hook 'after-change-functions (lambda (begin end length) (kasumi-send-load)) t t)
   (setq major-mode 'kasumi-mode)
   (setq mode-name "Kasumi")
   (run-hooks 'kasumi-mode-hook))
