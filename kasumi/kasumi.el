@@ -15,6 +15,18 @@
     (+ 1 (count-if (lambda (x) (= x ?\n)) s))
     ))
 
+(defun take-nth-sub (lis n one)
+  (if (= n 0)
+      (cons (reverse one) lis)
+    (take-nth-sub (cdr lis) (- n 1)
+                  (cons (car lis) one))))
+
+;; [a] -> ([a] . [a])
+(defun take-nth (l n)
+  (take-nth-sub l n '()))
+(defun string-join (lis sep)
+  (mapconcat 'identity lis sep))
+
 (defcustom kasumi-where-is-shiranui nil
   "Path where shiranui locates.")
 
@@ -45,11 +57,29 @@
    (concat (number-to-string (count-line-string value)) " " command "\n" value)
    ))
 
+;; string -> (command value rest)
+(defun kasumi-parse-sub (str)
+  (let* ((lines (split-string str "\n"))
+         (first-line (split-string (car lines) " "))
+         (command-line-length (string-to-number (car first-line)))
+         (command (string-join (cdr first-line) " "))
+         (value-and-rest (take-nth (cdr lines) command-line-length)))
+    (list command (string-join (car value-and-rest) "\n")
+                  (string-join (cdr value-and-rest) "\n"))))
+
+;; string -> [(command . value)]
+(defun kasumi-parse (str)
+  (if (= (length str) 0)
+      '()
+    (let ((command-value-rest (kasumi-parse-sub str)))
+      (cons (cons (car command-value-rest) (cadr command-value-rest))
+            (kasumi-parse (caddr command-value-rest))))))
+
+
 ;; need parsing?
 (defun kasumi-process-filter (process str)
-  (message str))
-  ;; (if receive-in-progress
-  ;;     (setq receiving-str (concat receiving-str str))
+  (let ((pairs-command-value (kasumi-parse str)))))
+
 (defun kasumi-send-load ()
   (interactive)
   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
