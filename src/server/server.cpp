@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include <sstream>
 
 namespace shiranui{
     namespace server{
@@ -96,7 +97,11 @@ namespace shiranui{
                     //std::cerr << std::endl;
                 }
             }else{
-                send_command(COMMAND_SYNTAXEROR,"");
+                int from  = std::distance(first,iter),
+                    to    = std::distance(first,last);
+                std::stringstream ss;
+                ss << from << " " << to;
+                send_command(COMMAND_SYNTAXEROR,ss.str());
             }
         }
     }

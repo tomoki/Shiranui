@@ -139,7 +139,7 @@ namespace shiranui{
                 {
                     block.name("block");
                     on_success(block,set_location_info);
-                    block = ("{" >> *statement >> "}")
+                    block = ("{" > *statement > "}")
                              [qi::_val = ph::new_<ast::Block>(qi::_1)]
                           ;
                 }
@@ -266,7 +266,7 @@ namespace shiranui{
                 {
                     atom.name("atom");
                     on_success(atom,set_location_info);
-                    atom       = ("(" >> expression >> ")")
+                    atom       = ("(" > expression > ")")
                                | integer
                                | variable
                                | function

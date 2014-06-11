@@ -101,12 +101,38 @@
           (kasumi-process-pairs (cdr pairs-command-value)))))
 
 (defun kasumi-receive-syntaxerror (value)
-  (message "there is syntaxerror: %s" value)
-  )
+  (message "there is syntaxerror")
+  (if (not (= (length value) 0))
+      (let ((beg-end-list (split-string value " ")))
+        (kasumi-put-syntaxerror (string-to-number (car beg-end-list))
+                                (string-to-number (cadr beg-end-list))))))
 
 (defun kasumi-send-load ()
   (interactive)
   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
+
+(defface kasumi-syntaxerror-face
+  '((((supports :underline (:style wave)))
+     :underline (:style wave :color "Red1"))
+    (t
+     :underline t :inherit error))
+    "Used for syntaxerror")
+
+(defun kasumi-put-syntaxerror (beg end)
+  (save-restriction
+    (let ((ol (make-overlay beg end)))
+      (progn
+        (overlay-put ol 'category 'kasumi-face)
+        (overlay-put ol 'face 'kasumi-syntaxerror-face)
+        ol))))
+
+(defun kasumi-remove-all-overlay ()
+  (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
+
+(defun kasumi-refresh (beg end length)
+  (progn
+    (kasumi-remove-all-overlay)
+    (kasumi-send-load)))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
@@ -125,7 +151,7 @@
   (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
-  (add-hook 'after-change-functions (lambda (begin end length) (kasumi-send-load)) t t)
+  (add-hook 'after-change-functions 'kasumi-refresh t t)
   (setq major-mode 'kasumi-mode)
   (setq mode-name "Kasumi")
   (run-hooks 'kasumi-mode-hook))
