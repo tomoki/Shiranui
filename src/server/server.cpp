@@ -66,7 +66,6 @@ namespace shiranui{
             value::PrettyPrinterForValue printer_for_value(std::cerr);
 
             pos_iterator_t first(source.begin()),last(source.end());
-            pos_iterator_t last_one(source.end()-1);
             pos_iterator_t iter = first;
             bool ok = false;
             Parser<pos_iterator_t> resolver(first);
@@ -76,14 +75,11 @@ namespace shiranui{
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                 std::stringstream ss;
                 ss << std::distance(first,x.first) << " " << std::distance(first,x.last);
-                //ss << get_line(x.first) << " " << get_column(first,x.first) << " "
-                //    << get_line(x.last) << " "  << get_column(first,x.last);
                 send_command(COMMAND_SYNTAXEROR,ss.str());
                 return;
             }
 
             if(ok and iter == last){
-                // there is no syntax error.
                 // first path,shiranui doesn't eval flytestline.
                 try{
                     program->accept(r);
@@ -104,8 +100,6 @@ namespace shiranui{
                 }
             }else{
                 std::stringstream ss;
-                // ss << get_line(iter) << " " << get_column(first,iter) << " "
-                //    << get_line(last) << " " << get_column(first,last);
                 ss << std::distance(first,iter) << " " << std::distance(first,last);
                 send_command(COMMAND_SYNTAXEROR,ss.str());
             }

@@ -20,7 +20,7 @@ void repl(){
         std::cout << "> ";
         std::string str;
         std::getline(std::cin,str);
-        if(std::cin.eof()==1) {
+        if(std::cin.eof()){
             std::cerr << "good bye shirei" << std::endl;
             return;
         }
