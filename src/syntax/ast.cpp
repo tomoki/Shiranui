@@ -75,11 +75,27 @@ namespace shiranui{
                 : value(e){
             }
 
+            // FlyLine
+            FlyLine::FlyLine(Expression* l)
+                : left(l){
+            }
+            FlyLine::FlyLine(Expression* l,Expression* r)
+                : left(l),right(r){
+            }
+
             // SourceCode
+            SourceCode::SourceCode(){
+            }
             SourceCode::SourceCode(std::vector<Statement*> ss){
                 for(Statement* s : ss){
                     statements.push_back(sp<Statement>(s));
                 }
+            }
+            void SourceCode::add_statement(Statement* s){
+                statements.push_back(sp<Statement>(s));
+            }
+            void SourceCode::add_flyline(FlyLine* l){
+                flylines.push_back(sp<FlyLine>(l));
             }
 
             // LocationInfo
@@ -127,6 +143,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void IfElseStatement ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void FlyLine          ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void SourceCode      ::accept(VisitorForAST& visitor){
@@ -223,8 +242,16 @@ namespace shiranui{
                 os << "return ";
                 ret.value->accept(*this);
             }
+            void PrettyPrinterForAST::visit(syntax::ast::FlyLine& l){
+                os << "#- ";
+                l.left->accept(*this);
+            }
             void PrettyPrinterForAST::visit(syntax::ast::SourceCode& sc){
                 for(auto& s : sc.statements){
+                    s->accept(*this);
+                    os << std::endl;
+                }
+                for(auto& s : sc.flylines){
                     s->accept(*this);
                     os << std::endl;
                 }

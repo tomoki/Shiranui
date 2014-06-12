@@ -45,6 +45,7 @@ namespace shiranui{
             void visit(syntax::ast::Definement&);
             void visit(syntax::ast::ReturnStatement&);
             void visit(syntax::ast::IfElseStatement&);
+            void visit(syntax::ast::FlyLine&);
             void visit(syntax::ast::SourceCode&);
         };
     }

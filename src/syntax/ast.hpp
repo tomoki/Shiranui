@@ -122,9 +122,19 @@ namespace shiranui{
                 ReturnStatement(Expression* e);
                 void accept(VisitorForAST&);
             };
+            struct FlyLine : LocationInfo{
+                sp<Expression> left,right;
+                explicit FlyLine(Expression*);
+                explicit FlyLine(Expression*,Expression*);
+                void accept(VisitorForAST&);
+            };
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
+                std::vector<sp<FlyLine>> flylines;
                 explicit SourceCode(std::vector<Statement*> ss);
+                SourceCode();
+                void add_statement(Statement* s);
+                void add_flyline(FlyLine* s);
                 void accept(VisitorForAST&);
             };
         }
@@ -148,6 +158,7 @@ namespace shiranui{
                 virtual void visit(Definement&)       = 0;
                 virtual void visit(ReturnStatement&)  = 0;
                 virtual void visit(IfElseStatement&)  = 0;
+                virtual void visit(FlyLine&)          = 0;
                 virtual void visit(SourceCode&)       = 0;
             };
             struct PrettyPrinterForAST : VisitorForAST{
@@ -166,6 +177,7 @@ namespace shiranui{
                 void visit(Definement&);
                 void visit(ReturnStatement&);
                 void visit(IfElseStatement&);
+                void visit(FlyLine&);
                 void visit(SourceCode&);
             };
 

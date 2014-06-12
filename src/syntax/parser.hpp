@@ -273,10 +273,28 @@ namespace shiranui{
                                ;
                 }
                 {
+                    qi::rule<Iterator> js = *(qi::space - qi::eol);
+                    flyline.name("flyline");
+                    on_success(flyline,set_location_info);
+                    // change expression to expression or error.
+                    // add eol or something like that.
+                    flyline = ("#-" >> expression >> "->" >> expression)
+                               [qi::_val = ph::new_<ast::FlyLine>(qi::_1,qi::_2)]
+                            | ("#-" >> expression >> "->")
+                               [qi::_val = ph::new_<ast::FlyLine>(qi::_1)]
+                            ;
+
+                }
+                {
                     source.name("source");
                     on_success(source,set_location_info);
-                    source     = (qi::eps >> *(statement))
-                                 [qi::_val = ph::new_<ast::SourceCode>(qi::_1)];
+                    source = qi::eps [qi::_val = ph::new_<ast::SourceCode>()]
+                          >> *(statement 
+                                [ph::bind(&ast::SourceCode::add_statement,qi::_val,qi::_1)]
+                              |flyline
+                                [ph::bind(&ast::SourceCode::add_flyline,qi::_val,qi::_1)]
+                              )
+                           ;
                 }
 
 
@@ -305,6 +323,7 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,ast::ReturnStatement*(),Skipper>  return_stmt;
             boost::spirit::qi::rule<Iterator,ast::IfElseExpression*(),Skipper> ifelse_expr;
             boost::spirit::qi::rule<Iterator,ast::Block*(),Skipper>            block;
+            boost::spirit::qi::rule<Iterator,ast::FlyLine*(),Skipper>                  flyline;
             boost::spirit::qi::rule<Iterator,ast::Statement*(),Skipper>        statement;
         };
     }
