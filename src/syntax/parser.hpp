@@ -55,16 +55,14 @@ namespace shiranui{
             }
         private:
             void static do_annotate(ast::LocationInfo& li,Iterator f,Iterator l,Iterator first){
-                using std::distance;
                 li.line = get_line(f);
                 li.column = get_column(first,f);
-                li.length = distance(f,l);
+                li.length = std::distance(f,l);
             }
             void static do_annotate(ast::LocationInfo* li,Iterator f,Iterator l,Iterator first){
-                using std::distance;
                 li->line = get_line(f);
                 li->column = get_column(first,f);
-                li->length = distance(f,l);
+                li->length = std::distance(f,l);
             }
 
             static void do_annotate(...){
@@ -84,123 +82,122 @@ namespace shiranui{
                 auto set_location_info = annotate(qi::_val,qi::_1,qi::_3);
                 {
                     identifier.name("identifier");
-                    on_success(identifier,set_location_info);
                     identifier = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))];
+                    on_success(identifier,set_location_info);
                 }
 
                 {
                     integer.name("integer");
-                    on_success(integer,set_location_info);
                     integer    = qi::int_ [qi::_val = ph::new_<ast::Number>(qi::_1)];
+                    on_success(integer,set_location_info);
                 }
 
                 {
                     variable.name("variable");
-                    on_success(variable,set_location_info);
                     variable   = identifier [qi::_val = ph::new_<ast::Variable>(qi::_1)];
+                    on_success(variable,set_location_info);
                 }
                 {
                     function.name("function");
-                    on_success(function,set_location_info);
                     function   = (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
                                   [qi::_val = ph::new_<ast::Function>(qi::_1,qi::_2)]
                                | (lit("\\") > "(" > ")" > block)
                                   [qi::_val = ph::new_<ast::Function>(
                                               std::vector<ast::Identifier>(),qi::_1)]
                                ;
+                    on_success(function,set_location_info);
 
                 }
 
                 {
                     definement.name("definement");
-                    on_success(definement,set_location_info);
                     definement = ("let" > identifier > "=" > expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,true)]
                                | ("mut" > identifier > "=" > expression)
                                   [qi::_val = ph::new_<ast::Definement>(qi::_1,qi::_2,false)]
                                ;
+                    on_success(definement,set_location_info);
                 }
                 {
                     ifelse_stmt.name("if_else_statement");
-                    on_success(ifelse_stmt,set_location_info);
                     ifelse_stmt= ("if" >> expression >> "then" >> block >> "else" >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
                                | ("if" >> expression >> "then" >> block)
                                   [qi::_val = ph::new_<ast::IfElseStatement>(qi::_1,qi::_2)]
                                ;
+                    on_success(ifelse_stmt,set_location_info);
                 }
                 {
                     return_stmt.name("return_statement");
-                    on_success(return_stmt,set_location_info);
                     return_stmt = ("return" > expression)
                                  [qi::_val = ph::new_<ast::ReturnStatement>(qi::_1)]
                                 ;
+                    on_success(return_stmt,set_location_info);
                 }
                 {
                     block.name("block");
-                    on_success(block,set_location_info);
                     block = ("{" > *statement > "}")
                              [qi::_val = ph::new_<ast::Block>(qi::_1)]
                           ;
+                    on_success(block,set_location_info);
                 }
                 {
                     statement.name("statement");
-                    on_success(statement,set_location_info);
                     statement  = (definement > ";")
                                | ifelse_stmt
                                | block
                                | (return_stmt > ";")
                                ;
+                    on_success(statement,set_location_info);
                 }
 
                 {
                     expression.name("expression");
-                    on_success(expression,set_location_info);
                     expression = ifelse_expr [qi::_val = qi::_1]
                                | test [qi::_val = qi::_1]
                                ;
+                    on_success(expression,set_location_info);
                 }
 
                 {
                     ifelse_expr.name("if_else_expression");
-                    on_success(ifelse_expr,set_location_info);
                     ifelse_expr= ("if" >> expression >> "then" 
                                        >> expression >> "else" >> expression)
                                  [qi::_val = ph::new_<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
+                    on_success(ifelse_expr,set_location_info);
                 }
                 {
                     test.name("test");
-                    on_success(test,set_location_info);
                     test       = or_test [qi::_val = qi::_1];
+                    on_success(test,set_location_info);
                 }
                 {
                     or_test.name("or_test");
-                    on_success(or_test,set_location_info);
                     or_test    = and_test [qi::_val = qi::_1] >>
                                   *(("or" >> and_test)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("or",qi::_val,qi::_1)])
                                ;
+                    on_success(or_test,set_location_info);
                 }
                 {
                     and_test.name("and_test");
-                    on_success(and_test,set_location_info);
                     and_test   = not_test [qi::_val = qi::_1] >> 
                                  *(("and" >> not_test)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("and",qi::_val,qi::_1)])
                                ;
+                    on_success(and_test,set_location_info);
                 }
                 {
                     not_test.name("not_test");
-                    on_success(not_test,set_location_info);
                     not_test   = ("not" >> not_test)
                                   [qi::_val = ph::new_<ast::UnaryOperator>("not",qi::_1)]
                                | comparison [qi::_val = qi::_1]
                                ;
+                    on_success(not_test,set_location_info);
                 }
 
                 {
                     comparison.name("comparison");
-                    on_success(comparison,set_location_info);
                     // TODO add >,<,<=,>=,...
                     comparison = addi [qi::_val = qi::_1] >> 
                                  *(("=" >> addi)
@@ -209,11 +206,11 @@ namespace shiranui{
                                    [qi::_val = ph::new_<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
                                   )
                                ;
+                    on_success(comparison,set_location_info);
                 }
 
                 {
                     addi.name("addi");
-                    on_success(addi,set_location_info);
                     addi       = multi [qi::_val = qi::_1] >> 
                                  *(('+' >> addi)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("+",qi::_val,qi::_1)]
@@ -221,11 +218,11 @@ namespace shiranui{
                                    [qi::_val = ph::new_<ast::BinaryOperator>("-",qi::_val,qi::_1)]
                                   )
                                ;
+                    on_success(addi,set_location_info);
                 }
 
                 {
                     multi.name("multi");
-                    on_success(multi,set_location_info);
                     multi      = unary [qi::_val = qi::_1] >>
                                  *(('*' >> unary)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("*",qi::_val,qi::_1)]
@@ -236,21 +233,20 @@ namespace shiranui{
 
                                   )
                                ;
+                    on_success(multi,set_location_info);
                 }
                 {
                     unary.name("unary");
-                    on_success(unary,set_location_info);
-                    // .alias() not work.
                     unary      = power [qi::_val = qi::_1]
                                | ("+" >> unary)
                                   [qi::_val = ph::new_<ast::UnaryOperator>("+",qi::_1)]
                                | ("-" >> unary)
                                   [qi::_val = ph::new_<ast::UnaryOperator>("-",qi::_1)]
                                ;
+                    on_success(unary,set_location_info);
                 }
                 {
                     power.name("power");
-                    on_success(power,set_location_info);
                     power      = atom [qi::_val = qi::_1] >>
                                  *(('^' >> atom)
                                    [qi::_val = ph::new_<ast::BinaryOperator>("^",qi::_val,qi::_1)]
@@ -261,20 +257,20 @@ namespace shiranui{
                                                         qi::_val,std::vector<ast::Expression*>())]
                                   )
                                ;
+                    on_success(power,set_location_info);
                 }
 
                 {
                     atom.name("atom");
-                    on_success(atom,set_location_info);
                     atom       = ("(" > expression > ")")
                                | integer
                                | variable
                                | function
                                ;
+                    on_success(atom,set_location_info);
                 }
                 {
                     flyline.name("flyline");
-                    on_success(flyline,set_location_info);
                     // change expression to expression or error.
                     // add eol or something like that.
                     // do not use no_skip contains expression
@@ -283,10 +279,10 @@ namespace shiranui{
                             | ("#-" > expression > "->" > ";")
                                [qi::_val = ph::new_<ast::FlyLine>(qi::_1)]
                             ;
+                    on_success(flyline,set_location_info);
                 }
                 {
                     source.name("source");
-                    on_success(source,set_location_info);
                     source = qi::eps [qi::_val = ph::new_<ast::SourceCode>()]
                           >> *(statement 
                                 [ph::bind(&ast::SourceCode::add_statement,qi::_val,qi::_1)]
@@ -294,6 +290,7 @@ namespace shiranui{
                                 [ph::bind(&ast::SourceCode::add_flyline,qi::_val,qi::_1)]
                               )
                            ;
+                    on_success(source,set_location_info);
                 }
             }
             boost::phoenix::function<error_handler_f> handler;
