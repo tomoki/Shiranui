@@ -114,6 +114,7 @@ namespace shiranui{
                 int start_point = calc_point(source,sf->line,sf->column);
                 int end_point = start_point + sf->length;
                 std::stringstream ss;
+                ss << start_point << " " << end_point;
                 send_command(COMMAND_SYNTAXEROR,ss.str());
             }
         }
