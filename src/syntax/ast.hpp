@@ -60,14 +60,14 @@ namespace shiranui{
             };
             struct Block : Statement{
                 std::vector<sp<Statement>> statements;
-                Block(std::vector<Statement*> ss);
+                Block(std::vector<sp<Statement>> ss);
                 void accept(VisitorForAST&);
             };
 
             struct Function : Expression{
                 std::vector<Identifier> parameters;
                 sp<Block>               body;
-                Function(std::vector<Identifier> params,Block* ss);
+                Function(std::vector<Identifier> params,sp<Block> ss);
                 void accept(VisitorForAST&);
             };
 
@@ -75,29 +75,28 @@ namespace shiranui{
             struct FunctionCall : Expression{
                 sp<Expression> function;
                 std::vector<sp<Expression>> arguments;
-                FunctionCall(Expression* i,std::vector<Expression*> as);
+                FunctionCall(sp<Expression> i,std::vector<sp<Expression>> as);
                 void accept(VisitorForAST&);
             };
 
             struct BinaryOperator : Expression{
                 std::string op;
                 sp<Expression> left,right;
-                BinaryOperator(std::string o,Expression* l,Expression* r);
+                BinaryOperator(std::string o,sp<Expression> l,sp<Expression> r);
                 void accept(VisitorForAST&);
             };
             struct UnaryOperator : Expression{
                 std::string op;
                 sp<Expression> exp;
-                UnaryOperator(std::string o,Expression* e);
+                UnaryOperator(std::string o,sp<Expression> e);
                 void accept(VisitorForAST&);
             };
-
 
             struct IfElseExpression : Expression{
                 sp<Expression> pred;
                 sp<Expression> ife;
                 sp<Expression> elsee;
-                IfElseExpression(Expression* p,Expression* ib,Expression* eb);
+                IfElseExpression(sp<Expression> p,sp<Expression> ib,sp<Expression> eb);
                 void accept(VisitorForAST&);
             };
 
@@ -106,35 +105,35 @@ namespace shiranui{
                 Identifier id;
                 sp<Expression> value;
                 bool is_const;
-                Definement(Identifier i,Expression *e,bool isc);
+                Definement(Identifier i,sp<Expression> e,bool isc);
                 void accept(VisitorForAST&);
             };
             struct IfElseStatement : Statement{
                 sp<Expression> pred;
                 sp<Block> ifblock;
                 sp<Block> elseblock;
-                IfElseStatement(Expression* e,Block* iblock);
-                IfElseStatement(Expression* e,Block* iblock,Block* eblock);
+                IfElseStatement(sp<Expression> e,sp<Block> iblock);
+                IfElseStatement(sp<Expression> e,sp<Block> iblock,sp<Block> eblock);
                 void accept(VisitorForAST&);
             };
             struct ReturnStatement : Statement{
                 sp<Expression> value;
-                ReturnStatement(Expression* e);
+                ReturnStatement(sp<Expression> e);
                 void accept(VisitorForAST&);
             };
             struct FlyLine : LocationInfo{
                 sp<Expression> left,right;
-                explicit FlyLine(Expression*);
-                explicit FlyLine(Expression*,Expression*);
+                explicit FlyLine(sp<Expression>);
+                explicit FlyLine(sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
-                explicit SourceCode(std::vector<Statement*> ss);
+                explicit SourceCode(std::vector<sp<Statement>> ss);
                 SourceCode();
-                void add_statement(Statement* s);
-                void add_flyline(FlyLine* s);
+                void add_statement(sp<Statement> s);
+                void add_flyline(sp<FlyLine> s);
                 void accept(VisitorForAST&);
             };
         }

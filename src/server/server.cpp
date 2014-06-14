@@ -5,6 +5,7 @@ namespace shiranui{
     namespace server{
         const std::string COMMAND_LOAD = "load";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
+        int calc_point(const std::string&,int,int);
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
             int cnt = 1;
@@ -57,10 +58,13 @@ namespace shiranui{
             }
         }
         // copy string because pos_iterator_t needs its reference.
-        void PipeServer::on_receive_load_command(std::string source){
+        // this is first path.I don't want to compute flyline.
+        void PipeServer::on_receive_load_command(std::string source_){
             using namespace shiranui;
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
+            source = source_;
+            // delete program;
             Runner r;
             ast::PrettyPrinterForAST printer(std::cerr);
             value::PrettyPrinterForValue printer_for_value(std::cerr);
@@ -68,6 +72,7 @@ namespace shiranui{
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
+            // TODO:swap.
             Parser<pos_iterator_t> resolver(first);
             try{
                 ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
@@ -83,8 +88,8 @@ namespace shiranui{
                 // first path,shiranui doesn't eval flytestline.
                 try{
                     program->accept(r);
-                    //r.cur.v->accept(printer_for_value);
-                    //std::cerr << std::endl;
+                    current_runner = r;
+                    send_run_flyline();
                 }catch(NoSuchVariableException e){
                     //std::cerr << "No such variable: ";
                     //e.where->accept(printer);
@@ -103,6 +108,30 @@ namespace shiranui{
                 ss << std::distance(first,iter) << " " << std::distance(first,last);
                 send_command(COMMAND_SYNTAXEROR,ss.str());
             }
+        }
+        void PipeServer::send_run_flyline(){
+            for(sp<syntax::ast::FlyLine> sf : program->flylines){
+                int start_point = calc_point(source,sf->line,sf->column);
+                int end_point = start_point + sf->length;
+                std::stringstream ss;
+                send_command(COMMAND_SYNTAXEROR,ss.str());
+            }
+        }
+        int calc_point(const std::string& source,int line,int column){
+            int li=1,co=1;
+            int point = 1;
+            for(const char& c : source){
+                if(line == li and column == co){
+                    return point;
+                }
+                if(c == '\n'){
+                    co = 1;li++;
+                }else{
+                    co++;
+                }
+                point++;
+            }
+            return -1;
         }
     }
 }

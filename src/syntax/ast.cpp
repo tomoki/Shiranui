@@ -21,83 +21,70 @@ namespace shiranui{
             String::String(std::vector<char> v):value(v.begin(),v.end()) {}
 
             // Block
-            Block::Block(std::vector<Statement*> ss){
-                for(auto s : ss){
-                    statements.push_back(sp<Statement>(s));
-                }
+            Block::Block(std::vector<sp<Statement>> ss)
+                : statements(ss){
             }
             // Function
-            Function::Function(std::vector<Identifier> params,Block* ss)
+            Function::Function(std::vector<Identifier> params,sp<Block> ss)
                 : parameters(params),body(ss){
             }
 
             // FunctionCall
-            FunctionCall::FunctionCall(Expression* i,std::vector<Expression*> as){
-                function = sp<Expression>(i);
-                for(Expression* e : as){
-                    arguments.push_back(sp<Expression>(e));
-                }
+            FunctionCall::FunctionCall(sp<Expression> i,std::vector<sp<Expression>> as)
+                : function(i),arguments(as){
             }
 
             // BinaryOperator
-            BinaryOperator::BinaryOperator(std::string o,Expression* l,Expression* r){
-                left = sp<Expression>(l);
-                right = sp<Expression>(r);
-                op = o;
+            BinaryOperator::BinaryOperator(std::string o,sp<Expression> l,sp<Expression> r)
+                : op(o),left(l),right(r){
             }
             // UnaryOperator
-            UnaryOperator::UnaryOperator(std::string o,Expression* e){
-                op = o;
-                exp = sp<Expression>(e);
+            UnaryOperator::UnaryOperator(std::string o,sp<Expression> e)
+                : op(o),exp(e){
             }
 
             // IfElseExpression
-            IfElseExpression::IfElseExpression(Expression* p,Expression* ib,Expression* eb){
-                pred = sp<Expression>(p);
-                ife  = sp<Expression>(ib);
-                elsee= sp<Expression>(eb);
+            IfElseExpression::IfElseExpression(sp<Expression> p,sp<Expression> ib,sp<Expression> eb)
+                : pred(p),ife(ib),elsee(eb){
             }
 
             // Definement
-            Definement::Definement(Identifier i,Expression *e,bool isc)
+            Definement::Definement(Identifier i,sp<Expression> e,bool isc)
                 : id(i),value(e),is_const(isc) {}
 
             // IfElseStatement
-            IfElseStatement::IfElseStatement(Expression* e,Block* iblock)
+            IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock)
                 : pred(e),ifblock(iblock),elseblock(new Block({})){
             }
-            IfElseStatement::IfElseStatement(Expression* e,Block* iblock,Block* eblock)
+            IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock,sp<Block> eblock)
                 : pred(e),ifblock(iblock),elseblock(eblock){
             }
 
             // ReturnStatement
-            ReturnStatement::ReturnStatement(Expression* e)
+            ReturnStatement::ReturnStatement(sp<Expression> e)
                 : value(e){
             }
 
             // FlyLine
-            FlyLine::FlyLine(Expression* l)
+            FlyLine::FlyLine(sp<Expression> l)
                 : left(l){
             }
-            FlyLine::FlyLine(Expression* l,Expression* r)
+            FlyLine::FlyLine(sp<Expression> l,sp<Expression> r)
                 : left(l),right(r){
             }
 
             // SourceCode
             SourceCode::SourceCode(){
             }
-            SourceCode::SourceCode(std::vector<Statement*> ss){
-                for(Statement* s : ss){
-                    statements.push_back(sp<Statement>(s));
-                }
+            SourceCode::SourceCode(std::vector<sp<Statement>> ss)
+                : statements(ss){
             }
-            void SourceCode::add_statement(Statement* s){
-                statements.push_back(sp<Statement>(s));
+            void SourceCode::add_statement(sp<Statement> s){
+                statements.push_back(s);
             }
-            void SourceCode::add_flyline(FlyLine* l){
-                flylines.push_back(sp<FlyLine>(l));
+            void SourceCode::add_flyline(sp<FlyLine> l){
+                flylines.push_back(l);
             }
-
             // LocationInfo
         }
     }

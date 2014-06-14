@@ -20,13 +20,14 @@ void repl(){
         std::cout << "> ";
         std::string str;
         std::getline(std::cin,str);
+        str += "\n";
         if(std::cin.eof()){
             std::cerr << "good bye shirei" << std::endl;
             return;
         }
         pos_iterator_t first(str.begin()),last(str.end());
         pos_iterator_t iter = first;
-        ast::SourceCode* program;
+        sp<ast::SourceCode> program;
         bool ok = false;
         try{
             Parser<pos_iterator_t> resolver(first);
@@ -65,10 +66,8 @@ void repl(){
             std::cout << "remaining: '" << std::string(iter, last) << "'\n";
             std::cout << "-------------------------\n";
         }
-        free(program);
     }
 }
-
 void start_server(){
     shiranui::server::PipeServer server(std::cin,std::cout);
     server.start();
