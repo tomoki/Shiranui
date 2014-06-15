@@ -125,7 +125,7 @@ namespace shiranui{
                         cur.v = std::make_shared<Integer>(l->value%r->value);
                     }else if(bop.op == "^"){
                     }else{
-                        throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(&bop));
+                        throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
                     return;
                 }
