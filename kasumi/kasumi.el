@@ -24,6 +24,11 @@
   "load")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
+(defconst kasumi-command-goodflyline
+  "goodflyline")
+(defconst kasumi-command-badflyline
+  "badflyline")
+
 
 ;; getline needs newline("\n")
 (defun buffer-string-no-properties ()
@@ -99,6 +104,10 @@
         (value   (cdr pair-command-value)))
     (cond ((string= command kasumi-command-syntaxerror)
            (kasumi-receive-syntaxerror value))
+          ((string= command kasumi-command-goodflyline)
+           (kasumi-receive-goodflyline value))
+          ((string= command kasumi-command-badflyline)
+           (kasumi-receive-badflyline value))
           (t (message "unknown command:%s " command))
           )))
 
@@ -115,6 +124,18 @@
         (kasumi-put-syntaxerror (string-to-number (nth 0 beg-end-list))
                                 (string-to-number (nth 1 beg-end-list)))
         )))
+
+(defun kasumi-receive-goodflyline (value)
+  (let ((beg-end-list (split-string value " ")))
+    (kasumi-put-goodflyline (string-to-number (nth 0 beg-end-list))
+                            (string-to-number (nth 1 beg-end-list)))
+    ))
+(defun kasumi-receive-badflyline (value)
+  (let ((beg-end-list (split-string value " ")))
+    (kasumi-put-badflyline (string-to-number (nth 0 beg-end-list))
+                            (string-to-number (nth 1 beg-end-list)))
+    ))
+
 (defun kasumi-send-load ()
   (interactive)
   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
@@ -126,13 +147,37 @@
      :underline t :inherit error))
     "Used for syntaxerror")
 
-(defun kasumi-put-syntaxerror (beg end)
+(defface kasumi-goodflyline-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Green1"))
+    (t
+     :underline t :inherit error))
+    "Used for flyline that passed test")
+
+(defface kasumi-badflyline-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Red1"))
+    (t
+     :underline t :inherit error))
+    "Used for flyline that didn't pass test")
+
+(defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
       (progn
         (overlay-put ol 'category 'kasumi-face)
-        (overlay-put ol 'face 'kasumi-syntaxerror-face)
+        (overlay-put ol 'face face)
         ol))))
+
+(defun kasumi-put-syntaxerror (beg end)
+  (kasumi-put-face 'kasumi-syntaxerror-face beg end))
+
+(defun kasumi-put-goodflyline (beg end)
+  (kasumi-put-face 'kasumi-goodflyline-face beg end))
+
+(defun kasumi-put-badflyline (beg end)
+  (kasumi-put-face 'kasumi-badflyline-face beg end))
+
 
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))

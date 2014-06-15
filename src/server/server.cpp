@@ -5,6 +5,9 @@ namespace shiranui{
     namespace server{
         const std::string COMMAND_LOAD = "load";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
+        const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
+        const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
+        const std::string COMMAND_BAD_FLYLINE = "badflyline";
         int calc_point(const std::string&,int,int);
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
@@ -31,6 +34,22 @@ namespace shiranui{
                 os << how_many_lines(value) << " " << command << std::endl;
             }
             send_lock.unlock();
+        }
+        void PipeServer::send_simple_command(const std::string& command,
+                                             const int& start_point,
+                                             const int& end_point){
+            std::stringstream ss;
+            ss << start_point << " " << end_point;
+            return send_command(command,ss.str());
+        }
+        void PipeServer::send_syntaxerror(const int& start_point,const int& end_point){
+            return send_simple_command(COMMAND_SYNTAXEROR,start_point,end_point);
+        }
+        void PipeServer::send_good_flyline(const int& start_point,const int& end_point){
+            return send_simple_command(COMMAND_GOOD_FLYLINE,start_point,end_point);
+        }
+        void PipeServer::send_bad_flyline(const int& start_point,const int& end_point){
+            return send_simple_command(COMMAND_BAD_FLYLINE,start_point,end_point);
         }
         // call from thread.
         void PipeServer::receive_command(){
@@ -72,15 +91,12 @@ namespace shiranui{
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
-            // TODO:swap.
             Parser<pos_iterator_t> resolver(first);
             try{
                 ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
                         boost::spirit::qi::space,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
-                std::stringstream ss;
-                ss << std::distance(first,x.first) << " " << std::distance(first,x.last);
-                send_command(COMMAND_SYNTAXEROR,ss.str());
+                send_syntaxerror(std::distance(first,x.first),std::distance(first,x.last));
                 return;
             }
 
@@ -104,18 +120,37 @@ namespace shiranui{
                     //std::cerr << std::endl;
                 }
             }else{
-                std::stringstream ss;
-                ss << std::distance(first,iter) << " " << std::distance(first,last);
-                send_command(COMMAND_SYNTAXEROR,ss.str());
+                send_syntaxerror(std::distance(first,iter),std::distance(first,last));
             }
         }
         void PipeServer::send_run_flyline(){
-            for(sp<syntax::ast::FlyLine> sf : program->flylines){
+            using namespace syntax::ast;
+            using namespace runtime::value;
+            using namespace shiranui::runtime;
+            for(sp<FlyLine> sf : program->flylines){
                 int start_point = calc_point(source,sf->line,sf->column);
                 int end_point = start_point + sf->length;
-                std::stringstream ss;
-                ss << start_point << " " << end_point;
-                send_command(COMMAND_SYNTAXEROR,ss.str());
+                if(sf->right != nullptr){
+                    auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
+                    try{
+                        bin->accept(current_runner);
+                    }catch(NoSuchVariableException e){
+                    }catch(ConvertException e){
+                    }catch(RuntimeException e){
+                    }
+
+                    sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(current_runner.cur.v);
+                    if(b != nullptr){
+                        if(b->value){
+                            send_good_flyline(start_point,end_point);
+                        }else{
+                            send_bad_flyline(start_point,end_point);
+                        }
+                    }else{
+                        send_syntaxerror(start_point,end_point);
+                    }
+                }else{
+                }
             }
         }
         int calc_point(const std::string& source,int line,int column){
