@@ -135,8 +135,14 @@ namespace shiranui{
                     try{
                         bin->accept(current_runner);
                     }catch(NoSuchVariableException e){
+                        send_syntaxerror(start_point,end_point);
+                        continue;
                     }catch(ConvertException e){
+                        send_syntaxerror(start_point,end_point);
+                        continue;
                     }catch(RuntimeException e){
+                        send_syntaxerror(start_point,end_point);
+                        continue;
                     }
 
                     sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(current_runner.cur.v);

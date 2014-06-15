@@ -42,7 +42,7 @@ namespace shiranui{
                 return;
             }else{
                 // is it really ok?
-                throw NoSuchVariableException(sp<syntax::ast::Variable>(&var));
+                throw NoSuchVariableException(std::make_shared<syntax::ast::Variable>(var));
             }
         }
         void Runner::visit(syntax::ast::Number& num){
@@ -73,7 +73,7 @@ namespace shiranui{
                 sp<UserFunction> f = std::dynamic_pointer_cast<UserFunction>(func);
                 if(f != nullptr){
                     if(fc.arguments.size() != f->parameters.size()){
-                        throw ConvertException(sp<syntax::ast::FunctionCall>(&fc));
+                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }
                     Runner inner(this);
                     for(int i=0;i<f->parameters.size();i++){
@@ -95,7 +95,7 @@ namespace shiranui{
 //             if(f != nullptr){
 //                 return;
 //             }
-            throw ConvertException(sp<syntax::ast::FunctionCall>(&fc));
+            throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
         }
         void Runner::visit(syntax::ast::BinaryOperator& bop){
             bop.left->accept(*this);
@@ -103,7 +103,7 @@ namespace shiranui{
             bop.right->accept(*this);
             sp<Value> right = cur.v;
             if(typeid(*left) != typeid(*right)){
-                throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+                throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
             }
             {
                 sp<Integer> l = std::dynamic_pointer_cast<Integer>(left);
@@ -125,7 +125,7 @@ namespace shiranui{
                         cur.v = std::make_shared<Integer>(l->value%r->value);
                     }else if(bop.op == "^"){
                     }else{
-                        throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+                        throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(&bop));
                     }
                     return;
                 }
@@ -143,12 +143,12 @@ namespace shiranui{
                     }else if(bop.op == "or"){
                         cur.v = std::make_shared<Boolean>(l->value or r->value);
                     }else{
-                        throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+                        throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
                     return;
                 }
             }
-            throw ConvertException(sp<syntax::ast::BinaryOperator>(&bop));
+            throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
             if(bop.op == "="){
             }else if(bop.op == "/="){
             }else if(bop.op == "+"){
