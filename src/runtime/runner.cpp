@@ -128,14 +128,21 @@ namespace shiranui{
                                 throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                             }
                             fc.arguments[0]->accept(*this);
-                            sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
-                            if(s == nullptr){
-                                throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
-                            }else{
-                                // replace this.
-                                std::cout << s->value;
-                                // cur.v = 
+                            {
+                                sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
+                                if(s != nullptr){
+                                    std::cout << s->value << std::endl;
+                                    return;
+                                }
                             }
+                            {
+                                sp<Integer> s = std::dynamic_pointer_cast<Integer>(cur.v);
+                                if(s != nullptr){
+                                    std::cout << s->value << std::endl;
+                                    return;
+                                }
+                            }
+                            throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                             return;
                         }
                     }
