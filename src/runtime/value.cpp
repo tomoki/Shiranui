@@ -18,6 +18,12 @@ namespace shiranui{
                 v.visit(*this);
             }
 
+            // Return
+            Return::Return(Value* v) : value(v) {}
+            Return::Return(sp<Value> v) : value(v) {}
+            void Return::accept(VisitorForValue& v){
+                v.visit(*this);
+            }
             // Function
             UserFunction::UserFunction(std::vector<ast::Identifier> ps,
                                        sp<ast::Block>               b)
@@ -28,11 +34,20 @@ namespace shiranui{
                 v.visit(*this);
             }
 
-            // Return
-            Return::Return(Value* v) : value(v) {}
-            Return::Return(sp<Value> v) : value(v) {}
-            void Return::accept(VisitorForValue& v){
+            SystemCall::SystemCall(){
+                parameters = {ast::Identifier("str")};
+            }
+            void SystemCall::accept(VisitorForValue& v){
                 v.visit(*this);
+            }
+
+            namespace builtin{
+                PrintFunction::PrintFunction(){
+                    parameters = {ast::Identifier("str")};
+                }
+                void PrintFunction::accept(VisitorForValue& v){
+                    v.visit(*this);
+                }
             }
         }
     }
@@ -43,7 +58,7 @@ namespace shiranui{
         namespace value{
             PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_)
                 : os(os_){
-            }
+                }
             void PrettyPrinterForValue::visit(Integer& i){
                 os << i.value;
             }
@@ -70,6 +85,15 @@ namespace shiranui{
                 os << "(return ";
                 r.value->accept(*this);
                 os << ")";
+            }
+
+            // builtin
+            void PrettyPrinterForValue::visit(SystemCall& sc){
+                os << "system_call";
+            }
+
+            void PrettyPrinterForValue::visit(builtin::PrintFunction& f){
+                os << "print ";
             }
         }
     }

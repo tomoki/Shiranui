@@ -13,6 +13,8 @@ namespace shiranui{
         using shiranui::runtime::value::Function;
         using shiranui::runtime::value::UserFunction;
         using shiranui::runtime::value::Return;
+        using shiranui::runtime::value::SystemCall;
+        using shiranui::runtime::value::builtin::PrintFunction;
         ValEnv::ValEnv(){
             v = std::make_shared<Integer>(0);
             e = std::make_shared<Environment>();
@@ -37,6 +39,10 @@ namespace shiranui{
             return;
         }
         void Runner::visit(syntax::ast::Variable& var){
+            if(var.value.name == "system_call"){
+                cur.v = std::make_shared<SystemCall>();
+                return;
+            }
             if(cur.e->has(var.value)){
                 cur.v = cur.e->get(var.value);
                 return;
@@ -91,10 +97,29 @@ namespace shiranui{
                     return;
                 }
             }
-//            f = std::dynamic_pointer_cast<BuiltinFunction>(func);
-//             if(f != nullptr){
-//                 return;
-//             }
+            {
+                sp<SystemCall> f = std::dynamic_pointer_cast<SystemCall>(func);
+                if(f != nullptr){
+                    if(fc.arguments.size() != 1){
+                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                    }
+                    fc.arguments[0]->accept(*this);
+                    sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
+                    if(s == nullptr){
+                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                    }else{
+                        if(s->value == "print"){
+                            cur.v = std::make_shared<PrintFunction>();
+                        }else{
+                            throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                        }
+                    }
+                    return;
+                }
+            }
+            {
+                sp<SystemCall> f = std::dynamic_pointer_cast<SystemCall>(func);
+            }
             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
         }
         void Runner::visit(syntax::ast::BinaryOperator& bop){

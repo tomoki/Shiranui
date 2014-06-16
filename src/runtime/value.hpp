@@ -43,6 +43,12 @@ namespace shiranui{
                 explicit Boolean(bool);
                 void accept(VisitorForValue&);
             };
+            struct Return : Value{
+                sp<Value> value;
+                Return(Value*);
+                Return(sp<Value>);
+                void accept(VisitorForValue&);
+            };
             struct Function : Value{
                 std::vector<ast::Identifier> parameters;
             };
@@ -51,12 +57,18 @@ namespace shiranui{
                 UserFunction(std::vector<ast::Identifier>,sp<ast::Block>);
                 void accept(VisitorForValue&);
             };
-            struct Return : Value{
-                sp<Value> value;
-                Return(Value*);
-                Return(sp<Value>);
+            struct SystemCall : Function{
+                SystemCall();
                 void accept(VisitorForValue&);
             };
+            struct BuiltinFunction : Function{
+            };
+            namespace builtin{
+                struct PrintFunction : BuiltinFunction{
+                    PrintFunction();
+                    void accept(VisitorForValue&);
+                };
+            }
         }
     }
 }
@@ -66,11 +78,14 @@ namespace shiranui{
         namespace value{
             struct VisitorForValue{
                 virtual ~VisitorForValue(){}
-                virtual void visit(Integer&)      = 0;
-                virtual void visit(String&)       = 0;
-                virtual void visit(Boolean&)      = 0;
-                virtual void visit(UserFunction&) = 0;
-                virtual void visit(Return&)       = 0;
+                virtual void visit(Integer&)                      = 0;
+                virtual void visit(String&)                       = 0;
+                virtual void visit(Boolean&)                      = 0;
+                virtual void visit(UserFunction&)                 = 0;
+                virtual void visit(Return&)                       = 0;
+                virtual void visit(SystemCall&)                   = 0;
+                // builtin
+                virtual void visit(builtin::PrintFunction&)       = 0;
             };
             struct PrettyPrinterForValue : VisitorForValue{
                 std::ostream& os;
@@ -80,6 +95,8 @@ namespace shiranui{
                 void visit(Boolean&);
                 void visit(UserFunction&);
                 void visit(Return&);
+                void visit(SystemCall&);
+                void visit(builtin::PrintFunction&);
             };
         }
     }
