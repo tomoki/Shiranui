@@ -151,6 +151,8 @@ int main(int argc,char **argv){
         test(str);
         return 0;
     }
+    // otherwise
+    repl();
 
     return 0;
 }
