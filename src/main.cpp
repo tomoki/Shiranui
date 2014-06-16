@@ -95,11 +95,11 @@ void test(const std::string content){
         return;
     }
     if(ok and iter == last){
-        program->accept(printer);
+        //program->accept(printer);
         try{
             program->accept(r);
-            r.cur.v->accept(printer_for_value);
-            std::cerr << std::endl;
+            //r.cur.v->accept(printer_for_value);
+            //std::cerr << std::endl;
         }catch(NoSuchVariableException e){
             std::cerr << "No such variable: ";
             e.where->accept(printer);

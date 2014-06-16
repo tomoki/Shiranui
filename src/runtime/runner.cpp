@@ -14,6 +14,7 @@ namespace shiranui{
         using shiranui::runtime::value::UserFunction;
         using shiranui::runtime::value::Return;
         using shiranui::runtime::value::SystemCall;
+        using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::builtin::PrintFunction;
         ValEnv::ValEnv(){
             v = std::make_shared<Integer>(0);
@@ -118,7 +119,27 @@ namespace shiranui{
                 }
             }
             {
-                sp<SystemCall> f = std::dynamic_pointer_cast<SystemCall>(func);
+                sp<BuiltinFunction> f = std::dynamic_pointer_cast<BuiltinFunction>(func);
+                if(f != nullptr){
+                    {
+                        sp<PrintFunction> p = std::dynamic_pointer_cast<PrintFunction>(f);
+                        if(p != nullptr){
+                            if(fc.arguments.size() != 1){
+                                throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                            }
+                            fc.arguments[0]->accept(*this);
+                            sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
+                            if(s == nullptr){
+                                throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                            }else{
+                                // replace this.
+                                std::cout << s->value;
+                                // cur.v = 
+                            }
+                            return;
+                        }
+                    }
+                }
             }
             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
         }

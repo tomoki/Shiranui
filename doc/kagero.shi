@@ -1,27 +1,7 @@
 let true = 1=1;
 let false = 1/=1;
 
-#- pow(2,10) -> 1024
-let pow = \(x,n){
-    if n = 0 then{
-        return 1;
-    }else{
-        let r = pow(x*x,n/2);
-        if n % 2 = 1 then{
-            return r * x;
-        }else{
-            return r;
-        }
-    }
+let print = \(s){
+    return system_call("print")(s);
 };
-let gcd = \(a,b){
-    if b = 0 then{
-        return a;
-    }else{
-        return gcd(b,a%b);
-    }
-};
-let lcm = \(a,b){
-    return a*b / gcd(a,b);
-};
-
+let unit = print("HelloWorld");
