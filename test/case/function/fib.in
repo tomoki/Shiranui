@@ -1,0 +1,16 @@
+let fib = \(n){
+    if n = 0 or n = 1 then {
+        return 1;
+    }else{
+        return fib(n-1) + fib(n-2);
+    }
+};
+
+let unit = print(fib(0));
+let unit = print(fib(1));
+let unit = print(fib(2));
+let unit = print(fib(3));
+let unit = print(fib(4));
+let unit = print(fib(5));
+let unit = print(fib(6));
+let unit = print(fib(7));

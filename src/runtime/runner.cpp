@@ -78,16 +78,17 @@ namespace shiranui{
                     if(fc.arguments.size() != f->parameters.size()){
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }
-                    Runner inner(this);
-                    inner.cur.e = f->env;
+                    sp<Environment> before = this->cur.e;
+                    sp<Environment> call_env = std::make_shared<Environment>(f->env);
                     for(int i=0;i<f->parameters.size();i++){
                         fc.arguments[i]->accept(*this);
                         // it is not const.
-                        inner.cur.e->define(f->parameters[i],cur.v,false);
+                        call_env->define(f->parameters[i],cur.v,false);
                     }
-
-                    f->body->accept(inner);
-                    sp<Return> ret = std::dynamic_pointer_cast<Return>(inner.cur.v);
+                    this->cur.e = call_env;
+                    f->body->accept(*this);
+                    this->cur.e = before;
+                    sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur.v);
                     if(ret == nullptr){
                         std::cerr << "WARN: this is not return value." << std::endl;
                     }else{
