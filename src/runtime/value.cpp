@@ -26,8 +26,9 @@ namespace shiranui{
             }
             // Function
             UserFunction::UserFunction(std::vector<ast::Identifier> ps,
-                                       sp<ast::Block>               b)
-                : body(b) {
+                                       sp<ast::Block> b,
+                                       sp<environment::Environment> e)
+                : body(b),env(e){
                     parameters = ps;
             }
             void UserFunction::accept(VisitorForValue& v){

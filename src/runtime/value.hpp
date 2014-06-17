@@ -3,6 +3,7 @@
 
 #include <string>
 #include "../syntax/ast.hpp"
+
 namespace shiranui{
     namespace syntax{
         namespace ast{
@@ -17,6 +18,13 @@ namespace shiranui{
     namespace runtime{
         namespace value{
             struct VisitorForValue;
+        }
+    }
+}
+namespace shiranui{
+    namespace runtime{
+        namespace environment{
+            struct Environment;
         }
     }
 }
@@ -54,7 +62,9 @@ namespace shiranui{
             };
             struct UserFunction : Function{
                 sp<ast::Block> body;
-                UserFunction(std::vector<ast::Identifier>,sp<ast::Block>);
+                sp<environment::Environment> env;
+                UserFunction(std::vector<ast::Identifier>,sp<ast::Block>,
+                             sp<environment::Environment>);
                 void accept(VisitorForValue&);
             };
             struct SystemCall : Function{

@@ -20,10 +20,6 @@ namespace shiranui{
             v = std::make_shared<Integer>(0);
             e = std::make_shared<Environment>();
         }
-        ValEnv::ValEnv(Environment* e_){
-            v = std::make_shared<Integer>(0);
-            e = std::make_shared<Environment>(e_);
-        }
         ValEnv::ValEnv(sp<Environment> e_){
             v = std::make_shared<Integer>(0);
             e = std::make_shared<Environment>(e_);
@@ -70,7 +66,7 @@ namespace shiranui{
             }
         }
         void Runner::visit(syntax::ast::Function& f){
-            cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body));
+            cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body,cur.e));
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
             fc.function->accept(*this);
@@ -83,11 +79,13 @@ namespace shiranui{
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }
                     Runner inner(this);
+                    inner.cur.e = f->env;
                     for(int i=0;i<f->parameters.size();i++){
                         fc.arguments[i]->accept(*this);
                         // it is not const.
                         inner.cur.e->define(f->parameters[i],cur.v,false);
                     }
+
                     f->body->accept(inner);
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(inner.cur.v);
                     if(ret == nullptr){
@@ -257,6 +255,11 @@ namespace shiranui{
         }
 
         void Runner::visit(syntax::ast::Assignment& assign){
+            if(cur.e->has(assign.id) and
+               not cur.e->is_const(assign.id)){
+                assign.value->accept(*this);
+                cur.e->set(assign.id,cur.v);
+            }
             return;
         }
 

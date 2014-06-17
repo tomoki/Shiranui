@@ -8,4 +8,4 @@ let f = \(){
     return a;
 };
 
-let unit = print();
+let unit = print(f());
