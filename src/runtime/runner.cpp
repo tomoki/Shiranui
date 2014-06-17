@@ -255,10 +255,16 @@ namespace shiranui{
             }
             return;
         }
+
+        void Runner::visit(syntax::ast::Assignment& assign){
+            return;
+        }
+
         // do not eval firsttime.
         void Runner::visit(syntax::ast::FlyLine& line){
             return;
         }
+
         void Runner::visit(syntax::ast::SourceCode& sc){
             for(auto s : sc.statements){
                 s->accept(*this);

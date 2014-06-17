@@ -65,6 +65,8 @@ namespace shiranui{
                 : value(e){
             }
 
+            Assignment::Assignment(Identifier i,sp<Expression> e)
+                : id(i),value(e){}
             // FlyLine
             FlyLine::FlyLine(sp<Expression> l)
                 : left(l){
@@ -130,6 +132,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void IfElseStatement ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void Assignment       ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void FlyLine          ::accept(VisitorForAST& visitor){
@@ -229,6 +234,12 @@ namespace shiranui{
                 os << "return ";
                 ret.value->accept(*this);
             }
+            void PrettyPrinterForAST::visit(syntax::ast::Assignment& l){
+                l.id.accept(*this);
+                os << " <- ";
+                l.value->accept(*this);
+            }
+
             void PrettyPrinterForAST::visit(syntax::ast::FlyLine& l){
                 os << "#- ";
                 l.left->accept(*this);

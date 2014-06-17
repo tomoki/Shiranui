@@ -116,6 +116,12 @@ namespace shiranui{
                 IfElseStatement(sp<Expression> e,sp<Block> iblock,sp<Block> eblock);
                 void accept(VisitorForAST&);
             };
+            struct Assignment : Statement{
+                Identifier id;
+                sp<Expression> value;
+                Assignment(Identifier,sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct ReturnStatement : Statement{
                 sp<Expression> value;
                 ReturnStatement(sp<Expression> e);
@@ -157,6 +163,7 @@ namespace shiranui{
                 virtual void visit(Definement&)       = 0;
                 virtual void visit(ReturnStatement&)  = 0;
                 virtual void visit(IfElseStatement&)  = 0;
+                virtual void visit(Assignment&)       = 0;
                 virtual void visit(FlyLine&)          = 0;
                 virtual void visit(SourceCode&)       = 0;
             };
@@ -176,6 +183,7 @@ namespace shiranui{
                 void visit(Definement&);
                 void visit(ReturnStatement&);
                 void visit(IfElseStatement&);
+                void visit(Assignment&);
                 void visit(FlyLine&);
                 void visit(SourceCode&);
             };

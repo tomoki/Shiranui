@@ -162,8 +162,16 @@ namespace shiranui{
                     on_success(block,set_location_info);
                 }
                 {
+                    assignment.name("assignment");
+                    assignment = (identifier >> "<-" >> expression)
+                                  [qi::_val = qi_make_shared<ast::Assignment>(qi::_1,qi::_2)]
+                               ;
+                    on_success(assignment,set_location_info);
+                }
+                {
                     statement.name("statement");
                     statement  = (definement > ";")
+                               | (assignment > ";")
                                | ifelse_stmt
                                | block
                                | (return_stmt > ";")
@@ -339,6 +347,7 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,sp<ast::ReturnStatement>(),Skipper>  return_stmt;
             boost::spirit::qi::rule<Iterator,sp<ast::IfElseExpression>(),Skipper> ifelse_expr;
             boost::spirit::qi::rule<Iterator,sp<ast::Block>(),Skipper>            block;
+            boost::spirit::qi::rule<Iterator,sp<ast::Assignment>(),Skipper>        assignment;
             boost::spirit::qi::rule<Iterator,sp<ast::FlyLine>(),Skipper>          flyline;
             boost::spirit::qi::rule<Iterator,sp<ast::Statement>(),Skipper>        statement;
         };
