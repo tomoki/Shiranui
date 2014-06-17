@@ -164,12 +164,14 @@ namespace shiranui{
                 os << str.value;
             }
             void PrettyPrinterForAST::visit(syntax::ast::Block& block){
-                os << "{" << std::endl;
+                os << ind() << "{" << std::endl;
+                indent += 1;
                 for(auto& s : block.statements){
                     s->accept(*this);
                     os << std::endl;
                 }
-                os << "}";
+                indent -= 1;
+                os << ind() << "}";
             }
             void PrettyPrinterForAST::visit(syntax::ast::Function& func){
                 os << "\\(";
@@ -192,7 +194,6 @@ namespace shiranui{
                     }
                 }
                 os << ")";
-
             }
             void PrettyPrinterForAST::visit(syntax::ast::BinaryOperator& bop){
                 os << "(";
@@ -207,7 +208,7 @@ namespace shiranui{
                 os << ")";
             }
             void PrettyPrinterForAST::visit(syntax::ast::IfElseExpression& iee){
-                os << "if ";
+                os << ind() << "if ";
                 iee.pred->accept(*this);
                 os << " then" << std::endl;
                 iee.ife->accept(*this);
@@ -217,31 +218,35 @@ namespace shiranui{
                 os << std::endl;
             }
             void PrettyPrinterForAST::visit(syntax::ast::IfElseStatement& ies){
-                os << "if ";
+                os << ind() << "if ";
                 ies.pred->accept(*this);
-                os << " then ";
+                os << " then " << std::endl;
                 ies.ifblock->accept(*this);
                 os << " else " << std::endl;
                 ies.elseblock->accept(*this);
             }
             void PrettyPrinterForAST::visit(syntax::ast::Definement& def){
-                os << (def.is_const?"let ":"mut ");
+                os << ind() << (def.is_const?"let ":"mut ");
                 def.id.accept(*this);
-                os << " -> ";
+                os << " = ";
                 def.value->accept(*this);
+                os << ";";
             }
             void PrettyPrinterForAST::visit(syntax::ast::ReturnStatement& ret){
-                os << "return ";
+                os << ind() << "return ";
                 ret.value->accept(*this);
+                os << ";";
             }
             void PrettyPrinterForAST::visit(syntax::ast::Assignment& l){
+                os << ind();
                 l.id.accept(*this);
                 os << " <- ";
                 l.value->accept(*this);
+                os << ";";
             }
 
             void PrettyPrinterForAST::visit(syntax::ast::FlyLine& l){
-                os << "#- ";
+                os << ind() << "#- ";
                 l.left->accept(*this);
             }
             void PrettyPrinterForAST::visit(syntax::ast::SourceCode& sc){
@@ -254,7 +259,9 @@ namespace shiranui{
                     os << std::endl;
                 }
             }
-
+            std::string PrettyPrinterForAST::ind(){
+                return std::string(indent*4,' ');
+            }
         }
     }
 }

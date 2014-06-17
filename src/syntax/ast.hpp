@@ -169,7 +169,8 @@ namespace shiranui{
             };
             struct PrettyPrinterForAST : VisitorForAST{
                 std::ostream& os;
-                PrettyPrinterForAST(std::ostream& o) : os(o) {};
+                int indent;
+                PrettyPrinterForAST(std::ostream& o) : os(o),indent(0) {};
                 void visit(Identifier&);
                 void visit(Variable&);
                 void visit(Number&);
@@ -186,6 +187,7 @@ namespace shiranui{
                 void visit(Assignment&);
                 void visit(FlyLine&);
                 void visit(SourceCode&);
+                std::string ind();
             };
 
         }

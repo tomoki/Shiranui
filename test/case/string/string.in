@@ -1,2 +1,6 @@
 let unit = print("Hello");
 let unit = print("Hello" + "World");
+let unit = print("Hello" = "Hello");
+let unit = print("Hello" = "World");
+let unit = print("Hello" /= "Hello");
+let unit = print("Hello" /= "World");
