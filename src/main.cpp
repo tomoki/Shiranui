@@ -130,6 +130,7 @@ int main(int argc,char **argv){
     opt.add_options()
         ("help,h","print help message")
         ("server,s","run Shiranui in server mode")
+        ("kagero,k",po::value<std::string>(),"Specify Kagero(Standard) library path")
         ("exec,e",po::value<std::string>(),"execute given file")
     ;
     po::variables_map vm;
@@ -148,6 +149,15 @@ int main(int argc,char **argv){
         std::fstream fs(filename);
         std::string str((std::istreambuf_iterator<char>(fs)),
                          std::istreambuf_iterator<char>());
+        if(vm.count("kagero")){
+            std::string filename = vm["kagero"].as<std::string>();
+            std::fstream fs(filename);
+            str = (std::string((std::istreambuf_iterator<char>(fs)),
+                               (std::istreambuf_iterator<char>()))) 
+                  + str;
+
+        }
+        std::cout << str << std::endl;
         test(str);
         return 0;
     }
