@@ -7,12 +7,13 @@
 CURDIR=`dirname $0`
 INPUTS=`find $CURDIR/case -type f -name "*.in" | sort`
 PROG=$1
+KAGERO=$2
 TIME=2s
 
-if [ $# -eq 0  ]
+if [ $# -le 1  ]
 then
     echo "Pass program as first argument."
-    echo "ex: ./test.sh ./a.out"
+    echo "ex: ./test.sh ./a.out kagero"
     exit 1
 fi
 
@@ -27,7 +28,7 @@ do
     if [ -e $output ]
     then
         tmp=`mktemp`
-        time timeout $TIME $PROG -e $input > $tmp
+        timeout $TIME $PROG -e $input -k $KAGERO > $tmp
         d=`diff $output $tmp -Z`
         if [ ${#d} -eq 0 ]
         then

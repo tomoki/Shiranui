@@ -157,7 +157,6 @@ int main(int argc,char **argv){
                   + str;
 
         }
-        std::cout << str << std::endl;
         test(str);
         return 0;
     }
