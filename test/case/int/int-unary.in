@@ -1,0 +1,2 @@
+let unit = print(-1);
+let unit = print(--1);

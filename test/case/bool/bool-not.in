@@ -1,0 +1,2 @@
+let unit = print(not true);
+let unit = print(not false);
