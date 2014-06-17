@@ -1,0 +1,12 @@
+let sum = \(n){
+    mut a = 0;
+    for i in [0..N) {
+        a <- a + i;
+    }
+    return a;
+};
+
+let unit = print(sum(1));
+let unit = print(sum(2));
+let unit = print(sum(3));
+let unit = print(sum(4));
