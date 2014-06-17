@@ -1,6 +1,5 @@
-let true = 1=1;
-let false = 1/=1;
-
 let print = \(s){
     return system_call("print")(s);
 };
+
+let unit = print(1);

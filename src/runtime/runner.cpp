@@ -258,6 +258,5 @@ namespace shiranui{
             }
             return;
         }
-
     }
 }
