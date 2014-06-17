@@ -1,0 +1,9 @@
+let f = \(n){
+    if n = 1 then {
+        return 1;
+    } else {
+        return 1 + f(n-1);
+    }
+};
+
+let unit = print(f(10));

@@ -1,0 +1,7 @@
+let f = \(n){
+    return \(){
+        return n;
+    };
+};
+
+let unit = print(f(3)());

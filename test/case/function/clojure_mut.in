@@ -1,0 +1,11 @@
+let f = \(){
+    mut a = 0;
+    let g = \(){
+        a <- 3;
+        return 0;
+    };
+    let unused = g();
+    return a;
+};
+
+let unit = print();
