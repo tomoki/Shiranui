@@ -142,6 +142,13 @@ namespace shiranui{
                                     return;
                                 }
                             }
+                            {
+                                sp<Boolean> s = std::dynamic_pointer_cast<Boolean>(cur.v);
+                                if(s != nullptr){
+                                    std::cout << (s->value?"true":"false") << std::endl;
+                                    return;
+                                }
+                            }
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                             return;
                         }
