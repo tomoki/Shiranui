@@ -49,6 +49,8 @@ done
 if [ $cnt -eq $suc ]
 then
     echo -e "\033[0;32mAll test Passed!!\033[0;39m"
+    exit 0
 else
     echo -e "\033[0;31mSome test failed.("`expr $cnt - $suc`"/$cnt)\033[0;39m"
+    exit 1
 fi
