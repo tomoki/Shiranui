@@ -1,0 +1,13 @@
+let gen = \(){
+    mut n = 0;
+    let a = \(){
+        n <- n + 1;
+        return n;
+    };
+    return a;
+};
+
+let a = gen();
+let unit = print(a());
+let unit = print(a());
+let unit = print(a());
