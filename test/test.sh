@@ -6,16 +6,16 @@
 
 CURDIR=`dirname $0`
 INPUTS=`find $CURDIR/case -type f -name "*.in" | sort`
-PROG=$1
-KAGERO=$2
+PROG=$CURDIR/../src/shiranui
+KAGERO=$CURDIR/../lib/kagero.shi
 TIME=2s
 
-if [ $# -le 1  ]
-then
-    echo "Pass program as first argument."
-    echo "ex: ./test.sh ./a.out kagero"
-    exit 1
-fi
+# if [ $# -le 1  ]
+# then
+#     echo "Pass program as first argument."
+#     echo "ex: ./test.sh ./a.out kagero"
+#     exit 1
+# fi
 
 cnt=0
 suc=0
