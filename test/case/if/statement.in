@@ -1,0 +1,35 @@
+let f = \(){
+    if true then {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+let g = \(){
+    if true then {
+        return true;
+    }
+    return false;
+};
+
+let f2 = \(){
+    if false then {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+let g2 = \(){
+    if false then {
+        return true;
+    }
+    return false;
+};
+
+
+let unit = print(f());
+let unit = print(g());
+let unit = print(f2());
+let unit = print(g2());
