@@ -1,5 +1,0 @@
-let print = \(s){
-    return system_call("print")(s);
-};
-
-let unit = print("Hello World");
