@@ -207,6 +207,23 @@ namespace shiranui{
                     return;
                 }
             }
+            {
+                sp<String> l = std::dynamic_pointer_cast<String>(left);
+                sp<String> r = std::dynamic_pointer_cast<String>(right);
+                if(l != nullptr and r != nullptr){
+                    if(bop.op == "="){
+                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                    }else if(bop.op == "/="){
+                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                    }else if(bop.op == "+"){
+                        cur.v = std::make_shared<String>(l->value+r->value);
+                    }else{
+                        throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
+                    }
+                    return;
+                }
+
+            }
             throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
             if(bop.op == "="){
             }else if(bop.op == "/="){
@@ -222,11 +239,31 @@ namespace shiranui{
 
         }
         void Runner::visit(syntax::ast::UnaryOperator& uop){
-                  if(uop.op == "not"){
-            }else if(uop.op == "+"){
-            }else if(uop.op == "-"){
+            uop.exp->accept(*this);
+            sp<Value> v_ = cur.v;
+            {
+                sp<Integer> v = std::dynamic_pointer_cast<Integer>(v_);
+                if(v != nullptr){
+                    if(uop.op == "+"){
+                        cur.v = v;
+                        return;
+                    }else if(uop.op == "-"){
+                        cur.v = std::make_shared<Integer>(-(v->value));
+                        return;
+                    }
+                }
             }
-            return;
+            {
+                sp<Boolean> v = std::dynamic_pointer_cast<Boolean>(v_);
+                if(v != nullptr){
+                    if(uop.op == "not"){
+                        cur.v = std::make_shared<Boolean>(not (v->value));
+                        return;
+                    }
+                }
+            }
+
+            throw ConvertException(std::make_shared<syntax::ast::UnaryOperator>(uop));
         }
         void Runner::visit(syntax::ast::IfElseExpression&){
             return;
