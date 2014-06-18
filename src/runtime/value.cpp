@@ -85,6 +85,22 @@ namespace shiranui{
                     }
                     return nullptr;
                 }
+                LengthFunction::LengthFunction(){
+                    name = "len";
+                    parameters = {ast::Identifier("array")};
+                }
+                sp<Value> LengthFunction::run(std::vector<sp<Value>> args){
+                    if(args.size() != 1){
+                        return nullptr;
+                    }
+                    {
+                        sp<Array> s = std::dynamic_pointer_cast<Array>(args[0]);
+                        if(s != nullptr){
+                            return std::make_shared<Integer>(s->value.size());
+                        }
+                    }
+                    return nullptr;
+                }
             }
         }
     }

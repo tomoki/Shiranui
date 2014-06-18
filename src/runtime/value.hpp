@@ -87,6 +87,11 @@ namespace shiranui{
                     PrintFunction();
                     sp<Value> run(std::vector<sp<Value>>);
                 };
+                struct LengthFunction: BuiltinFunction{
+                    LengthFunction();
+                    sp<Value> run(std::vector<sp<Value>>);
+                };
+
             }
         }
     }

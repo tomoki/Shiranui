@@ -17,6 +17,7 @@ namespace shiranui{
         using shiranui::runtime::value::SystemCall;
         using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::builtin::PrintFunction;
+        using shiranui::runtime::value::builtin::LengthFunction;
         ValEnv::ValEnv(){
             v = std::make_shared<Integer>(0);
             e = std::make_shared<Environment>();
@@ -167,6 +168,9 @@ namespace shiranui{
                     }else{
                         if(s->value == "print"){
                             cur.v = std::make_shared<PrintFunction>();
+                        }else if(s->value == "length"){
+                            cur.v = std::make_shared<LengthFunction>();
+                        }else if(s->value == "len"){
                         }else{
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                         }
@@ -189,7 +193,6 @@ namespace shiranui{
                         }else{
                             cur.v = ret;
                         }
-                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                         return;
                     }
                 }
