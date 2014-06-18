@@ -51,6 +51,11 @@ namespace shiranui{
                 explicit Boolean(bool);
                 void accept(VisitorForValue&);
             };
+            struct Array : Value{
+                std::vector<sp<Value>> value;
+                explicit Array(std::vector<sp<Value>>);
+                void accept(VisitorForValue&);
+            };
             struct Return : Value{
                 sp<Value> value;
                 Return(Value*);
@@ -91,6 +96,7 @@ namespace shiranui{
                 virtual void visit(Integer&)                      = 0;
                 virtual void visit(String&)                       = 0;
                 virtual void visit(Boolean&)                      = 0;
+                virtual void visit(Array&)                        = 0;
                 virtual void visit(UserFunction&)                 = 0;
                 virtual void visit(Return&)                       = 0;
                 virtual void visit(SystemCall&)                   = 0;
@@ -103,6 +109,7 @@ namespace shiranui{
                 void visit(Integer&);
                 void visit(String&);
                 void visit(Boolean&);
+                void visit(Array&);
                 void visit(UserFunction&);
                 void visit(Return&);
                 void visit(SystemCall&);

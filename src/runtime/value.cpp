@@ -18,6 +18,12 @@ namespace shiranui{
                 v.visit(*this);
             }
 
+            Array::Array(std::vector<sp<Value>> v) : value(v) {}
+            void Array::accept(VisitorForValue& v){
+                v.visit(*this);
+            }
+
+
             // Return
             Return::Return(Value* v) : value(v) {}
             Return::Return(sp<Value> v) : value(v) {}
@@ -68,6 +74,14 @@ namespace shiranui{
             }
             void PrettyPrinterForValue::visit(Boolean& b){
                 os << (b.value?"true":"false");
+            }
+            void PrettyPrinterForValue::visit(Array& a){
+                os << "[";
+                for(sp<Value> v : a.value){
+                    v->accept(*this);
+                    os << ",";
+                }
+                os << "]";
             }
             void PrettyPrinterForValue::visit(UserFunction& f){
                 using shiranui::syntax::ast::PrettyPrinterForAST;

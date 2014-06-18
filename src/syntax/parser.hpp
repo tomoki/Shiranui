@@ -113,6 +113,16 @@ namespace shiranui{
                 }
 
                 {
+                    array.name("array");
+                    array = (qi::lexeme["["] >> "]")
+                             [qi::_val = qi_make_shared<ast::Enum>()]
+                          | ("[" >> (expression % ",") >> "]")
+                             [qi::_val = qi_make_shared<ast::Enum>(qi::_1)]
+                          // | ("[" >> expression ".." >> expression >> "]")
+                          // | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
+                          ;
+                }
+                {
                     variable.name("variable");
                     variable   = identifier [qi::_val = qi_make_shared<ast::Variable>(qi::_1)];
                     on_success(variable,set_location_info);
@@ -293,6 +303,7 @@ namespace shiranui{
                     atom       = ("(" > expression > ")")
                                | integer
                                | string
+                               | array
                                | variable
                                | function
                                ;
@@ -340,6 +351,7 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,sp<ast::SourceCode>(),Skipper>       source;
             boost::spirit::qi::rule<Iterator,sp<ast::Number>()>                   integer;
             boost::spirit::qi::rule<Iterator,sp<ast::String>()>                   string;
+            boost::spirit::qi::rule<Iterator,sp<ast::Array>(),Skipper>            array;
             boost::spirit::qi::rule<Iterator,sp<ast::Function>(),Skipper>         function;
             boost::spirit::qi::rule<Iterator,sp<ast::Variable>()>                 variable;
             boost::spirit::qi::rule<Iterator,sp<ast::Definement>(),Skipper>       definement;

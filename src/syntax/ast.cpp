@@ -20,6 +20,8 @@ namespace shiranui{
             String::String(std::string v):value(v) {}
             String::String(std::vector<char> v):value(v.begin(),v.end()) {}
 
+            Enum::Enum(std::vector<sp<Expression>> es) : expressions(es) {};
+            Enum::Enum() {};
             // Block
             Block::Block(std::vector<sp<Statement>> ss)
                 : statements(ss){
@@ -107,6 +109,10 @@ namespace shiranui{
             void String          ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
+            void Enum            ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+
             void Block           ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
@@ -163,6 +169,14 @@ namespace shiranui{
             void PrettyPrinterForAST::visit(syntax::ast::String& str){
                 os << str.value;
             }
+            void PrettyPrinterForAST::visit(syntax::ast::Enum& enu){
+                os << "[";
+                for(sp<Expression> exp : enu.expressions){
+                    exp->accept(*this);
+                }
+                os << "]";
+            }
+
             void PrettyPrinterForAST::visit(syntax::ast::Block& block){
                 os << ind() << "{" << std::endl;
                 indent += 1;

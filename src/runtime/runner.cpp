@@ -9,6 +9,7 @@ namespace shiranui{
         using shiranui::runtime::value::Value;
         using shiranui::runtime::value::Integer;
         using shiranui::runtime::value::String;
+        using shiranui::runtime::value::Array;
         using shiranui::runtime::value::Boolean;
         using shiranui::runtime::value::Function;
         using shiranui::runtime::value::UserFunction;
@@ -53,6 +54,14 @@ namespace shiranui{
         }
         void Runner::visit(syntax::ast::String& s){
             cur.v = std::make_shared<String>(s.value);
+        }
+        void Runner::visit(syntax::ast::Enum& e){
+            std::vector<sp<Value>> vs;
+            for(sp<syntax::ast::Expression> exp : e.expressions){
+                exp->accept(*this);
+                vs.push_back(cur.v);
+            }
+            cur.v = std::make_shared<Array>(vs);
         }
         void Runner::visit(syntax::ast::Block& block){
             Runner br(this);
