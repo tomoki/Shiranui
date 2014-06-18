@@ -1,12 +1,12 @@
 let is_odd = \(n){
-    if n = 0 then{
+    if n = 0 {
         return false;
     }else{
         return is_even(n-1);
     }
 };
 let is_even = \(n){
-    if n = 0 then{
+    if n = 0 {
         return true;
     }else{
         return is_odd(n-1);

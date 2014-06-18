@@ -152,13 +152,17 @@ namespace shiranui{
                 }
                 {
                     ifelse_stmt.name("if_else_statement");
-                    ifelse_stmt= ("if" >> expression >> "then" >> block >> "else" >> block)
+                    ifelse_stmt= ("if" >> expression >> block >> "else" >> block)
                                   [qi::_val = qi_make_shared<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
-                               | ("if" >> expression >> "then" >> block)
+                               | ("if" >> expression >> block)
                                   [qi::_val = qi_make_shared<ast::IfElseStatement>(qi::_1,qi::_2)]
                                ;
                     on_success(ifelse_stmt,set_location_info);
                 }
+//                {
+//                    for_stmt.name("for_statement");
+//                    for_stmt = ("for" >> identifier >> "in" >> expression >> block);
+//                }
                 {
                     return_stmt.name("return_statement");
                     return_stmt = ("return" > expression)

@@ -1,5 +1,5 @@
 let f = \(){
-    if true then {
+    if true {
         return true;
     } else {
         return false;
@@ -7,14 +7,14 @@ let f = \(){
 };
 
 let g = \(){
-    if true then {
+    if true {
         return true;
     }
     return false;
 };
 
 let f2 = \(){
-    if false then {
+    if false {
         return true;
     } else {
         return false;
@@ -22,7 +22,7 @@ let f2 = \(){
 };
 
 let g2 = \(){
-    if false then {
+    if false {
         return true;
     }
     return false;

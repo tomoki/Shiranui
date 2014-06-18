@@ -1,0 +1,12 @@
+let sum = \(ar){
+    mut ret = 0;
+    for i in ar {
+        ret <- ret + i;
+    };
+    return ret;
+};
+
+let unit = print(sum([]));
+let unit = print(sum([1]));
+let unit = print(sum([1,2]));
+let unit = print(sum([1,2,1+1+1]));
