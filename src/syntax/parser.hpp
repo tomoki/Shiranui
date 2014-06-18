@@ -252,7 +252,15 @@ namespace shiranui{
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1)]
                                  | ("/=" >> addi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
-                                  )
+                                 | ("<" >> addi)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<",qi::_val,qi::_1)]
+                                 | ("<=" >> addi)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<=",qi::_val,qi::_1)]
+                                 | (">" >> addi)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">",qi::_val,qi::_1)]
+                                 | (">=" >> addi)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">=",qi::_val,qi::_1)]
+                                 )
                                ;
                     on_success(comparison,set_location_info);
                 }

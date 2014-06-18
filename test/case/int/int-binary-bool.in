@@ -1,0 +1,20 @@
+let unit = print(1 < 1);
+let unit = print(1 <= 1);
+let unit = print(1 = 1);
+let unit = print(1 /= 1);
+let unit = print(1 > 1);
+let unit = print(1 >= 1);
+
+let unit = print(2 < 1);
+let unit = print(2 <= 1);
+let unit = print(2 = 1);
+let unit = print(2 /= 1);
+let unit = print(2 > 1);
+let unit = print(2 >= 1);
+
+let unit = print(2 <  3);
+let unit = print(2 <= 3);
+let unit = print(2 =  3);
+let unit = print(2 /= 3);
+let unit = print(2 >  3);
+let unit = print(2 >= 3);

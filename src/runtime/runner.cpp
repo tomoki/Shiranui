@@ -217,6 +217,14 @@ namespace shiranui{
                         cur.v = std::make_shared<Boolean>(l->value == r->value);
                     }else if(bop.op == "/="){
                         cur.v = std::make_shared<Boolean>(l->value != r->value);
+                    }else if(bop.op == "<"){
+                        cur.v = std::make_shared<Boolean>(l->value < r->value);
+                    }else if(bop.op == "<="){
+                        cur.v = std::make_shared<Boolean>(l->value <= r->value);
+                    }else if(bop.op == ">"){
+                        cur.v = std::make_shared<Boolean>(l->value > r->value);
+                    }else if(bop.op == ">="){
+                        cur.v = std::make_shared<Boolean>(l->value >= r->value);
                     }else if(bop.op == "+"){
                         cur.v = std::make_shared<Integer>(l->value+r->value);
                     }else if(bop.op == "-"){
