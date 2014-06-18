@@ -250,7 +250,7 @@ namespace shiranui{
                     comparison = addi [qi::_val = qi::_1] >> 
                                  *(("=" >> addi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1)]
-                                 | ("/=" >> multi)
+                                 | ("/=" >> addi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
                                   )
                                ;
@@ -260,7 +260,7 @@ namespace shiranui{
                 {
                     addi.name("addi");
                     addi       = multi [qi::_val = qi::_1] >> 
-                                 *(('+' >> addi)
+                                 *(('+' >> multi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("+",qi::_val,qi::_1)]
                                  | ('-' >> multi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("-",qi::_val,qi::_1)]
