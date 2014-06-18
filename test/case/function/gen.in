@@ -11,3 +11,5 @@ let a = gen();
 let unit = print(a());
 let unit = print(a());
 let unit = print(a());
+let b = gen();
+let unit = print(b());
