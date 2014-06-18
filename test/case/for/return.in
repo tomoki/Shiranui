@@ -1,0 +1,13 @@
+let f = \(n){
+    for i in [1..n]{
+        if i = n/2 {
+            return i;
+        }
+    }
+    return 0;
+};
+
+let unit = print(f(2));
+let unit = print(f(4));
+let unit = print(f(0));
+

@@ -1,6 +1,6 @@
 let sum = \(n){
     mut a = 0;
-    for i in [0..N) {
+    for i in [0..n-1] {
         a <- a + i;
     }
     return a;

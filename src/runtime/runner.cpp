@@ -113,15 +113,17 @@ namespace shiranui{
         }
 
         void Runner::visit(syntax::ast::Block& block){
-            Runner br(this);
+            sp<Environment> before = cur.e;
+            sp<Environment> inner = std::make_shared<Environment>(cur.e);
+            cur.e = inner;
             for(auto& st : block.statements){
-                st->accept(br);
-                cur.v = br.cur.v;
+                st->accept(*this);
                 sp<Return> r = std::dynamic_pointer_cast<Return>(cur.v);
                 if(r != nullptr){
-                    return;
+                    break;
                 }
             }
+            cur.e = before;
         }
         void Runner::visit(syntax::ast::Function& f){
             cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body,cur.e));
@@ -334,7 +336,26 @@ namespace shiranui{
             }
             return;
         }
-
+        void Runner::visit(syntax::ast::ForStatement& fors){
+            fors.loop_exp->accept(*this);
+            sp<Array> arr = std::dynamic_pointer_cast<Array>(cur.v);
+            if(arr == nullptr){
+                throw ConvertException(fors.loop_exp);
+            }
+            sp<Environment> before = cur.e;
+            for(sp<Value> v : arr->value){
+                sp<Environment> inner = std::make_shared<Environment>(before);
+                inner->define(fors.loop_var,v,false);
+                cur.e = inner;
+                fors.block->accept(*this);
+                sp<Return> ret = std::dynamic_pointer_cast<Return>(cur.v);
+                if(ret != nullptr){
+                    break;
+                }
+            }
+            cur.e = before;
+            return;
+        }
         void Runner::visit(syntax::ast::Assignment& assign){
             if(cur.e->has(assign.id) and
                not cur.e->is_const(assign.id)){

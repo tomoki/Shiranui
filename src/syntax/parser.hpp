@@ -123,6 +123,7 @@ namespace shiranui{
                           | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
                              [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3)]
                           ;
+                    on_success(array,set_location_info);
                 }
                 {
                     variable.name("variable");
@@ -159,10 +160,12 @@ namespace shiranui{
                                ;
                     on_success(ifelse_stmt,set_location_info);
                 }
-//                {
-//                    for_stmt.name("for_statement");
-//                    for_stmt = ("for" >> identifier >> "in" >> expression >> block);
-//                }
+                {
+                    for_stmt.name("for_statement");
+                    for_stmt = ("for" > identifier > "in" > expression > block)
+                                [qi::_val = qi_make_shared<ast::ForStatement>(qi::_1,qi::_2,qi::_3)];
+                    on_success(for_stmt,set_location_info);
+                }
                 {
                     return_stmt.name("return_statement");
                     return_stmt = ("return" > expression)
@@ -189,6 +192,7 @@ namespace shiranui{
                     statement  = (definement > ";")
                                | (assignment > ";")
                                | ifelse_stmt
+                               | for_stmt
                                | block
                                | (return_stmt > ";")
                                ;
@@ -362,6 +366,7 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,sp<ast::Variable>()>                 variable;
             boost::spirit::qi::rule<Iterator,sp<ast::Definement>(),Skipper>       definement;
             boost::spirit::qi::rule<Iterator,sp<ast::IfElseStatement>(),Skipper>  ifelse_stmt;
+            boost::spirit::qi::rule<Iterator,sp<ast::ForStatement>(),Skipper>     for_stmt;
             boost::spirit::qi::rule<Iterator,sp<ast::ReturnStatement>(),Skipper>  return_stmt;
             boost::spirit::qi::rule<Iterator,sp<ast::IfElseExpression>(),Skipper> ifelse_expr;
             boost::spirit::qi::rule<Iterator,sp<ast::Block>(),Skipper>            block;

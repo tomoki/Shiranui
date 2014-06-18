@@ -67,6 +67,8 @@ namespace shiranui{
             IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock,sp<Block> eblock)
                 : pred(e),ifblock(iblock),elseblock(eblock){
             }
+            ForStatement::ForStatement(Identifier i,sp<Expression> e,sp<Block> b)
+                : loop_var(i),loop_exp(e),block(b) {}
 
             // ReturnStatement
             ReturnStatement::ReturnStatement(sp<Expression> e)
@@ -147,6 +149,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void IfElseStatement ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void ForStatement    ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void Assignment       ::accept(VisitorForAST& visitor){
@@ -256,11 +261,20 @@ namespace shiranui{
             void PrettyPrinterForAST::visit(syntax::ast::IfElseStatement& ies){
                 os << ind() << "if ";
                 ies.pred->accept(*this);
-                os << " then " << std::endl;
+                os << " ";
                 ies.ifblock->accept(*this);
-                os << " else " << std::endl;
+                os << " else ";
                 ies.elseblock->accept(*this);
             }
+            void PrettyPrinterForAST::visit(syntax::ast::ForStatement& fo){
+                os << ind() << "for ";
+                fo.loop_var.accept(*this);
+                os << " in ";
+                fo.loop_exp->accept(*this);
+                os << " ";
+                fo.block->accept(*this);
+            }
+
             void PrettyPrinterForAST::visit(syntax::ast::Definement& def){
                 os << ind() << (def.is_const?"let ":"mut ");
                 def.id.accept(*this);
