@@ -63,6 +63,54 @@ namespace shiranui{
             }
             cur.v = std::make_shared<Array>(vs);
         }
+        void Runner::visit(syntax::ast::Interval& intr){
+            sp<Value> start,end,next;
+            {
+                intr.start->accept(*this);
+                start = cur.v;
+                intr.end->accept(*this);
+                end = cur.v;
+                if(intr.next != nullptr){
+                    intr.next->accept(*this);
+                    next = cur.v;
+                }
+            }
+            {
+                sp<Integer> s = std::dynamic_pointer_cast<Integer>(start);
+                sp<Integer> e = std::dynamic_pointer_cast<Integer>(end);
+                if(s != nullptr and e != nullptr){
+                    if(next != nullptr){
+                        sp<Integer> n = std::dynamic_pointer_cast<Integer>(next);
+                        if(n == nullptr){
+                            throw ConvertException(std::make_shared<syntax::ast::Interval>(intr));
+                        }
+                        if(s->value == n->value){
+                            throw RangeException(std::make_shared<syntax::ast::Interval>(intr));
+                        }
+                        std::vector<sp<Value>> vs;
+                        if(s->value <= e->value){
+                            for(int i=s->value;i<=e->value;i+=(n->value-s->value)){
+                                vs.push_back(std::make_shared<Integer>(i));
+                            }
+                        }else{
+                            for(int i=s->value;i>=e->value;i+=(n->value-s->value)){
+                                vs.push_back(std::make_shared<Integer>(i));
+                            }
+                        }
+                        cur.v = std::make_shared<Array>(vs);
+                    }else{
+                        std::vector<sp<Value>> vs;
+                        for(int i=s->value;i<=e->value;i+=1){
+                            vs.push_back(std::make_shared<Integer>(i));
+                        }
+                        cur.v = std::make_shared<Array>(vs);
+                    }
+                    return;
+                }
+            }
+            throw ConvertException(std::make_shared<syntax::ast::Interval>(intr));
+        }
+
         void Runner::visit(syntax::ast::Block& block){
             Runner br(this);
             for(auto& st : block.statements){

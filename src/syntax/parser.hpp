@@ -118,8 +118,10 @@ namespace shiranui{
                              [qi::_val = qi_make_shared<ast::Enum>()]
                           | ("[" >> (expression % ",") >> "]")
                              [qi::_val = qi_make_shared<ast::Enum>(qi::_1)]
-                          // | ("[" >> expression ".." >> expression >> "]")
-                          // | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
+                          | ("[" >> expression >> ".." >> expression >> "]")
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2)]
+                          | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3)]
                           ;
                 }
                 {

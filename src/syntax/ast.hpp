@@ -62,11 +62,12 @@ namespace shiranui{
             struct Array : Expression{
                 virtual ~Array() {};
             };
-//            struct Interval : Array{
-//                sp<Expression> start,end,interval;
-//                explicit Interval(sp<Expression>,sp<Expression>);
-//                // Interval(sp<Expression>,sp<Expression>,sp<Expression>);
-//            };
+            struct Interval : Array{
+                sp<Expression> start,end,next;
+                Interval(sp<Expression>,sp<Expression>);
+                Interval(sp<Expression>,sp<Expression>,sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct Enum : Array{
                 std::vector<sp<Expression>> expressions;
                 explicit Enum(std::vector<sp<Expression>>);
@@ -171,6 +172,7 @@ namespace shiranui{
                 virtual void visit(Number&)           = 0;
                 virtual void visit(String&)           = 0;
                 virtual void visit(Enum&)             = 0;
+                virtual void visit(Interval&)         = 0;
                 virtual void visit(Block&)            = 0;
                 virtual void visit(Function&)         = 0;
                 virtual void visit(FunctionCall&)     = 0;
@@ -193,6 +195,7 @@ namespace shiranui{
                 void visit(Number&);
                 void visit(String&);
                 void visit(Enum&);
+                void visit(Interval&);
                 void visit(Block&);
                 void visit(Function&);
                 void visit(FunctionCall&);

@@ -22,6 +22,12 @@ namespace shiranui{
 
             Enum::Enum(std::vector<sp<Expression>> es) : expressions(es) {};
             Enum::Enum() {};
+
+            Interval::Interval(sp<Expression> s,sp<Expression> e)
+                                                : start(s),end(e) {}
+            Interval::Interval(sp<Expression> s,sp<Expression> n,sp<Expression> e)
+                                                : start(s),end(e),next(n) {}
+
             // Block
             Block::Block(std::vector<sp<Statement>> ss)
                 : statements(ss){
@@ -112,6 +118,9 @@ namespace shiranui{
             void Enum            ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
+            void Interval        ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
 
             void Block           ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
@@ -177,6 +186,19 @@ namespace shiranui{
                 os << "]";
             }
 
+            void PrettyPrinterForAST::visit(syntax::ast::Interval& intr){
+                os << "[";
+                intr.start->accept(*this);
+                os << ",";
+                if(intr.next != nullptr){
+                    intr.next->accept(*this);
+                }else{
+                    os << "?";
+                }
+                os << "..";
+                intr.end->accept(*this);
+                os << "]";
+            }
             void PrettyPrinterForAST::visit(syntax::ast::Block& block){
                 os << ind() << "{" << std::endl;
                 indent += 1;

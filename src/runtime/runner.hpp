@@ -20,6 +20,11 @@ namespace shiranui{
                 where = e;
             }
         };
+        struct RangeException : RuntimeException{
+            RangeException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct ValEnv{
             sp<value::Value> v;
             sp<environment::Environment> e;
@@ -37,6 +42,7 @@ namespace shiranui{
             void visit(syntax::ast::Number&);
             void visit(syntax::ast::String&);
             void visit(syntax::ast::Enum&);
+            void visit(syntax::ast::Interval&);
             void visit(syntax::ast::Block&);
             void visit(syntax::ast::Function&);
             void visit(syntax::ast::FunctionCall&);
