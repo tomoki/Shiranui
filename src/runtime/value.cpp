@@ -48,12 +48,42 @@ namespace shiranui{
                 v.visit(*this);
             }
 
+            void BuiltinFunction::accept(VisitorForValue& v){
+                v.visit(*this);
+            }
+
             namespace builtin{
                 PrintFunction::PrintFunction(){
+                    name = "print";
                     parameters = {ast::Identifier("str")};
                 }
-                void PrintFunction::accept(VisitorForValue& v){
-                    v.visit(*this);
+                sp<Value> PrintFunction::run(std::vector<sp<Value>> args){
+                    if(args.size() != 1){
+                        return nullptr;
+                    }
+                    {
+                        sp<String> s = std::dynamic_pointer_cast<String>(args[0]);
+                        if(s != nullptr){
+                            std::cout << s->value << std::endl;
+                            // TODO change to unit
+                            return s;
+                        }
+                    }
+                    {
+                        sp<Integer> s = std::dynamic_pointer_cast<Integer>(args[0]);
+                        if(s != nullptr){
+                            std::cout << s->value << std::endl;
+                            return s;
+                        }
+                    }
+                    {
+                        sp<Boolean> s = std::dynamic_pointer_cast<Boolean>(args[0]);
+                        if(s != nullptr){
+                            std::cout << (s->value?"true":"false") << std::endl;
+                            return s;
+                        }
+                    }
+                    return nullptr;
                 }
             }
         }
@@ -107,8 +137,8 @@ namespace shiranui{
                 os << "system_call";
             }
 
-            void PrettyPrinterForValue::visit(builtin::PrintFunction& f){
-                os << "print ";
+            void PrettyPrinterForValue::visit(BuiltinFunction& f){
+                os << f.name;
             }
         }
     }

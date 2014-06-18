@@ -77,11 +77,15 @@ namespace shiranui{
                 void accept(VisitorForValue&);
             };
             struct BuiltinFunction : Function{
+                std::string name;
+                void accept(VisitorForValue&);
+                // if run is fault,return nullptr.
+                virtual sp<Value> run(std::vector<sp<Value>>) = 0;
             };
             namespace builtin{
                 struct PrintFunction : BuiltinFunction{
                     PrintFunction();
-                    void accept(VisitorForValue&);
+                    sp<Value> run(std::vector<sp<Value>>);
                 };
             }
         }
@@ -101,7 +105,7 @@ namespace shiranui{
                 virtual void visit(Return&)                       = 0;
                 virtual void visit(SystemCall&)                   = 0;
                 // builtin
-                virtual void visit(builtin::PrintFunction&)       = 0;
+                virtual void visit(BuiltinFunction&)              = 0;
             };
             struct PrettyPrinterForValue : VisitorForValue{
                 std::ostream& os;
@@ -113,7 +117,7 @@ namespace shiranui{
                 void visit(UserFunction&);
                 void visit(Return&);
                 void visit(SystemCall&);
-                void visit(builtin::PrintFunction&);
+                void visit(BuiltinFunction&);
             };
         }
     }

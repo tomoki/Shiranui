@@ -178,36 +178,19 @@ namespace shiranui{
                 sp<BuiltinFunction> f = std::dynamic_pointer_cast<BuiltinFunction>(func);
                 if(f != nullptr){
                     {
-                        sp<PrintFunction> p = std::dynamic_pointer_cast<PrintFunction>(f);
-                        if(p != nullptr){
-                            if(fc.arguments.size() != 1){
-                                throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
-                            }
-                            fc.arguments[0]->accept(*this);
-                            {
-                                sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
-                                if(s != nullptr){
-                                    std::cout << s->value << std::endl;
-                                    return;
-                                }
-                            }
-                            {
-                                sp<Integer> s = std::dynamic_pointer_cast<Integer>(cur.v);
-                                if(s != nullptr){
-                                    std::cout << s->value << std::endl;
-                                    return;
-                                }
-                            }
-                            {
-                                sp<Boolean> s = std::dynamic_pointer_cast<Boolean>(cur.v);
-                                if(s != nullptr){
-                                    std::cout << (s->value?"true":"false") << std::endl;
-                                    return;
-                                }
-                            }
-                            throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
-                            return;
+                        std::vector<sp<Value>> arguments;
+                        for(sp<syntax::ast::Expression> arg : fc.arguments){
+                            arg->accept(*this);
+                            arguments.push_back(cur.v);
                         }
+                        sp<Value> ret = f->run(arguments);
+                        if(ret == nullptr){
+                            throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                        }else{
+                            cur.v = ret;
+                        }
+                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                        return;
                     }
                 }
             }
