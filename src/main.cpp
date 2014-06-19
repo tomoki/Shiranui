@@ -1,3 +1,4 @@
+#include "line_pos_iterator.hpp" // overwrite for temporary fix.
 #include <iostream>
 #include <fstream>
 #include <config.hpp>
