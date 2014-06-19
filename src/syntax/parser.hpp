@@ -119,9 +119,14 @@ namespace shiranui{
                           | ("[" >> (expression % ",") >> "]")
                              [qi::_val = qi_make_shared<ast::Enum>(qi::_1)]
                           | ("[" >> expression >> ".." >> expression >> "]")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2)]
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,nullptr,qi::_2,true)]
                           | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3)]
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3,true)]
+                          | ("[" >> expression >> ".." >> expression >> ")")
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,nullptr,qi::_2,false)]
+                          | ("[" >> expression >> "," >> expression >> ".." >> expression >> ")")
+                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3,false)]
+
                           ;
                     on_success(array,set_location_info);
                 }
@@ -246,7 +251,6 @@ namespace shiranui{
 
                 {
                     comparison.name("comparison");
-                    // TODO add >,<,<=,>=,...
                     comparison = addi [qi::_val = qi::_1] >> 
                                  *(("=" >> addi)
                                    [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1)]

@@ -80,32 +80,44 @@ namespace shiranui{
                 sp<Integer> s = std::dynamic_pointer_cast<Integer>(start);
                 sp<Integer> e = std::dynamic_pointer_cast<Integer>(end);
                 if(s != nullptr and e != nullptr){
+                    int change = 0;
                     if(next != nullptr){
                         sp<Integer> n = std::dynamic_pointer_cast<Integer>(next);
                         if(n == nullptr){
                             throw ConvertException(std::make_shared<syntax::ast::Interval>(intr));
                         }
-                        if(s->value == n->value){
+                        change = n->value - s->value;
+                        if(change == 0){
                             throw RangeException(std::make_shared<syntax::ast::Interval>(intr));
                         }
-                        std::vector<sp<Value>> vs;
-                        if(s->value <= e->value){
-                            for(int i=s->value;i<=e->value;i+=(n->value-s->value)){
+                    }
+                    std::vector<sp<Value>> vs;
+                    if(s->value <= e->value){
+                        // if next == nullptr
+                        if(change == 0) change = 1;
+                        if(intr.right_close){
+                            for(int i=s->value;i<=e->value;i+=change){
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }else{
-                            for(int i=s->value;i>=e->value;i+=(n->value-s->value)){
+                            for(int i=s->value;i<e->value;i+=change){
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }
-                        cur.v = std::make_shared<Array>(vs);
                     }else{
-                        std::vector<sp<Value>> vs;
-                        for(int i=s->value;i<=e->value;i+=1){
-                            vs.push_back(std::make_shared<Integer>(i));
+                        // if next == nullptr
+                        if(change == 0) change = -1;
+                        if(intr.right_close){
+                            for(int i=s->value;i>=e->value;i+=change){
+                                vs.push_back(std::make_shared<Integer>(i));
+                            }
+                        }else{
+                            for(int i=s->value;i>e->value;i+=change){
+                                vs.push_back(std::make_shared<Integer>(i));
+                            }
                         }
-                        cur.v = std::make_shared<Array>(vs);
                     }
+                    cur.v = std::make_shared<Array>(vs);
                     return;
                 }
             }

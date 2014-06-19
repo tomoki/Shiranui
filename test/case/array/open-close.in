@@ -1,0 +1,17 @@
+let a = [1..10);
+let b = [1,2..10);
+let c = [10,9..1);
+let d = [10..1);
+
+let sum = \(ar){
+    mut ret = 0;
+    for i in ar {
+        ret <- ret + i;
+    }
+    return ret;
+};
+
+let unit = print(sum(a));
+let unit = print(sum(b));
+let unit = print(sum(c));
+let unit = print(sum(d));

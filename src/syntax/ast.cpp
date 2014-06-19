@@ -23,10 +23,8 @@ namespace shiranui{
             Enum::Enum(std::vector<sp<Expression>> es) : expressions(es) {};
             Enum::Enum() {};
 
-            Interval::Interval(sp<Expression> s,sp<Expression> e)
-                                                : start(s),end(e) {}
-            Interval::Interval(sp<Expression> s,sp<Expression> n,sp<Expression> e)
-                                                : start(s),end(e),next(n) {}
+            Interval::Interval(sp<Expression> s,sp<Expression> n,sp<Expression> e,bool r)
+                                : start(s),end(e),next(n),right_close(r) {}
 
             // Block
             Block::Block(std::vector<sp<Statement>> ss)

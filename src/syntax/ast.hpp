@@ -64,8 +64,8 @@ namespace shiranui{
             };
             struct Interval : Array{
                 sp<Expression> start,end,next;
-                Interval(sp<Expression>,sp<Expression>);
-                Interval(sp<Expression>,sp<Expression>,sp<Expression>);
+                bool right_close;
+                Interval(sp<Expression>,sp<Expression>,sp<Expression>,bool);
                 void accept(VisitorForAST&);
             };
             struct Enum : Array{
