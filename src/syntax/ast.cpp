@@ -76,10 +76,10 @@ namespace shiranui{
             Assignment::Assignment(Identifier i,sp<Expression> e)
                 : id(i),value(e){}
             // FlyLine
-            FlyLine::FlyLine(sp<Expression> l)
-                : left(l){
+            TestFlyLine::TestFlyLine(sp<Expression> l,sp<Expression> r)
+                : left(l),right(r){
             }
-            FlyLine::FlyLine(sp<Expression> l,sp<Expression> r)
+            IdleFlyLine::IdleFlyLine(sp<Expression> l,sp<Expression> r)
                 : left(l),right(r){
             }
 
@@ -152,10 +152,13 @@ namespace shiranui{
             void ForStatement    ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            void Assignment       ::accept(VisitorForAST& visitor){
+            void Assignment      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
-            void FlyLine          ::accept(VisitorForAST& visitor){
+            void TestFlyLine     ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void IdleFlyLine     ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void SourceCode      ::accept(VisitorForAST& visitor){
@@ -293,10 +296,23 @@ namespace shiranui{
                 os << ";";
             }
 
-            void PrettyPrinterForAST::visit(syntax::ast::FlyLine& l){
+            void PrettyPrinterForAST::visit(syntax::ast::TestFlyLine& l){
                 os << ind() << "#- ";
                 l.left->accept(*this);
+                os << " -> ";
+                if(l.right != nullptr){
+                    l.right->accept(*this);
+                }
             }
+            void PrettyPrinterForAST::visit(syntax::ast::IdleFlyLine& l){
+                os << ind() << "#+ ";
+                l.left->accept(*this);
+                os << " -> ";
+                if(l.right != nullptr){
+                    l.right->accept(*this);
+                }
+            }
+
             void PrettyPrinterForAST::visit(syntax::ast::SourceCode& sc){
                 for(auto& s : sc.statements){
                     s->accept(*this);

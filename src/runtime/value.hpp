@@ -91,7 +91,6 @@ namespace shiranui{
                     LengthFunction();
                     sp<Value> run(std::vector<sp<Value>>);
                 };
-
             }
         }
     }

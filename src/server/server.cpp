@@ -9,6 +9,7 @@ namespace shiranui{
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
         int calc_point(const std::string&,int,int);
+        std::string to_reproductive(sp<runtime::value::Value>);
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
             int cnt = 1;
@@ -50,6 +51,16 @@ namespace shiranui{
         }
         void PipeServer::send_bad_flyline(const int& start_point,const int& end_point){
             return send_simple_command(COMMAND_BAD_FLYLINE,start_point,end_point);
+        }
+        void PipeServer::send_idle_flyline(const int& start_point,const int& end_point,
+                                           const int& remove_start,const int& remove_end,
+                                           const int& insert_point,const std::string& value){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl
+               << remove_start << " " << remove_end << std::endl
+               << insert_point << std::endl
+               << value;
+            return send_command(COMMAND_IDLE_FLYLINE,ss.str());
         }
         // call from thread.
         void PipeServer::receive_command(){
@@ -105,7 +116,7 @@ namespace shiranui{
                 try{
                     program->accept(r);
                     current_runner = r;
-                    send_run_flyline();
+                    run_flyline();
                 }catch(NoSuchVariableException e){
                     //std::cerr << "No such variable: ";
                     //e.where->accept(printer);
@@ -123,41 +134,116 @@ namespace shiranui{
                 send_syntaxerror(std::distance(first,iter),std::distance(first,last));
             }
         }
-        void PipeServer::send_run_flyline(){
+        void PipeServer::run_flyline(){
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
             for(sp<FlyLine> sf : program->flylines){
-                int start_point = calc_point(source,sf->line,sf->column);
-                int end_point = start_point + sf->length;
-                if(sf->right != nullptr){
-                    auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
-                    try{
-                        bin->accept(current_runner);
-                    }catch(NoSuchVariableException e){
-                        send_syntaxerror(start_point,end_point);
-                        continue;
-                    }catch(ConvertException e){
-                        send_syntaxerror(start_point,end_point);
-                        continue;
-                    }catch(RuntimeException e){
-                        send_syntaxerror(start_point,end_point);
-                        continue;
-                    }
-
-                    sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(current_runner.cur.v);
-                    if(b != nullptr){
-                        if(b->value){
-                            send_good_flyline(start_point,end_point);
-                        }else{
-                            send_bad_flyline(start_point,end_point);
-                        }
-                    }else{
-                        send_syntaxerror(start_point,end_point);
-                    }
-                }else{
+                {
+                    sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                    if(l != nullptr) run_testflyline(l);
+                }
+                {
+                    sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                    if(l != nullptr) run_idleflyline(l);
                 }
             }
+        }
+        void PipeServer::run_testflyline(sp<syntax::ast::TestFlyLine> sf){
+            using namespace syntax::ast;
+            using namespace runtime::value;
+            using namespace shiranui::runtime;
+
+            int start_point = calc_point(source,sf->line,sf->column);
+            int end_point = start_point + sf->length;
+            if(sf->right != nullptr){
+                auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
+                try{
+                    bin->accept(current_runner);
+                }catch(NoSuchVariableException e){
+                    send_syntaxerror(start_point,end_point);
+                    return;
+                }catch(ConvertException e){
+                    send_syntaxerror(start_point,end_point);
+                    return;
+                }catch(RuntimeException e){
+                    send_syntaxerror(start_point,end_point);
+                    return;
+                }
+
+                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(current_runner.cur.v);
+                if(b != nullptr){
+                    if(b->value){
+                        send_good_flyline(start_point,end_point);
+                    }else{
+                        send_bad_flyline(start_point,end_point);
+                    }
+                }else{
+                    send_syntaxerror(start_point,end_point);
+                }
+            }else{ // right == null
+                // reproduce
+                // do not delete anything
+                // send_idle_flyline(start_point,end_point,1,1,end_point-1,"hoge");
+                // send_change_flyline_to_idle();
+            }
+        }
+        void PipeServer::run_idleflyline(sp<syntax::ast::IdleFlyLine> sf){
+            using namespace syntax::ast;
+            using namespace runtime::value;
+            using namespace shiranui::runtime;
+            int start_point = calc_point(source,sf->line,sf->column);
+            int end_point = start_point + sf->length;
+            // TODO: copy runner.
+            sf->left->accept(current_runner);
+            sp<Value> left = current_runner.cur.v;
+            std::string left_str = to_reproductive(left);
+            if(sf->right != nullptr){
+                int remove_start = calc_point(source,sf->right->line,sf->right->column);
+                int remove_end = remove_start + sf->right->length;
+                send_idle_flyline(start_point,end_point,remove_start,remove_end
+                                 ,remove_start,left_str);
+            }else{ // right == null
+                // reproduce
+                // do not delete anything
+                send_idle_flyline(start_point,end_point,1,1,end_point-1,left_str);
+                // send_change_flyline_to_idle();
+            }
+        }
+        std::string to_reproductive(sp<runtime::value::Value> vi){
+            using namespace runtime::value;
+            {
+                sp<Integer> v = std::dynamic_pointer_cast<Integer>(vi);
+                if(v != nullptr){
+                    std::stringstream ss;
+                    ss << v->value;
+                    return ss.str();
+                }
+            }
+            {
+                sp<String> v = std::dynamic_pointer_cast<String>(vi);
+                if(v != nullptr){
+                    std::stringstream ss;
+                    ss << '"' << v->value << '"';
+                    return ss.str();
+                }
+            }
+            {
+                sp<Array> v = std::dynamic_pointer_cast<Array>(vi);
+                if(v != nullptr){
+                    std::stringstream ss;
+                    ss << "[";
+                    for(int i=0;i<v->value.size();i++){
+                        ss << to_reproductive(v->value[i]);
+                        if(i != v->value.size()-1){
+                            ss << ",";
+                        }
+                    }
+                    ss << "]";
+                    return ss.str();
+                }
+            }
+            return "unknown";
         }
         int calc_point(const std::string& source,int line,int column){
             int li=1,co=1;

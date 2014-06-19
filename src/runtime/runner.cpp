@@ -386,7 +386,10 @@ namespace shiranui{
         }
 
         // do not eval firsttime.
-        void Runner::visit(syntax::ast::FlyLine& line){
+        void Runner::visit(syntax::ast::TestFlyLine& line){
+            return;
+        }
+        void Runner::visit(syntax::ast::IdleFlyLine& line){
             return;
         }
 

@@ -24,6 +24,8 @@
   "load")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
+(defconst kasumi-command-idleflyline
+  "idleflyline")
 (defconst kasumi-command-goodflyline
   "goodflyline")
 (defconst kasumi-command-badflyline
@@ -84,7 +86,6 @@
       (cons (cons (car command-value-rest) (cadr command-value-rest))
             (kasumi-parse (caddr command-value-rest))))))
 
-
 ;; need newline end of string?
 (defun kasumi-send-command (command value)
   (process-send-string shiranui-process
@@ -108,6 +109,8 @@
            (kasumi-receive-goodflyline value))
           ((string= command kasumi-command-badflyline)
            (kasumi-receive-badflyline value))
+          ((string= command kasumi-command-idleflyline)
+           (kasumi-receive-idleflyline value))
           (t (message "unknown command:%s " command))
           )))
 
@@ -133,8 +136,28 @@
 (defun kasumi-receive-badflyline (value)
   (let ((beg-end-list (split-string value " ")))
     (kasumi-put-badflyline (string-to-number (nth 0 beg-end-list))
-                            (string-to-number (nth 1 beg-end-list)))
+                           (string-to-number (nth 1 beg-end-list)))
     ))
+
+;; beg end <- target
+;; beg end <- remove
+;; beg   <- insert here
+;; value <- this.
+(defun kasumi-receive-idleflyline (value)
+  (let* ((lines (split-string value "\n"))
+         (target (split-string (nth 0 lines) " "))
+         (remove (split-string (nth 1 lines) " "))
+         (where  (split-string (nth 2 lines) " "))
+         (value  (nth 3 lines))
+         (inhibit-modification-hooks t))
+    (save-excursion
+      (progn
+        (delete-region (string-to-number (nth 0 remove))
+                       (string-to-number (nth 1 remove)))
+        (goto-char (string-to-number (nth 0 where)))
+        (insert value)
+        (kasumi-put-idleflyline (string-to-number (nth 0 target))
+                                (string-to-number (nth 1 target)))))))
 
 (defun kasumi-send-load ()
   (interactive)
@@ -161,6 +184,13 @@
      :underline t :inherit error))
     "Used for flyline that didn't pass test")
 
+(defface kasumi-idleflyline-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Yello1"))
+    (t
+     :underline t :inherit error))
+    "Used for flyline that run")
+
 (defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
@@ -178,6 +208,8 @@
 (defun kasumi-put-badflyline (beg end)
   (kasumi-put-face 'kasumi-badflyline-face beg end))
 
+(defun kasumi-put-idleflyline (beg end)
+  (kasumi-put-face 'kasumi-idleflyline-face beg end))
 
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
@@ -194,7 +226,7 @@
   (kill-all-local-variables)
   (use-local-map kasumi-mode-map)
   (set (make-local-variable 'font-lock-defaults) '(kasumi-font-lock-keywords))
-
+  (setq-local comment-start "#")
   (make-local-variable 'receive-in-progress)
   (make-local-variable 'receiving-str)
   (set (make-local-variable 'shiranui-process)

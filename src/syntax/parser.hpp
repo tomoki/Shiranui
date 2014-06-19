@@ -337,9 +337,14 @@ namespace shiranui{
                     // add eol or something like that.
                     // do not use no_skip contains expression
                     flyline = ("#-" >> expression >> "->" >> expression >> ";")
-                               [qi::_val = qi_make_shared<ast::FlyLine>(qi::_1,qi::_2)]
+                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2)]
                             | ("#-" > expression > "->" > ";")
-                               [qi::_val = qi_make_shared<ast::FlyLine>(qi::_1)]
+                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,nullptr)]
+                            | ("#+" >> expression >> "->" >> expression >> ";")
+                               [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,qi::_2)]
+                            | ("#+" > expression > "->" > ";")
+                               [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,nullptr)]
+
                             ;
                     on_success(flyline,set_location_info);
                 }

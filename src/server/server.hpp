@@ -24,11 +24,16 @@ namespace shiranui{
             void send_simple_command(const std::string&,const int&,const int&);
             void send_good_flyline(const int&,const int&);
             void send_bad_flyline(const int&,const int&);
+            void send_idle_flyline(const int&,const int&, const int&,const int&,
+                                   const int&,const std::string&);
+
             void send_syntaxerror(const int&,const int&);
             void receive_command();
             virtual void on_receive_command(const std::string&,const std::string&);
             void on_receive_load_command(std::string);
-            void send_run_flyline();
+            void run_flyline();
+            void run_testflyline(sp<syntax::ast::TestFlyLine>);
+            void run_idleflyline(sp<syntax::ast::IdleFlyLine>);
         };
     }
 }
