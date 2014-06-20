@@ -1,7 +1,7 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" 'kasumi-send-load) ;; inspect?
+    (define-key map "\C-\\" 'kasumi-refresh) ;; inspect?
     map)
   "Keymap for Kasumi Major mode")
 
@@ -120,23 +120,40 @@
     (cons (kasumi-process-pair (car pairs-command-value))
           (kasumi-process-pairs (cdr pairs-command-value)))))
 
+
+;; Should use original position?
+(defun kasumi-fix-point-sub (p lis)
+  (cond
+   ((null lis) p)
+   ((> p (car (car lis))) (kasumi-fix-point-sub (+ p (cdr (car lis))) (cdr lis)))
+   (t (kasumi-fix-point-sub p (cdr lis)))))
+
+(defun kasumi-fix-point (p)
+  (kasumi-fix-point-sub p point-diff))
+
+(defun kasumi-add-diff (where size)
+  (setq point-diff (cons (cons where size) point-diff)))
+
+(defun kasumi-string-to-fix-point (str)
+  (kasumi-fix-point (string-to-number str)))
+
 (defun kasumi-receive-syntaxerror (value)
   (message "there is syntaxerror")
   (if (not (= (length value) 0))
       (let ((beg-end-list (split-string value " ")))
-        (kasumi-put-syntaxerror (string-to-number (nth 0 beg-end-list))
-                                (string-to-number (nth 1 beg-end-list)))
+        (kasumi-put-syntaxerror (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                                (kasumi-string-to-fix-point (nth 1 beg-end-list)))
         )))
 
 (defun kasumi-receive-goodflyline (value)
   (let ((beg-end-list (split-string value " ")))
-    (kasumi-put-goodflyline (string-to-number (nth 0 beg-end-list))
-                            (string-to-number (nth 1 beg-end-list)))
+    (kasumi-put-goodflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 (defun kasumi-receive-badflyline (value)
   (let ((beg-end-list (split-string value " ")))
-    (kasumi-put-badflyline (string-to-number (nth 0 beg-end-list))
-                           (string-to-number (nth 1 beg-end-list)))
+    (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                           (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
 ;; beg end <- target
@@ -152,12 +169,20 @@
          (inhibit-modification-hooks t))
     (save-excursion
       (progn
-        (delete-region (string-to-number (nth 0 remove))
-                       (string-to-number (nth 1 remove)))
-        (goto-char (string-to-number (nth 0 where)))
+        (delete-region (kasumi-string-to-fix-point (nth 0 remove))
+                       (kasumi-string-to-fix-point (nth 1 remove)))
+
+
+        (goto-char (kasumi-string-to-fix-point (nth 0 where)))
+        (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 remove))
+                         (- (kasumi-string-to-fix-point (nth 0 remove))
+                            (kasumi-string-to-fix-point (nth 1 remove))))
+
         (insert value)
-        (kasumi-put-idleflyline (string-to-number (nth 0 target))
-                                (string-to-number (nth 1 target)))))))
+        (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 where))
+                         (length value))
+        (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
+                                (kasumi-string-to-fix-point (nth 1 target)))))))
 
 (defun kasumi-send-load ()
   (interactive)
@@ -217,6 +242,7 @@
 (defun kasumi-refresh (beg end length)
   (progn
     (kasumi-remove-all-overlay)
+    (setq point-diff '())
     (kasumi-send-load)))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
@@ -229,6 +255,8 @@
   (setq-local comment-start "#")
   (make-local-variable 'receive-in-progress)
   (make-local-variable 'receiving-str)
+  ;; ((where diff))
+  (set (make-local-variable 'point-diff) '())
   (set (make-local-variable 'shiranui-process)
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
