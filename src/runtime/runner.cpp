@@ -30,9 +30,6 @@ namespace shiranui{
             v = v_;
         }
         Runner::Runner() {}
-        Runner::Runner(Runner* outer)
-            : cur(outer->cur.e){
-        }
         void Runner::visit(syntax::ast::Identifier& id){
             throw RuntimeException(); // never occur.
             return;

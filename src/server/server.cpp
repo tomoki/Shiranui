@@ -1,5 +1,7 @@
 #include "server.hpp"
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 namespace shiranui{
     namespace server{
@@ -8,6 +10,7 @@ namespace shiranui{
         const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
+        const std::string COMMAND_DEBUG_PRINT = "debug";
         int calc_point(const std::string&,int,int);
         std::string to_reproductive(sp<runtime::value::Value>);
         int how_many_lines(const std::string& s){
@@ -22,6 +25,7 @@ namespace shiranui{
             : is(is_),os(os_){}
 
         void PipeServer::start(){
+            send_command(COMMAND_DEBUG_PRINT,"Hello Shirei!");
             std::thread receive_thread(&PipeServer::receive_command,this);
             receive_thread.join();
         }
@@ -93,6 +97,7 @@ namespace shiranui{
             using namespace shiranui;
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
+            const auto start_time = std::chrono::system_clock::now();
             source = source_;
             // delete program;
             Runner r;
@@ -133,20 +138,30 @@ namespace shiranui{
             }else{
                 send_syntaxerror(std::distance(first,iter),std::distance(first,last));
             }
+            const auto end_time = std::chrono::system_clock::now();
+            const auto time_span = end_time - start_time;
+            std::stringstream ts;
+            ts << "First path:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
+            send_command(COMMAND_DEBUG_PRINT,ts.str());
+
+
         }
         void PipeServer::run_flyline(){
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
             for(sp<FlyLine> sf : program->flylines){
-                {
-                    sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
-                    if(l != nullptr) run_testflyline(l);
-                }
-                {
-                    sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
-                    if(l != nullptr) run_idleflyline(l);
-                }
+                auto s = std::thread([this,sf](){
+                    {
+                        sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                        if(l != nullptr) run_testflyline(l);
+                    }
+                    {
+                        sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                        if(l != nullptr) run_idleflyline(l);
+                    }
+                    });
+                s.join();
             }
         }
         void PipeServer::run_testflyline(sp<syntax::ast::TestFlyLine> sf){
@@ -156,10 +171,11 @@ namespace shiranui{
 
             int start_point = calc_point(source,sf->line,sf->column);
             int end_point = start_point + sf->length;
+            Runner here = current_runner;
             if(sf->right != nullptr){
                 auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
                 try{
-                    bin->accept(current_runner);
+                    bin->accept(here);
                 }catch(NoSuchVariableException e){
                     send_syntaxerror(start_point,end_point);
                     return;
@@ -171,7 +187,7 @@ namespace shiranui{
                     return;
                 }
 
-                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(current_runner.cur.v);
+                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(here.cur.v);
                 if(b != nullptr){
                     if(b->value){
                         send_good_flyline(start_point,end_point);
@@ -182,10 +198,7 @@ namespace shiranui{
                     send_syntaxerror(start_point,end_point);
                 }
             }else{ // right == null
-                // reproduce
-                // do not delete anything
-                // send_idle_flyline(start_point,end_point,1,1,end_point-1,"hoge");
-                // send_change_flyline_to_idle();
+                send_syntaxerror(start_point,end_point);
             }
         }
         void PipeServer::run_idleflyline(sp<syntax::ast::IdleFlyLine> sf){
@@ -194,9 +207,21 @@ namespace shiranui{
             using namespace shiranui::runtime;
             int start_point = calc_point(source,sf->line,sf->column);
             int end_point = start_point + sf->length;
-            // TODO: copy runner.
-            sf->left->accept(current_runner);
-            sp<Value> left = current_runner.cur.v;
+            Runner here = current_runner;
+            try{
+                sf->left->accept(here);
+            }catch(NoSuchVariableException e){
+                send_syntaxerror(start_point,end_point);
+                return;
+            }catch(ConvertException e){
+                send_syntaxerror(start_point,end_point);
+                return;
+            }catch(RuntimeException e){
+                send_syntaxerror(start_point,end_point);
+                return;
+            }
+
+            sp<Value> left = here.cur.v;
             std::string left_str = to_reproductive(left);
             if(sf->right != nullptr){
                 int remove_start = calc_point(source,sf->right->line,sf->right->column);

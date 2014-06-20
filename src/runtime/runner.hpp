@@ -36,7 +36,6 @@ namespace shiranui{
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             ValEnv cur;
             Runner();
-            Runner(Runner*); // for block
             void visit(syntax::ast::Identifier&);
             void visit(syntax::ast::Variable&);
             void visit(syntax::ast::Number&);

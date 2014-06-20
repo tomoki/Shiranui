@@ -70,6 +70,8 @@ void repl(){
     }
 }
 void start_server(){
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
     shiranui::server::PipeServer server(std::cin,std::cout);
     server.start();
 }

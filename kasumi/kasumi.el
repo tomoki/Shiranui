@@ -30,6 +30,8 @@
   "goodflyline")
 (defconst kasumi-command-badflyline
   "badflyline")
+(defconst kasumi-command-debug-print
+  "debug")
 
 
 ;; getline needs newline("\n")
@@ -86,6 +88,15 @@
       (cons (cons (car command-value-rest) (cadr command-value-rest))
             (kasumi-parse (caddr command-value-rest))))))
 
+(defun kasumi-debug-print (str)
+  (let ((prev (current-buffer)))
+    (progn
+      (switch-to-buffer (process-buffer shiranui-process))
+      (insert str)
+      (insert "\n")
+      (switch-to-buffer prev))))
+
+
 ;; need newline end of string?
 (defun kasumi-send-command (command value)
   (process-send-string shiranui-process
@@ -93,6 +104,7 @@
    ))
 
 (defun kasumi-process-filter (process str)
+  ;; (kasumi-debug-print str)
   (let ((pairs-command-value (kasumi-parse (string-strip str))))
     (progn
       (kasumi-process-pairs pairs-command-value))))
@@ -111,6 +123,8 @@
            (kasumi-receive-badflyline value))
           ((string= command kasumi-command-idleflyline)
            (kasumi-receive-idleflyline value))
+          ((string= command kasumi-command-debug-print)
+           (kasumi-debug-print value))
           (t (message "unknown command:%s " command))
           )))
 
@@ -165,6 +179,7 @@
          (target (split-string (nth 0 lines) " "))
          (remove (split-string (nth 1 lines) " "))
          (where  (split-string (nth 2 lines) " "))
+         ;; TODO: string-join.
          (value  (nth 3 lines))
          (inhibit-modification-hooks t))
     (save-excursion
@@ -186,6 +201,7 @@
 
 (defun kasumi-send-load ()
   (interactive)
+  ;; (kasumi-debug-print "LOAD\n\n")
   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
 
 (defface kasumi-syntaxerror-face
@@ -211,7 +227,7 @@
 
 (defface kasumi-idleflyline-face
   '((((supports :underline (:style wave)))
-     :underline (:color "Yello1"))
+     :underline (:color "Yellow1"))
     (t
      :underline t :inherit error))
     "Used for flyline that run")
@@ -241,9 +257,10 @@
 
 (defun kasumi-refresh (beg end length)
   (progn
-    (kasumi-remove-all-overlay)
+    (kasumi-send-load)
     (setq point-diff '())
-    (kasumi-send-load)))
+    (setq load-count (+ load-count 1))
+    (kasumi-remove-all-overlay)))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
@@ -257,6 +274,7 @@
   (make-local-variable 'receiving-str)
   ;; ((where diff))
   (set (make-local-variable 'point-diff) '())
+  (set (make-local-variable 'load-count) 0)
   (set (make-local-variable 'shiranui-process)
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
