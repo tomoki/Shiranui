@@ -17,8 +17,8 @@ namespace shiranui{
             boost::mutex os_lock;
             std::string source;
 
-            boost::thread_group flyline_threads;
             boost::thread main_thread;
+            boost::thread_group flyline_threads;
 
             PipeServer(std::istream&,std::ostream&);
 
@@ -37,7 +37,7 @@ namespace shiranui{
             void receive_command(const std::string&,const std::string&);
             void on_change_command(const std::string&);
             void exec(std::string);
-            void run_flyline(std::string,runtime::Runner,sp<syntax::ast::FlyLine>);
+            void run_flyline(std::string,int);
             void run_testflyline(std::string,runtime::Runner,sp<syntax::ast::TestFlyLine>);
             void run_idleflyline(std::string,runtime::Runner,sp<syntax::ast::IdleFlyLine>);
         };

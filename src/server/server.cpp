@@ -98,6 +98,7 @@ namespace shiranui{
 
         void PipeServer::on_change_command(const std::string& value){
             main_thread.interrupt();
+            flyline_threads.interrupt_all();
             std::stringstream ss(value);
             while(not ss.eof()){
                 int point,remove_length,line_size;
@@ -117,6 +118,7 @@ namespace shiranui{
                 source.insert(point,insert_value);
             }
             main_thread.join();
+            flyline_threads.join_all();
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
@@ -126,7 +128,7 @@ namespace shiranui{
             using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
             const auto start_time = std::chrono::system_clock::now();
-            Runner r;
+
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
@@ -141,24 +143,9 @@ namespace shiranui{
             }
 
             if(ok and iter == last){
-                // first path,shiranui doesn't eval flytestline.
-                try{
-                    program->accept(r);
-                    for(auto p : program->flylines){
-                        run_flyline(source,r,p);
-                    }
-                }catch(NoSuchVariableException e){
-                    //std::cerr << "No such variable: ";
-                    //e.where->accept(printer);
-                    //std::cerr << std::endl;
-                }catch(ConvertException e){
-                    //std::cerr << "Convert Error: ";
-                    //e.where->accept(printer);
-                    //std::cerr << std::endl;
-                }catch(RuntimeException e){
-                    //std::cerr << "Something RuntimeException: ";
-                    //e.where->accept(printer);
-                    //std::cerr << std::endl;
+                for(int i=0;i<program->flylines.size();i++){
+                    flyline_threads.create_thread(boost::bind(&PipeServer::run_flyline,
+                                this,source,i));
                 }
             }else{
                 send_syntaxerror(std::distance(first,iter),std::distance(first,last));
@@ -168,13 +155,35 @@ namespace shiranui{
             std::stringstream ts;
             ts << "First path:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
             send_command(COMMAND_DEBUG_PRINT,ts.str());
+
         }
 
-        void PipeServer::run_flyline(std::string source,runtime::Runner r,
-                                     sp<syntax::ast::FlyLine> sf){
-            using namespace syntax::ast;
-            using namespace runtime::value;
+        void PipeServer::run_flyline(std::string source,int flyline_index){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
+
+            pos_iterator_t first(source.begin()),last(source.end());
+            pos_iterator_t iter = first;
+            bool ok = false;
+            Parser<pos_iterator_t> resolver(first);
+            sp<SourceCode> program;
+            ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+                                                 boost::spirit::qi::space,program);
+
+
+            Runner r;
+            sp<FlyLine> sf = program->flylines[flyline_index];
+            try{
+                program->accept(r);
+            }catch(NoSuchVariableException e){
+                return;
+            }catch(ConvertException e){
+                return;
+            }catch(RuntimeException e){
+                return;
+            }
 
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
