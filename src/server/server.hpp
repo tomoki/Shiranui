@@ -18,6 +18,8 @@ namespace shiranui{
             std::string source;
 
             boost::thread_group flyline_threads;
+            boost::thread main_thread;
+
             PipeServer(std::istream&,std::ostream&);
 
             void start();

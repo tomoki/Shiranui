@@ -1,7 +1,6 @@
 #include "server.hpp"
 #include <sstream>
 #include <chrono>
-#include <thread>
 
 namespace shiranui{
     namespace server{
@@ -97,7 +96,7 @@ namespace shiranui{
         }
 
         void PipeServer::on_change_command(const std::string& value){
-            // TODO: stop all running thread.
+            main_thread.interrupt();
             std::stringstream ss(value);
             while(not ss.eof()){
                 int point,remove_length,line_size;
@@ -105,7 +104,6 @@ namespace shiranui{
                 ss >> point >> remove_length >> line_size;
                 point--;
                 ss.ignore(); // remove newline.
-                // maybe incorrect.
                 for(int i=0;i<line_size;i++){
                     std::string s;
                     getline(ss,s);
@@ -114,28 +112,11 @@ namespace shiranui{
                         insert_value += '\n';
                     }
                 }
-//                {
-//                    std::stringstream ds;
-//                    ds << "p: " << point << " " << "remove: " << remove_length;
-//                    send_debug_print(ds.str());
-//                }
-
                 source.erase(point,remove_length);
-//                {
-//                    std::stringstream ds;
-//                    ds << "current:" << source << "i: " << point << " " << "insert: " << insert_value;
-//                    send_debug_print(ds.str());
-//                }
-
                 source.insert(point,insert_value);
-//                {
-//                    std::stringstream ds;
-//                    ds << "inserted:" << source;
-//                    send_debug_print(ds.str());
-//                }
             }
-//            send_debug_print(source);
-            exec(source);
+            main_thread.join();
+            main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
         void PipeServer::exec(std::string source){

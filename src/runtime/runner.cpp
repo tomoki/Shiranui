@@ -2,6 +2,7 @@
 #include <iostream>
 #include <typeinfo>
 #include <memory>
+#include <boost/thread/thread.hpp>
 
 namespace shiranui{
     namespace runtime{
@@ -35,6 +36,7 @@ namespace shiranui{
             return;
         }
         void Runner::visit(syntax::ast::Variable& var){
+            boost::this_thread::interruption_point();
             if(var.value.name == "system_call"){
                 cur.v = std::make_shared<SystemCall>();
                 return;
@@ -48,12 +50,15 @@ namespace shiranui{
             }
         }
         void Runner::visit(syntax::ast::Number& num){
+            boost::this_thread::interruption_point();
             cur.v = std::make_shared<Integer>(num.value);
         }
         void Runner::visit(syntax::ast::String& s){
+            boost::this_thread::interruption_point();
             cur.v = std::make_shared<String>(s.value);
         }
         void Runner::visit(syntax::ast::Enum& e){
+            boost::this_thread::interruption_point();
             std::vector<sp<Value>> vs;
             for(sp<syntax::ast::Expression> exp : e.expressions){
                 exp->accept(*this);
@@ -62,6 +67,7 @@ namespace shiranui{
             cur.v = std::make_shared<Array>(vs);
         }
         void Runner::visit(syntax::ast::Interval& intr){
+            boost::this_thread::interruption_point();
             sp<Value> start,end,next;
             {
                 intr.start->accept(*this);
@@ -94,10 +100,12 @@ namespace shiranui{
                         if(change == 0) change = 1;
                         if(intr.right_close){
                             for(int i=s->value;i<=e->value;i+=change){
+                                boost::this_thread::interruption_point();
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }else{
                             for(int i=s->value;i<e->value;i+=change){
+                                boost::this_thread::interruption_point();
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }
@@ -106,10 +114,12 @@ namespace shiranui{
                         if(change == 0) change = -1;
                         if(intr.right_close){
                             for(int i=s->value;i>=e->value;i+=change){
+                                boost::this_thread::interruption_point();
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }else{
                             for(int i=s->value;i>e->value;i+=change){
+                                boost::this_thread::interruption_point();
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }
@@ -122,6 +132,7 @@ namespace shiranui{
         }
 
         void Runner::visit(syntax::ast::Block& block){
+            boost::this_thread::interruption_point();
             sp<Environment> before = cur.e;
             sp<Environment> inner = std::make_shared<Environment>(cur.e);
             cur.e = inner;
@@ -135,9 +146,11 @@ namespace shiranui{
             cur.e = before;
         }
         void Runner::visit(syntax::ast::Function& f){
+            boost::this_thread::interruption_point();
             cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body,cur.e));
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
+            boost::this_thread::interruption_point();
             fc.function->accept(*this);
             sp<Value> func = cur.v;
             // check func.v is really function.
@@ -211,6 +224,7 @@ namespace shiranui{
             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
         }
         void Runner::visit(syntax::ast::BinaryOperator& bop){
+            boost::this_thread::interruption_point();
             bop.left->accept(*this);
             sp<Value> left = cur.v;
             bop.right->accept(*this);
@@ -301,6 +315,7 @@ namespace shiranui{
 
         }
         void Runner::visit(syntax::ast::UnaryOperator& uop){
+            boost::this_thread::interruption_point();
             uop.exp->accept(*this);
             sp<Value> v_ = cur.v;
             {
@@ -328,19 +343,23 @@ namespace shiranui{
             throw ConvertException(std::make_shared<syntax::ast::UnaryOperator>(uop));
         }
         void Runner::visit(syntax::ast::IfElseExpression&){
+            boost::this_thread::interruption_point();
             return;
         }
         void Runner::visit(syntax::ast::Definement& def){
+            boost::this_thread::interruption_point();
             def.value->accept(*this);
             cur.e->define(def.id,cur.v,def.is_const);
             return;
         }
         void Runner::visit(syntax::ast::ReturnStatement& ret){
+            boost::this_thread::interruption_point();
             ret.value->accept(*this);
             cur.v = std::make_shared<Return>(cur.v);
             return;
         }
         void Runner::visit(syntax::ast::IfElseStatement& ies){
+            boost::this_thread::interruption_point();
             ies.pred->accept(*this);
             sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur.v);
             if(bp == nullptr){
@@ -354,6 +373,7 @@ namespace shiranui{
             return;
         }
         void Runner::visit(syntax::ast::ForStatement& fors){
+            boost::this_thread::interruption_point();
             fors.loop_exp->accept(*this);
             sp<Array> arr = std::dynamic_pointer_cast<Array>(cur.v);
             if(arr == nullptr){
@@ -374,6 +394,7 @@ namespace shiranui{
             return;
         }
         void Runner::visit(syntax::ast::Assignment& assign){
+            boost::this_thread::interruption_point();
             if(cur.e->has(assign.id) and
                not cur.e->is_const(assign.id)){
                 assign.value->accept(*this);
@@ -384,13 +405,16 @@ namespace shiranui{
 
         // do not eval firsttime.
         void Runner::visit(syntax::ast::TestFlyLine& line){
+            boost::this_thread::interruption_point();
             return;
         }
         void Runner::visit(syntax::ast::IdleFlyLine& line){
+            boost::this_thread::interruption_point();
             return;
         }
 
         void Runner::visit(syntax::ast::SourceCode& sc){
+            boost::this_thread::interruption_point();
             for(auto s : sc.statements){
                 s->accept(*this);
             }
