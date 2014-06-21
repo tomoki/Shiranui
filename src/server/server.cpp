@@ -5,56 +5,52 @@
 
 namespace shiranui{
     namespace server{
-        const std::string COMMAND_LOAD = "load";
+        const std::string COMMAND_CHANGE = "change";
+        const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
-        const std::string COMMAND_DEBUG_PRINT = "debug";
-        int calc_point(const std::string&,int,int);
+
         std::string to_reproductive(sp<runtime::value::Value>);
-        int how_many_lines(const std::string& s){
-            if(s == "") return 0;
-            int cnt = 1;
-            for(char c : s){
-                if(c == '\n') cnt++;
-            }
-            return cnt;
+        int calc_point(const std::string&,int,int);
+        int how_many_lines(const std::string&);
+
+        PipeServer::PipeServer(std::istream& i,std::ostream& o)
+            : is(i),os(o){
         }
-        PipeServer::PipeServer(std::istream& is_,std::ostream& os_)
-            : is(is_),os(os_){}
 
         void PipeServer::start(){
-            send_command(COMMAND_DEBUG_PRINT,"Hello Shirei!");
-            std::thread receive_thread(&PipeServer::receive_command,this);
-            receive_thread.join();
+            boost::thread receive(&PipeServer::receive,this);
+            receive.join();
         }
 
         void PipeServer::send_command(const std::string& command,const std::string& value){
-            send_lock.lock();
+            std::stringstream ss;
+            os_lock.lock();
             if(value != ""){
                 os << how_many_lines(value) << " " << command << std::endl
                    << value << std::endl;
             }else{
                 os << how_many_lines(value) << " " << command << std::endl;
             }
-            send_lock.unlock();
+            os_lock.unlock();
         }
-        void PipeServer::send_simple_command(const std::string& command,
-                                             const int& start_point,
-                                             const int& end_point){
+        void PipeServer::send_command_with_two_points(const std::string& command,
+                                                      const int& start_point,
+                                                      const int& end_point){
             std::stringstream ss;
             ss << start_point << " " << end_point;
             return send_command(command,ss.str());
         }
         void PipeServer::send_syntaxerror(const int& start_point,const int& end_point){
-            return send_simple_command(COMMAND_SYNTAXEROR,start_point,end_point);
+            return send_command_with_two_points(COMMAND_SYNTAXEROR,start_point,end_point);
         }
         void PipeServer::send_good_flyline(const int& start_point,const int& end_point){
-            return send_simple_command(COMMAND_GOOD_FLYLINE,start_point,end_point);
+            return send_command_with_two_points(COMMAND_GOOD_FLYLINE,start_point,end_point);
         }
         void PipeServer::send_bad_flyline(const int& start_point,const int& end_point){
-            return send_simple_command(COMMAND_BAD_FLYLINE,start_point,end_point);
+            return send_command_with_two_points(COMMAND_BAD_FLYLINE,start_point,end_point);
         }
         void PipeServer::send_idle_flyline(const int& start_point,const int& end_point,
                                            const int& remove_start,const int& remove_end,
@@ -66,8 +62,13 @@ namespace shiranui{
                << value;
             return send_command(COMMAND_IDLE_FLYLINE,ss.str());
         }
-        // call from thread.
-        void PipeServer::receive_command(){
+
+        void PipeServer::send_debug_print(const std::string& value){
+            return send_command(COMMAND_DEBUG_PRINT,value);
+        }
+
+        // receive
+        void PipeServer::receive(){
             while(true){
                 int line;
                 std::string command;
@@ -78,39 +79,80 @@ namespace shiranui{
                         std::string s;
                         // getline doesn't have newline.
                         std::getline(is,s);
-                        value += s + "\n";
+                        value += s;
+                        if(i != line-1){
+                            value += "\n";
+                        }
                     }
-                    on_receive_command(command,value);
+                    receive_command(command,value);
                 }
                 is.clear(); // remove eof flag 
             }
         }
-        void PipeServer::on_receive_command(const std::string& command,
-                                            const std::string& value){
-            if(command == COMMAND_LOAD){
-                on_receive_load_command(value);
+        void PipeServer::receive_command(const std::string& command,
+                                         const std::string& value){
+            if(command == COMMAND_CHANGE){
+                return on_change_command(value);
             }
         }
-        // copy string because pos_iterator_t needs its reference.
-        // this is first path.I don't want to compute flyline.
-        void PipeServer::on_receive_load_command(std::string source_){
+
+        void PipeServer::on_change_command(const std::string& value){
+            // TODO: stop all running thread.
+            std::stringstream ss(value);
+            while(not ss.eof()){
+                int point,remove_length,line_size;
+                std::string insert_value;
+                ss >> point >> remove_length >> line_size;
+                point--;
+                ss.ignore(); // remove newline.
+                // maybe incorrect.
+                for(int i=0;i<line_size;i++){
+                    std::string s;
+                    getline(ss,s);
+                    insert_value += s;
+                    if(i != line_size - 1){
+                        insert_value += '\n';
+                    }
+                }
+//                {
+//                    std::stringstream ds;
+//                    ds << "p: " << point << " " << "remove: " << remove_length;
+//                    send_debug_print(ds.str());
+//                }
+
+                source.erase(point,remove_length);
+//                {
+//                    std::stringstream ds;
+//                    ds << "current:" << source << "i: " << point << " " << "insert: " << insert_value;
+//                    send_debug_print(ds.str());
+//                }
+
+                source.insert(point,insert_value);
+//                {
+//                    std::stringstream ds;
+//                    ds << "inserted:" << source;
+//                    send_debug_print(ds.str());
+//                }
+            }
+//            send_debug_print(source);
+            exec(source);
+        }
+
+        void PipeServer::exec(std::string source){
             using namespace shiranui;
             using namespace shiranui::syntax;
+            using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
             const auto start_time = std::chrono::system_clock::now();
-            source = source_;
-            // delete program;
             Runner r;
-            ast::PrettyPrinterForAST printer(std::cerr);
-            value::PrettyPrinterForValue printer_for_value(std::cerr);
-
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
             Parser<pos_iterator_t> resolver(first);
+            sp<SourceCode> program;
             try{
                 ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
-                        boost::spirit::qi::space,program);
+                                                     boost::spirit::qi::space,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                 send_syntaxerror(std::distance(first,x.first),std::distance(first,x.last));
                 return;
@@ -120,8 +162,9 @@ namespace shiranui{
                 // first path,shiranui doesn't eval flytestline.
                 try{
                     program->accept(r);
-                    current_runner = r;
-                    run_flyline();
+                    for(auto p : program->flylines){
+                        run_flyline(source,r,p);
+                    }
                 }catch(NoSuchVariableException e){
                     //std::cerr << "No such variable: ";
                     //e.where->accept(printer);
@@ -143,39 +186,37 @@ namespace shiranui{
             std::stringstream ts;
             ts << "First path:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
             send_command(COMMAND_DEBUG_PRINT,ts.str());
-
-
         }
-        void PipeServer::run_flyline(){
+
+        void PipeServer::run_flyline(std::string source,runtime::Runner r,
+                                     sp<syntax::ast::FlyLine> sf){
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
-            for(sp<FlyLine> sf : program->flylines){
-                auto s = std::thread([this,sf](){
-                    {
-                        sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
-                        if(l != nullptr) run_testflyline(l);
-                    }
-                    {
-                        sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
-                        if(l != nullptr) run_idleflyline(l);
-                    }
-                    });
-                s.join();
+
+            {
+                sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                if(l != nullptr) run_testflyline(source,r,l);
+            }
+            {
+                sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                if(l != nullptr) run_idleflyline(source,r,l);
             }
         }
-        void PipeServer::run_testflyline(sp<syntax::ast::TestFlyLine> sf){
+
+        void PipeServer::run_testflyline(std::string source,
+                                         runtime::Runner r,
+                                         sp<syntax::ast::TestFlyLine> sf){
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
 
             int start_point = calc_point(source,sf->line,sf->column);
             int end_point = start_point + sf->length;
-            Runner here = current_runner;
             if(sf->right != nullptr){
                 auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
                 try{
-                    bin->accept(here);
+                    bin->accept(r);
                 }catch(NoSuchVariableException e){
                     send_syntaxerror(start_point,end_point);
                     return;
@@ -187,7 +228,7 @@ namespace shiranui{
                     return;
                 }
 
-                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(here.cur.v);
+                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(r.cur.v);
                 if(b != nullptr){
                     if(b->value){
                         send_good_flyline(start_point,end_point);
@@ -201,15 +242,17 @@ namespace shiranui{
                 send_syntaxerror(start_point,end_point);
             }
         }
-        void PipeServer::run_idleflyline(sp<syntax::ast::IdleFlyLine> sf){
+
+        void PipeServer::run_idleflyline(std::string source,
+                                         runtime::Runner r,
+                                         sp<syntax::ast::IdleFlyLine> sf){
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
             int start_point = calc_point(source,sf->line,sf->column);
             int end_point = start_point + sf->length;
-            Runner here = current_runner;
             try{
-                sf->left->accept(here);
+                sf->left->accept(r);
             }catch(NoSuchVariableException e){
                 send_syntaxerror(start_point,end_point);
                 return;
@@ -221,7 +264,7 @@ namespace shiranui{
                 return;
             }
 
-            sp<Value> left = here.cur.v;
+            sp<Value> left = r.cur.v;
             std::string left_str = to_reproductive(left);
             if(sf->right != nullptr){
                 int remove_start = calc_point(source,sf->right->line,sf->right->column);
@@ -235,6 +278,10 @@ namespace shiranui{
                 // send_change_flyline_to_idle();
             }
         }
+
+
+
+        // helper functions.
         std::string to_reproductive(sp<runtime::value::Value> vi){
             using namespace runtime::value;
             {
@@ -285,6 +332,14 @@ namespace shiranui{
                 point++;
             }
             return -1;
+        }
+        int how_many_lines(const std::string& s){
+            if(s == "") return 0;
+            int cnt = 1;
+            for(char c : s){
+                if(c == '\n') cnt++;
+            }
+            return cnt;
         }
     }
 }

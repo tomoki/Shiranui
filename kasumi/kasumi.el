@@ -22,6 +22,8 @@
 
 (defconst kasumi-command-load
   "load")
+(defconst kasumi-command-change
+  "change")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
 (defconst kasumi-command-idleflyline
@@ -92,6 +94,7 @@
   (let ((prev (current-buffer)))
     (progn
       (switch-to-buffer (process-buffer shiranui-process))
+      (goto-char (point-max))
       (insert str)
       (insert "\n")
       (switch-to-buffer prev))))
@@ -179,30 +182,53 @@
          (target (split-string (nth 0 lines) " "))
          (remove (split-string (nth 1 lines) " "))
          (where  (split-string (nth 2 lines) " "))
+         (remove-start (string-to-number (nth 0 remove)))
+         (remove-end   (string-to-number (nth 1 remove)))
+         (add-point    (string-to-number (nth 0 where)))
          ;; TODO: string-join.
          (value  (nth 3 lines))
          (inhibit-modification-hooks t))
     (save-excursion
       (progn
-        (delete-region (kasumi-string-to-fix-point (nth 0 remove))
-                       (kasumi-string-to-fix-point (nth 1 remove)))
+        (goto-char (kasumi-fix-point add-point))
 
-
-        (goto-char (kasumi-string-to-fix-point (nth 0 where)))
-        (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 remove))
-                         (- (kasumi-string-to-fix-point (nth 0 remove))
-                            (kasumi-string-to-fix-point (nth 1 remove))))
+        (delete-region (kasumi-fix-point remove-start)
+                       (kasumi-fix-point remove-end))
 
         (insert value)
-        (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 where))
-                         (length value))
+
+        (add-change (kasumi-fix-point add-point)
+                    (- (kasumi-fix-point remove-end)
+                       (kasumi-fix-point remove-start))
+                    value)
+
+        (kasumi-add-diff (kasumi-fix-point remove-start)
+                         (+ (- (kasumi-fix-point remove-start)
+                               (kasumi-fix-point remove-end))
+                            (length value)))
+
+        ;; (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 where))
+        ;;                  (length value))
+
+
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
-(defun kasumi-send-load ()
-  (interactive)
-  ;; (kasumi-debug-print "LOAD\n\n")
-  (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
+;; (defun kasumi-send-load ()
+;;   (interactive)
+;;   ;; (kasumi-debug-print "LOAD\n\n")
+;;   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
+(defun kasumi-send-change-sub  (change)
+  (let ((point         (number-to-string (nth 0 change)))
+        (remove_length (number-to-string (nth 1 change)))
+        (value         (nth 2 change)))
+    (if (= (length value) 0)
+        (concat point " " remove_length " " (number-to-string (count-line-string value)))
+      (concat point " " remove_length " " (number-to-string (count-line-string value)) "\n" value))))
+
+(defun kasumi-send-change ()
+  (kasumi-send-command kasumi-command-change
+   (mapconcat 'kasumi-send-change-sub (reverse changes) "\n")))
 
 (defface kasumi-syntaxerror-face
   '((((supports :underline (:style wave)))
@@ -255,9 +281,14 @@
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
 
+(defun add-change (begin length insertion)
+  (setq changes (cons (list begin length insertion) changes)))
+
 (defun kasumi-refresh (beg end length)
   (progn
-    (kasumi-send-load)
+    (add-change beg length (buffer-substring-no-properties beg end))
+    (kasumi-send-change)
+    (setq changes '())
     (setq point-diff '())
     (setq load-count (+ load-count 1))
     (kasumi-remove-all-overlay)))
@@ -269,12 +300,14 @@
   (kill-all-local-variables)
   (use-local-map kasumi-mode-map)
   (set (make-local-variable 'font-lock-defaults) '(kasumi-font-lock-keywords))
-  (setq-local comment-start "#")
   (make-local-variable 'receive-in-progress)
   (make-local-variable 'receiving-str)
   ;; ((where diff))
   (set (make-local-variable 'point-diff) '())
   (set (make-local-variable 'load-count) 0)
+  ;; changes ((point remove_length insert))
+  (set (make-local-variable 'changes) '())
+
   (set (make-local-variable 'shiranui-process)
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
@@ -282,9 +315,15 @@
   (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
+
+  ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Setting-Hooks.html
+  ;; append to last,local.
+  ;; (add-hook 'before-change-functions 'kasumi-before-change t t)
   (add-hook 'after-change-functions 'kasumi-refresh t t)
   (setq major-mode 'kasumi-mode)
   (setq mode-name "Kasumi")
+  ;;  first boot.
+  (kasumi-refresh (point-min) (point-max) 0)
   (run-hooks 'kasumi-mode-hook))
 
 (provide 'kasumi-mode)
