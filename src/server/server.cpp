@@ -26,6 +26,7 @@ namespace shiranui{
 
         void PipeServer::send_command(const std::string& command,const std::string& value){
             std::stringstream ss;
+            boost::this_thread::interruption_point();
             os_lock.lock();
             if(value != ""){
                 os << how_many_lines(value) << " " << command << std::endl
