@@ -1,7 +1,10 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" 'kasumi-refresh) ;; inspect?
+    (define-key map "\C-\\" (lambda () (kasumi-refresh (point-min) (point-max) 0))) ;; inspect?
+    (define-key map "\C-xd" 'kasumi-decline)
+    (define-key map "\C-xa" 'kasumi-accept)
+    (define-key map "\C-xi" 'kasumi-idle)
     map)
   "Keymap for Kasumi Major mode")
 
@@ -292,6 +295,53 @@
     (setq point-diff '())
     (setq load-count (+ load-count 1))
     (kasumi-remove-all-overlay)))
+
+(defun kasumi-accept ()
+  (interactive)
+  (let ((is-idle-flyline
+         (save-excursion
+           (beginning-of-line)
+           (let ((head (buffer-substring-no-properties (point) (+ (point) 2))))
+             (string= head "#+")))))
+    (if is-idle-flyline
+        (save-excursion
+          (beginning-of-line)
+          (forward-char)
+          (delete-char 1)
+          (insert "-"))
+      (message "This is not idle-flyline"))))
+
+(defun kasumi-idle ()
+  (interactive)
+  (let ((is-idle-flyline
+         (save-excursion
+           (beginning-of-line)
+           (let ((head (buffer-substring-no-properties (point) (+ (point) 2))))
+             (string= head "#-")))))
+    (if is-idle-flyline
+        (save-excursion
+          (beginning-of-line)
+          (forward-char)
+          (delete-char 1)
+          (insert "+"))
+      (message "This is not accepted flyline"))))
+
+(defun kasumi-decline ()
+  (interactive)
+  (if (string= (buffer-substring-no-properties (line-beginning-position)
+                                               (+ (line-beginning-position) 2)) "#+")
+        (progn
+          (beginning-of-line)
+          (forward-char)
+          (delete-char 1)
+          (insert "-")
+          (let* ((s (search-forward "->"))
+                 (e (search-forward ";")))
+            (delete-region s (- e 1))
+            (backward-char)
+          )
+      (message "This is not idle-flyline")))
+
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
