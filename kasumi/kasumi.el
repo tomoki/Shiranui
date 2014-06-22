@@ -326,10 +326,29 @@
           (insert "+"))
       (message "This is not accepted flyline"))))
 
+;; (defun kasumi-decline ()
+;;   (interactive)
+;;   (if (string= (buffer-substring-no-properties (line-beginning-position)
+;;                                                (+ (line-beginning-position) 2)) "#+")
+;;         (progn
+;;           (beginning-of-line)
+;;           (forward-char)
+;;           (delete-char 1)
+;;           (insert "-")
+;;           (let* ((s (search-forward "->"))
+;;                  (e (search-forward ";")))
+;;             (delete-region s (- e 1))
+;;             (backward-char)
+;;           ))
+;;       (message "This is not idle-flyline")))
+
 (defun kasumi-decline ()
   (interactive)
-  (if (string= (buffer-substring-no-properties (line-beginning-position)
-                                               (+ (line-beginning-position) 2)) "#+")
+  (let ((is-idle (string= (buffer-substring-no-properties (line-beginning-position)
+                                               (+ (line-beginning-position) 2)) "#+"))
+        (prev-length (- (line-end-position) (line-beginning-position)))
+        (inhibit-modification-hooks t))
+    (if is-idle
         (progn
           (beginning-of-line)
           (forward-char)
@@ -339,9 +358,21 @@
                  (e (search-forward ";")))
             (delete-region s (- e 1))
             (backward-char)
+            (insert " "))
+          (kasumi-refresh (line-beginning-position) (line-end-position) prev-length)
           )
-      (message "This is not idle-flyline")))
-
+        (message "This is not idle-flyline"))))
+      ;;   (progn
+      ;;     (beginning-of-line)
+      ;;     (forward-char)
+      ;;     (delete-char 1)
+      ;;     (insert "-")
+      ;;     (let* ((s (search-forward "->"))
+      ;;            (e (search-forward ";")))
+      ;;       (delete-region s (- e 1))
+      ;;       (backward-char)
+      ;;     ))
+      ;; (message "This is not idle-flyline")))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
