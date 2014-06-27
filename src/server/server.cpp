@@ -219,7 +219,7 @@ namespace shiranui{
                     return;
                 }
 
-                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(r.cur.v);
+                sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(r.cur_v);
                 if(b != nullptr){
                     if(b->value){
                         send_good_flyline(start_point,end_point);
@@ -255,7 +255,7 @@ namespace shiranui{
                 return;
             }
 
-            sp<Value> left = r.cur.v;
+            sp<Value> left = r.cur_v;
             std::string left_str = to_reproductive(left);
             if(sf->right != nullptr){
                 int remove_start = calc_point(source,sf->right->line,sf->right->column);

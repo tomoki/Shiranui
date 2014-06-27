@@ -43,7 +43,7 @@ void repl(){
             program->accept(printer);
             try{
                 program->accept(r);
-                r.cur.v->accept(printer_for_value);
+                r.cur_v->accept(printer_for_value);
                 std::cerr << std::endl;
             }catch(NoSuchVariableException e){
                 std::cerr << "No such variable: ";

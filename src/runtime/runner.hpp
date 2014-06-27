@@ -25,16 +25,9 @@ namespace shiranui{
                 where = e;
             }
         };
-        struct ValEnv{
-            sp<value::Value> v;
-            sp<environment::Environment> e;
-            ValEnv();
-            ValEnv(environment::Environment*);
-            ValEnv(sp<environment::Environment>);
-            void set_value(sp<value::Value>);
-        };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
-            ValEnv cur;
+            sp<value::Value> cur_v;
+            sp<environment::Environment> cur_e;
             Runner();
             void visit(syntax::ast::Identifier&);
             void visit(syntax::ast::Variable&);

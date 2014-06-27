@@ -19,18 +19,10 @@ namespace shiranui{
         using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::builtin::PrintFunction;
         using shiranui::runtime::value::builtin::LengthFunction;
-        ValEnv::ValEnv(){
-            v = std::make_shared<Integer>(0);
-            e = std::make_shared<Environment>();
-        }
-        ValEnv::ValEnv(sp<Environment> e_){
-            v = std::make_shared<Integer>(0);
-            e = std::make_shared<Environment>(e_);
-        }
-        void ValEnv::set_value(sp<Value> v_){
-            v = v_;
-        }
-        Runner::Runner() {}
+        Runner::Runner() :
+            cur_v(std::make_shared<Integer>(0)),
+            cur_e(std::make_shared<Environment>())
+        {}
         void Runner::visit(syntax::ast::Identifier& id){
             throw RuntimeException(); // never occur.
             return;
@@ -38,11 +30,11 @@ namespace shiranui{
         void Runner::visit(syntax::ast::Variable& var){
             boost::this_thread::interruption_point();
             if(var.value.name == "system_call"){
-                cur.v = std::make_shared<SystemCall>();
+                cur_v = std::make_shared<SystemCall>();
                 return;
             }
-            if(cur.e->has(var.value)){
-                cur.v = cur.e->get(var.value);
+            if(cur_e->has(var.value)){
+                cur_v = cur_e->get(var.value);
                 return;
             }else{
                 // is it really ok?
@@ -51,32 +43,32 @@ namespace shiranui{
         }
         void Runner::visit(syntax::ast::Number& num){
             boost::this_thread::interruption_point();
-            cur.v = std::make_shared<Integer>(num.value);
+            cur_v = std::make_shared<Integer>(num.value);
         }
         void Runner::visit(syntax::ast::String& s){
             boost::this_thread::interruption_point();
-            cur.v = std::make_shared<String>(s.value);
+            cur_v = std::make_shared<String>(s.value);
         }
         void Runner::visit(syntax::ast::Enum& e){
             boost::this_thread::interruption_point();
             std::vector<sp<Value>> vs;
             for(sp<syntax::ast::Expression> exp : e.expressions){
                 exp->accept(*this);
-                vs.push_back(cur.v);
+                vs.push_back(cur_v);
             }
-            cur.v = std::make_shared<Array>(vs);
+            cur_v = std::make_shared<Array>(vs);
         }
         void Runner::visit(syntax::ast::Interval& intr){
             boost::this_thread::interruption_point();
             sp<Value> start,end,next;
             {
                 intr.start->accept(*this);
-                start = cur.v;
+                start = cur_v;
                 intr.end->accept(*this);
-                end = cur.v;
+                end = cur_v;
                 if(intr.next != nullptr){
                     intr.next->accept(*this);
-                    next = cur.v;
+                    next = cur_v;
                 }
             }
             {
@@ -124,7 +116,7 @@ namespace shiranui{
                             }
                         }
                     }
-                    cur.v = std::make_shared<Array>(vs);
+                    cur_v = std::make_shared<Array>(vs);
                     return;
                 }
             }
@@ -133,26 +125,26 @@ namespace shiranui{
 
         void Runner::visit(syntax::ast::Block& block){
             boost::this_thread::interruption_point();
-            sp<Environment> before = cur.e;
-            sp<Environment> inner = std::make_shared<Environment>(cur.e);
-            cur.e = inner;
+            sp<Environment> before = cur_e;
+            sp<Environment> inner = std::make_shared<Environment>(cur_e);
+            cur_e = inner;
             for(auto& st : block.statements){
                 st->accept(*this);
-                sp<Return> r = std::dynamic_pointer_cast<Return>(cur.v);
+                sp<Return> r = std::dynamic_pointer_cast<Return>(cur_v);
                 if(r != nullptr){
                     break;
                 }
             }
-            cur.e = before;
+            cur_e = before;
         }
         void Runner::visit(syntax::ast::Function& f){
             boost::this_thread::interruption_point();
-            cur.set_value(std::make_shared<UserFunction>(f.parameters,f.body,cur.e));
+            cur_v = std::make_shared<UserFunction>(f.parameters,f.body,cur_e);
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
             boost::this_thread::interruption_point();
             fc.function->accept(*this);
-            sp<Value> func = cur.v;
+            sp<Value> func = cur_v;
             // check func.v is really function.
             {
                 sp<UserFunction> f = std::dynamic_pointer_cast<UserFunction>(func);
@@ -160,21 +152,21 @@ namespace shiranui{
                     if(fc.arguments.size() != f->parameters.size()){
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }
-                    sp<Environment> before = this->cur.e;
+                    sp<Environment> before = this->cur_e;
                     sp<Environment> call_env = std::make_shared<Environment>(f->env);
                     for(int i=0;i<f->parameters.size();i++){
                         fc.arguments[i]->accept(*this);
                         // it is not const.
-                        call_env->define(f->parameters[i],cur.v,false);
+                        call_env->define(f->parameters[i],cur_v,false);
                     }
-                    this->cur.e = call_env;
+                    this->cur_e = call_env;
                     f->body->accept(*this);
-                    this->cur.e = before;
-                    sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur.v);
+                    this->cur_e = before;
+                    sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if(ret == nullptr){
                         std::cerr << "WARN: this is not return value." << std::endl;
                     }else{
-                        cur.v = ret->value;
+                        cur_v = ret->value;
                     }
                     return;
                 }
@@ -186,14 +178,14 @@ namespace shiranui{
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }
                     fc.arguments[0]->accept(*this);
-                    sp<String> s = std::dynamic_pointer_cast<String>(cur.v);
+                    sp<String> s = std::dynamic_pointer_cast<String>(cur_v);
                     if(s == nullptr){
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }else{
                         if(s->value == "print"){
-                            cur.v = std::make_shared<PrintFunction>();
+                            cur_v = std::make_shared<PrintFunction>();
                         }else if(s->value == "length"){
-                            cur.v = std::make_shared<LengthFunction>();
+                            cur_v = std::make_shared<LengthFunction>();
                         }else if(s->value == "len"){
                         }else{
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
@@ -209,13 +201,13 @@ namespace shiranui{
                         std::vector<sp<Value>> arguments;
                         for(sp<syntax::ast::Expression> arg : fc.arguments){
                             arg->accept(*this);
-                            arguments.push_back(cur.v);
+                            arguments.push_back(cur_v);
                         }
                         sp<Value> ret = f->run(arguments);
                         if(ret == nullptr){
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                         }else{
-                            cur.v = ret;
+                            cur_v = ret;
                         }
                         return;
                     }
@@ -226,9 +218,9 @@ namespace shiranui{
         void Runner::visit(syntax::ast::BinaryOperator& bop){
             boost::this_thread::interruption_point();
             bop.left->accept(*this);
-            sp<Value> left = cur.v;
+            sp<Value> left = cur_v;
             bop.right->accept(*this);
-            sp<Value> right = cur.v;
+            sp<Value> right = cur_v;
             if(typeid(*left) != typeid(*right)){
                 throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
             }
@@ -237,27 +229,27 @@ namespace shiranui{
                 sp<Integer> r = std::dynamic_pointer_cast<Integer>(right);
                 if(l != nullptr and r != nullptr){
                     if(bop.op == "="){
-                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                        cur_v = std::make_shared<Boolean>(l->value == r->value);
                     }else if(bop.op == "/="){
-                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                        cur_v = std::make_shared<Boolean>(l->value != r->value);
                     }else if(bop.op == "<"){
-                        cur.v = std::make_shared<Boolean>(l->value < r->value);
+                        cur_v = std::make_shared<Boolean>(l->value < r->value);
                     }else if(bop.op == "<="){
-                        cur.v = std::make_shared<Boolean>(l->value <= r->value);
+                        cur_v = std::make_shared<Boolean>(l->value <= r->value);
                     }else if(bop.op == ">"){
-                        cur.v = std::make_shared<Boolean>(l->value > r->value);
+                        cur_v = std::make_shared<Boolean>(l->value > r->value);
                     }else if(bop.op == ">="){
-                        cur.v = std::make_shared<Boolean>(l->value >= r->value);
+                        cur_v = std::make_shared<Boolean>(l->value >= r->value);
                     }else if(bop.op == "+"){
-                        cur.v = std::make_shared<Integer>(l->value+r->value);
+                        cur_v = std::make_shared<Integer>(l->value+r->value);
                     }else if(bop.op == "-"){
-                        cur.v = std::make_shared<Integer>(l->value-r->value);
+                        cur_v = std::make_shared<Integer>(l->value-r->value);
                     }else if(bop.op == "*"){
-                        cur.v = std::make_shared<Integer>(l->value*r->value);
+                        cur_v = std::make_shared<Integer>(l->value*r->value);
                     }else if(bop.op == "/"){
-                        cur.v = std::make_shared<Integer>(l->value/r->value);
+                        cur_v = std::make_shared<Integer>(l->value/r->value);
                     }else if(bop.op == "%"){
-                        cur.v = std::make_shared<Integer>(l->value%r->value);
+                        cur_v = std::make_shared<Integer>(l->value%r->value);
                     }else if(bop.op == "^"){
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
@@ -270,13 +262,13 @@ namespace shiranui{
                 sp<Boolean> r = std::dynamic_pointer_cast<Boolean>(right);
                 if(l != nullptr and r != nullptr){
                     if(bop.op == "="){
-                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                        cur_v = std::make_shared<Boolean>(l->value == r->value);
                     }else if(bop.op == "/="){
-                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                        cur_v = std::make_shared<Boolean>(l->value != r->value);
                     }else if(bop.op == "and"){
-                        cur.v = std::make_shared<Boolean>(l->value and r->value);
+                        cur_v = std::make_shared<Boolean>(l->value and r->value);
                     }else if(bop.op == "or"){
-                        cur.v = std::make_shared<Boolean>(l->value or r->value);
+                        cur_v = std::make_shared<Boolean>(l->value or r->value);
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
@@ -288,11 +280,11 @@ namespace shiranui{
                 sp<String> r = std::dynamic_pointer_cast<String>(right);
                 if(l != nullptr and r != nullptr){
                     if(bop.op == "="){
-                        cur.v = std::make_shared<Boolean>(l->value == r->value);
+                        cur_v = std::make_shared<Boolean>(l->value == r->value);
                     }else if(bop.op == "/="){
-                        cur.v = std::make_shared<Boolean>(l->value != r->value);
+                        cur_v = std::make_shared<Boolean>(l->value != r->value);
                     }else if(bop.op == "+"){
-                        cur.v = std::make_shared<String>(l->value+r->value);
+                        cur_v = std::make_shared<String>(l->value+r->value);
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
@@ -317,15 +309,15 @@ namespace shiranui{
         void Runner::visit(syntax::ast::UnaryOperator& uop){
             boost::this_thread::interruption_point();
             uop.exp->accept(*this);
-            sp<Value> v_ = cur.v;
+            sp<Value> v_ = cur_v;
             {
                 sp<Integer> v = std::dynamic_pointer_cast<Integer>(v_);
                 if(v != nullptr){
                     if(uop.op == "+"){
-                        cur.v = v;
+                        cur_v = v;
                         return;
                     }else if(uop.op == "-"){
-                        cur.v = std::make_shared<Integer>(-(v->value));
+                        cur_v = std::make_shared<Integer>(-(v->value));
                         return;
                     }
                 }
@@ -334,7 +326,7 @@ namespace shiranui{
                 sp<Boolean> v = std::dynamic_pointer_cast<Boolean>(v_);
                 if(v != nullptr){
                     if(uop.op == "not"){
-                        cur.v = std::make_shared<Boolean>(not (v->value));
+                        cur_v = std::make_shared<Boolean>(not (v->value));
                         return;
                     }
                 }
@@ -349,19 +341,19 @@ namespace shiranui{
         void Runner::visit(syntax::ast::Definement& def){
             boost::this_thread::interruption_point();
             def.value->accept(*this);
-            cur.e->define(def.id,cur.v,def.is_const);
+            cur_e->define(def.id,cur_v,def.is_const);
             return;
         }
         void Runner::visit(syntax::ast::ReturnStatement& ret){
             boost::this_thread::interruption_point();
             ret.value->accept(*this);
-            cur.v = std::make_shared<Return>(cur.v);
+            cur_v = std::make_shared<Return>(cur_v);
             return;
         }
         void Runner::visit(syntax::ast::IfElseStatement& ies){
             boost::this_thread::interruption_point();
             ies.pred->accept(*this);
-            sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur.v);
+            sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur_v);
             if(bp == nullptr){
                 throw ConvertException(ies.pred);
             }
@@ -375,30 +367,30 @@ namespace shiranui{
         void Runner::visit(syntax::ast::ForStatement& fors){
             boost::this_thread::interruption_point();
             fors.loop_exp->accept(*this);
-            sp<Array> arr = std::dynamic_pointer_cast<Array>(cur.v);
+            sp<Array> arr = std::dynamic_pointer_cast<Array>(cur_v);
             if(arr == nullptr){
                 throw ConvertException(fors.loop_exp);
             }
-            sp<Environment> before = cur.e;
+            sp<Environment> before = cur_e;
             for(sp<Value> v : arr->value){
                 sp<Environment> inner = std::make_shared<Environment>(before);
                 inner->define(fors.loop_var,v,false);
-                cur.e = inner;
+                cur_e = inner;
                 fors.block->accept(*this);
-                sp<Return> ret = std::dynamic_pointer_cast<Return>(cur.v);
+                sp<Return> ret = std::dynamic_pointer_cast<Return>(cur_v);
                 if(ret != nullptr){
                     break;
                 }
             }
-            cur.e = before;
+            cur_e = before;
             return;
         }
         void Runner::visit(syntax::ast::Assignment& assign){
             boost::this_thread::interruption_point();
-            if(cur.e->has(assign.id) and
-               not cur.e->is_const(assign.id)){
+            if(cur_e->has(assign.id) and
+               not cur_e->is_const(assign.id)){
                 assign.value->accept(*this);
-                cur.e->set(assign.id,cur.v);
+                cur_e->set(assign.id,cur_v);
             }
             return;
         }
