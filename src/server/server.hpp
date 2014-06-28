@@ -19,6 +19,7 @@ namespace shiranui{
 
             boost::thread main_thread;
             boost::thread_group flyline_threads;
+            std::vector<sp<syntax::ast::SourceCode>> program_per_flyline;
 
             PipeServer(std::istream&,std::ostream&);
 
@@ -26,6 +27,7 @@ namespace shiranui{
             void send_command(const std::string&,const std::string&);
             void send_command_with_two_points(const std::string&,const int&,const int&);
             void send_syntaxerror(const int&,const int&);
+            void send_runtimeerror(const int&,const int&);
             void send_good_flyline(const int&,const int&);
             void send_bad_flyline(const int&,const int&);
             void send_idle_flyline(const int&,const int&, const int&,const int&,

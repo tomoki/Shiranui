@@ -29,6 +29,8 @@
   "change")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
+(defconst kasumi-command-runtimeerror
+  "runtimeerror")
 (defconst kasumi-command-idleflyline
   "idleflyline")
 (defconst kasumi-command-goodflyline
@@ -131,6 +133,8 @@
            (kasumi-receive-idleflyline value))
           ((string= command kasumi-command-debug-print)
            (kasumi-debug-print value))
+          ((string= command kasumi-command-runtimeerror)
+           (kasumi-receive-runtimeerror value))
           (t (message "unknown command:%s " command))
           )))
 
@@ -164,12 +168,19 @@
         (kasumi-put-syntaxerror (kasumi-string-to-fix-point (nth 0 beg-end-list))
                                 (kasumi-string-to-fix-point (nth 1 beg-end-list)))
         )))
+(defun kasumi-receive-runtimeerror (value)
+  (if (not (= (length value) 0))
+      (let ((beg-end-list (split-string value " ")))
+        (kasumi-put-runtimeerror (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                                 (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+        )))
 
 (defun kasumi-receive-goodflyline (value)
   (let ((beg-end-list (split-string value " ")))
     (kasumi-put-goodflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
                             (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
+
 (defun kasumi-receive-badflyline (value)
   (let ((beg-end-list (split-string value " ")))
     (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
@@ -240,6 +251,13 @@
      :underline t :inherit error))
     "Used for syntaxerror")
 
+(defface kasumi-runtimeerror-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Red1"))
+    (t
+     :underline t :inherit error))
+    "Used for runtimeerror")
+
 (defface kasumi-goodflyline-face
   '((((supports :underline (:style wave)))
      :underline (:color "Green1"))
@@ -280,6 +298,9 @@
 
 (defun kasumi-put-idleflyline (beg end)
   (kasumi-put-face 'kasumi-idleflyline-face beg end))
+
+(defun kasumi-put-runtimeerror (beg end)
+  (kasumi-put-face 'kasumi-runtimeerror-face beg end))
 
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))

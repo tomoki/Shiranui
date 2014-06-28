@@ -7,6 +7,7 @@ namespace shiranui{
         const std::string COMMAND_CHANGE = "change";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
+        const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
         const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
@@ -52,6 +53,10 @@ namespace shiranui{
         void PipeServer::send_bad_flyline(const int& start_point,const int& end_point){
             return send_command_with_two_points(COMMAND_BAD_FLYLINE,start_point,end_point);
         }
+        void PipeServer::send_runtimeerror(const int& start_point,const int& end_point){
+            return send_command_with_two_points(COMMAND_RUNTIMEERROR,start_point,end_point);
+        }
+
         void PipeServer::send_idle_flyline(const int& start_point,const int& end_point,
                                            const int& remove_start,const int& remove_end,
                                            const int& insert_point,const std::string& value){
@@ -143,6 +148,28 @@ namespace shiranui{
             }
 
             if(ok and iter == last){
+                // find runtime bug.
+                Runner r;
+                try{
+                    program->accept(r);
+                }catch(NoSuchVariableException e){
+                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int end_point = start_point + e.where->length;
+                    send_runtimeerror(start_point,end_point);
+                    return;
+                }catch(ConvertException e){
+                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int end_point = start_point + e.where->length;
+                    send_runtimeerror(start_point,end_point);
+                    return;
+                }catch(RuntimeException e){
+                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int end_point = start_point + e.where->length;
+                    send_runtimeerror(start_point,end_point);
+                    return;
+                }
+
+                program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
                 for(int i=0;i<program->flylines.size();i++){
                     flyline_threads.create_thread(boost::bind(&PipeServer::run_flyline,
                                 this,source,i));
@@ -166,13 +193,12 @@ namespace shiranui{
 
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
-            bool ok = false;
             Parser<pos_iterator_t> resolver(first);
             sp<SourceCode> program;
-            ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+            bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
                                                  boost::spirit::qi::space,program);
 
-
+            program_per_flyline[flyline_index] = program; // TODO:use better way.
             Runner r;
             sp<FlyLine> sf = program->flylines[flyline_index];
             try{
