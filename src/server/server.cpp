@@ -5,12 +5,16 @@
 namespace shiranui{
     namespace server{
         const std::string COMMAND_CHANGE = "change";
+        const std::string COMMAND_INSPECT = "inspect";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
         const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
+
+        const std::string COMMAND_INSPECT_STRIKE = "inspect_strike";
+        const std::string COMMAND_INSPECT_CLEAR = "inspect_clear";
 
         std::string to_reproductive(sp<runtime::value::Value>);
         int calc_point(const std::string&,int,int);
@@ -57,6 +61,7 @@ namespace shiranui{
             return send_command_with_two_points(COMMAND_RUNTIMEERROR,start_point,end_point);
         }
 
+
         void PipeServer::send_idle_flyline(const int& start_point,const int& end_point,
                                            const int& remove_start,const int& remove_end,
                                            const int& insert_point,const std::string& value){
@@ -70,6 +75,14 @@ namespace shiranui{
 
         void PipeServer::send_debug_print(const std::string& value){
             return send_command(COMMAND_DEBUG_PRINT,value);
+        }
+
+        void PipeServer::send_inspect_strike(const int& start_point,const int& end_point){
+            return send_command_with_two_points(COMMAND_INSPECT_STRIKE,start_point,end_point);
+        }
+
+        void PipeServer::send_inspect_clear(){
+            return send_command(COMMAND_INSPECT_CLEAR,"");
         }
 
         // receive
@@ -98,6 +111,8 @@ namespace shiranui{
                                          const std::string& value){
             if(command == COMMAND_CHANGE){
                 return on_change_command(value);
+            }else if(command == COMMAND_INSPECT){
+                return on_inspect_command(value);
             }
         }
 
@@ -125,6 +140,45 @@ namespace shiranui{
             main_thread.join();
             flyline_threads.join_all();
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
+        }
+
+        void PipeServer::on_inspect_command(const std::string& value){
+            std::stringstream ss(value);
+            int line;ss >> line;
+            // TODO: check main_thread,flyline_threads condition.
+            for(int i=0;i<program_per_flyline.size();i++){
+                if(program_per_flyline[i]->flylines[i]->line == line){
+                    std::stringstream out;
+                    out << "inspect -> " << i;
+                    send_debug_print(out.str());
+                    inspect(program_per_flyline[i],
+                            program_per_flyline[i]->flylines[i]);
+                    return;
+                }
+            }
+            //boost::unique_lock<boost::mutex> lock(main_thread_end_mutex);
+            //main_thread_waiting.wait(lock);
+        }
+        void PipeServer::inspect(sp<syntax::ast::SourceCode> program,sp<syntax::ast::FlyLine> sf){
+            using namespace shiranui::runtime::diver;
+            using namespace shiranui::syntax::ast;
+            Diver diver(program);
+            {
+                sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                if(l != nullptr){
+                    DivingMessage ms = diver.dive(l->left);
+                    send_debug_print(ms.str());
+                    send_diving_message(source,ms);
+                }
+            }
+            {
+                sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                if(l != nullptr){
+                    DivingMessage ms = diver.dive(l->left);
+                    send_debug_print(ms.str());
+                    send_diving_message(source,ms);
+                }
+            }
         }
 
         void PipeServer::exec(std::string source){
@@ -180,9 +234,8 @@ namespace shiranui{
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;
             std::stringstream ts;
-            ts << "First path:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
-            send_command(COMMAND_DEBUG_PRINT,ts.str());
-
+            ts << "First parse:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
+            send_debug_print(ts.str());
         }
 
         void PipeServer::run_flyline(std::string source,int flyline_index){
@@ -201,15 +254,7 @@ namespace shiranui{
             program_per_flyline[flyline_index] = program; // TODO:use better way.
             Runner r;
             sp<FlyLine> sf = program->flylines[flyline_index];
-            try{
-                program->accept(r);
-            }catch(NoSuchVariableException e){
-                return;
-            }catch(ConvertException e){
-                return;
-            }catch(RuntimeException e){
-                return;
-            }
+            program->accept(r); // do not cause exception.
 
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
@@ -235,13 +280,13 @@ namespace shiranui{
                 try{
                     bin->accept(r);
                 }catch(NoSuchVariableException e){
-                    send_syntaxerror(start_point,end_point);
+                    send_bad_flyline(start_point,end_point);
                     return;
                 }catch(ConvertException e){
-                    send_syntaxerror(start_point,end_point);
+                    send_bad_flyline(start_point,end_point);
                     return;
                 }catch(RuntimeException e){
-                    send_syntaxerror(start_point,end_point);
+                    send_bad_flyline(start_point,end_point);
                     return;
                 }
 
@@ -271,13 +316,13 @@ namespace shiranui{
             try{
                 sf->left->accept(r);
             }catch(NoSuchVariableException e){
-                send_syntaxerror(start_point,end_point);
+                send_bad_flyline(start_point,end_point);
                 return;
             }catch(ConvertException e){
-                send_syntaxerror(start_point,end_point);
+                send_bad_flyline(start_point,end_point);
                 return;
             }catch(RuntimeException e){
-                send_syntaxerror(start_point,end_point);
+                send_bad_flyline(start_point,end_point);
                 return;
             }
 
@@ -289,14 +334,26 @@ namespace shiranui{
                 send_idle_flyline(start_point,end_point,remove_start,remove_end
                                  ,remove_start,left_str);
             }else{ // right == null
-                // reproduce
                 // do not delete anything
                 send_idle_flyline(start_point,end_point,1,1,end_point-1,left_str);
-                // send_change_flyline_to_idle();
             }
         }
-
-
+        void PipeServer::send_diving_message(const std::string& source,
+                                             runtime::diver::DivingMessage message){
+            using namespace runtime::diver;
+            std::stringstream ss(message.str());
+            send_inspect_clear();
+            std::string command;
+            while(ss >> command){
+                if(command == STRIKE){
+                    int line,column,length;
+                    ss >> line >> column >> length;
+                    int start_point = calc_point(source,line,column);
+                    int end_point = start_point + length;
+                    send_inspect_strike(start_point,end_point);
+                }
+            }
+        }
 
         // helper functions.
         std::string to_reproductive(sp<runtime::value::Value> vi){

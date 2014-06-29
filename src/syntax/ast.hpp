@@ -2,6 +2,7 @@
 #define AST_HPP_INCLUDED
 
 #include "../misc.hpp"
+#include "../runtime/runtime_info.hpp"
 #include <iostream>
 #include <memory>
 
@@ -20,6 +21,7 @@ namespace shiranui{
     namespace syntax{
         namespace ast{
             struct LocationInfo{
+                runtime::infomation::RuntimeInfomation runtime_info;
                 unsigned int line,column,length;
                 virtual void accept(VisitorForAST&) = 0;
             };

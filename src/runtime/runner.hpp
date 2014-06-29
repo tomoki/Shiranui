@@ -28,7 +28,13 @@ namespace shiranui{
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;
+            int cur_t;
             Runner();
+            template<typename T>
+            int before_visit(T&);
+            template<typename T>
+            void after_visit(T&,int);
+
             void visit(syntax::ast::Identifier&);
             void visit(syntax::ast::Variable&);
             void visit(syntax::ast::Number&);

@@ -1,7 +1,7 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" (lambda () (kasumi-refresh (point-min) (point-max) 0))) ;; inspect?
+    (define-key map "\C-\\" 'kasumi-inspect) ;; inspect?
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
@@ -27,6 +27,8 @@
   "load")
 (defconst kasumi-command-change
   "change")
+(defconst kasumi-command-inspect
+  "inspect")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
 (defconst kasumi-command-runtimeerror
@@ -39,6 +41,10 @@
   "badflyline")
 (defconst kasumi-command-debug-print
   "debug")
+(defconst kasumi-command-inspect-strike
+  "inspect_strike")
+(defconst kasumi-command-inspect-clear
+  "inspect_clear")
 
 
 ;; getline needs newline("\n")
@@ -135,6 +141,10 @@
            (kasumi-debug-print value))
           ((string= command kasumi-command-runtimeerror)
            (kasumi-receive-runtimeerror value))
+          ((string= command kasumi-command-inspect-strike)
+           (kasumi-receive-inspect-strike value))
+          ((string= command kasumi-command-inspect-clear)
+           (kasumi-remove-all-inspect-overlay))
           (t (message "unknown command:%s " command))
           )))
 
@@ -143,7 +153,6 @@
       '()
     (cons (kasumi-process-pair (car pairs-command-value))
           (kasumi-process-pairs (cdr pairs-command-value)))))
-
 
 ;; Should use original position?
 (defun kasumi-fix-point-sub (p lis)
@@ -154,6 +163,15 @@
 
 (defun kasumi-fix-point (p)
   (kasumi-fix-point-sub p point-diff))
+
+(defun kasumi-orig-point-sub (p lis)
+  (cond
+   ((null lis) p)
+   ((> p (car (car lis))) (kasumi-orig-point-sub (+ p (cdr (car lis))) (cdr lis)))
+   (t (kasumi-orig-point-sub p (cdr lis)))))
+
+(defun kasumi-orig-point (p)
+  (kasumi-orig-point-sub p point-diff))
 
 (defun kasumi-add-diff (where size)
   (setq point-diff (cons (cons where size) point-diff)))
@@ -185,6 +203,12 @@
   (let ((beg-end-list (split-string value " ")))
     (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+    ))
+
+(defun kasumi-receive-inspect-strike (value)
+  (let ((beg-end-list (split-string value " ")))
+    (kasumi-put-inspect-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                               (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
 ;; beg end <- target
@@ -228,10 +252,7 @@
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
-;; (defun kasumi-send-load ()
-;;   (interactive)
-;;   ;; (kasumi-debug-print "LOAD\n\n")
-;;   (kasumi-send-command kasumi-command-load (buffer-string-no-properties)))
+
 (defun kasumi-send-change-sub  (change)
   (let ((point         (number-to-string (nth 0 change)))
         (remove_length (number-to-string (nth 1 change)))
@@ -279,11 +300,24 @@
      :underline t :inherit error))
     "Used for flyline that run")
 
+(defface kasumi-inspect-strike-face
+  '((t :strike-through t)
+    )
+  "strike for inspect")
+
 (defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
       (progn
         (overlay-put ol 'category 'kasumi-face)
+        (overlay-put ol 'face face)
+        ol))))
+
+(defun kasumi-put-inspect-face (face beg end)
+  (save-restriction
+    (let ((ol (make-overlay beg end)))
+      (progn
+        (overlay-put ol 'category 'kasumi-inspect-face)
         (overlay-put ol 'face face)
         ol))))
 
@@ -302,8 +336,15 @@
 (defun kasumi-put-runtimeerror (beg end)
   (kasumi-put-face 'kasumi-runtimeerror-face beg end))
 
+(defun kasumi-put-inspect-strike (beg end)
+  (kasumi-put-inspect-face 'kasumi-inspect-strike-face beg end))
+
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
+
+(defun kasumi-remove-all-inspect-overlay ()
+  (interactive)
+  (remove-overlays (point-min) (point-max) 'category 'kasumi-inspect-face))
 
 (defun add-change (begin length insertion)
   (setq changes (cons (list begin length insertion) changes)))
@@ -316,6 +357,22 @@
     (setq point-diff '())
     (setq load-count (+ load-count 1))
     (kasumi-remove-all-overlay)))
+
+(defun kasumi-count-lines ()
+  "Print the current line number (in the buffer) of point."
+  (interactive)
+  (save-restriction
+    (widen)
+    (save-excursion
+      (beginning-of-line)
+      (1+ (count-lines 1 (point))))))
+
+(defun kasumi-inspect ()
+  (interactive)
+  (progn
+    (kasumi-send-command kasumi-command-inspect (number-to-string (kasumi-count-lines)))
+    ;; (kasumi-refresh (point-min) (point-min) 0)
+  ))
 
 (defun kasumi-accept ()
   (interactive)
@@ -347,22 +404,6 @@
           (insert "+"))
       (message "This is not accepted flyline"))))
 
-;; (defun kasumi-decline ()
-;;   (interactive)
-;;   (if (string= (buffer-substring-no-properties (line-beginning-position)
-;;                                                (+ (line-beginning-position) 2)) "#+")
-;;         (progn
-;;           (beginning-of-line)
-;;           (forward-char)
-;;           (delete-char 1)
-;;           (insert "-")
-;;           (let* ((s (search-forward "->"))
-;;                  (e (search-forward ";")))
-;;             (delete-region s (- e 1))
-;;             (backward-char)
-;;           ))
-;;       (message "This is not idle-flyline")))
-
 (defun kasumi-decline ()
   (interactive)
   (let ((is-idle (string= (buffer-substring-no-properties (line-beginning-position)
@@ -383,17 +424,6 @@
           (kasumi-refresh (line-beginning-position) (line-end-position) prev-length)
           )
         (message "This is not idle-flyline"))))
-      ;;   (progn
-      ;;     (beginning-of-line)
-      ;;     (forward-char)
-      ;;     (delete-char 1)
-      ;;     (insert "-")
-      ;;     (let* ((s (search-forward "->"))
-      ;;            (e (search-forward ";")))
-      ;;       (delete-region s (- e 1))
-      ;;       (backward-char)
-      ;;     ))
-      ;; (message "This is not idle-flyline")))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()

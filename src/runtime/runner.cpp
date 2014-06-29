@@ -4,6 +4,8 @@
 #include <memory>
 #include <boost/thread/thread.hpp>
 
+#define BEFORE_VISIT_MACRO(NODE) int cur_t = before_visit(NODE)
+#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t)
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::environment::Environment;
@@ -21,45 +23,62 @@ namespace shiranui{
         using shiranui::runtime::value::builtin::LengthFunction;
         Runner::Runner() :
             cur_v(std::make_shared<Integer>(0)),
-            cur_e(std::make_shared<Environment>())
+            cur_e(std::make_shared<Environment>()),
+            cur_t(-1)
         {}
+        template<typename T>
+        int Runner::before_visit(T& node){
+            boost::this_thread::interruption_point();
+            cur_t++;
+            node.runtime_info.visit_time.push_back(cur_t);
+            return cur_t;
+        }
+
+        template<typename T>
+        void Runner::after_visit(T& node,int cur_t){
+            node.runtime_info.return_value[cur_t] = cur_v;
+            boost::this_thread::interruption_point();
+        }
+
         void Runner::visit(syntax::ast::Identifier& id){
             throw RuntimeException(); // never occur.
             return;
         }
         void Runner::visit(syntax::ast::Variable& var){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(var);
             if(var.value.name == "system_call"){
                 cur_v = std::make_shared<SystemCall>();
-                return;
+                AFTER_VISIT_MACRO(var);
             }
             if(cur_e->has(var.value)){
                 cur_v = cur_e->get(var.value);
-                return;
+                AFTER_VISIT_MACRO(var);
             }else{
-                // is it really ok?
                 throw NoSuchVariableException(std::make_shared<syntax::ast::Variable>(var));
             }
         }
         void Runner::visit(syntax::ast::Number& num){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(num);
             cur_v = std::make_shared<Integer>(num.value);
+            AFTER_VISIT_MACRO(num);
         }
         void Runner::visit(syntax::ast::String& s){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(s);
             cur_v = std::make_shared<String>(s.value);
+            AFTER_VISIT_MACRO(s);
         }
         void Runner::visit(syntax::ast::Enum& e){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(e);
             std::vector<sp<Value>> vs;
             for(sp<syntax::ast::Expression> exp : e.expressions){
                 exp->accept(*this);
                 vs.push_back(cur_v);
             }
             cur_v = std::make_shared<Array>(vs);
+            AFTER_VISIT_MACRO(e);
         }
         void Runner::visit(syntax::ast::Interval& intr){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(intr);
             sp<Value> start,end,next;
             {
                 intr.start->accept(*this);
@@ -117,14 +136,14 @@ namespace shiranui{
                         }
                     }
                     cur_v = std::make_shared<Array>(vs);
-                    return;
+                    AFTER_VISIT_MACRO(intr);
                 }
             }
             throw ConvertException(std::make_shared<syntax::ast::Interval>(intr));
         }
 
         void Runner::visit(syntax::ast::Block& block){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(block);
             sp<Environment> before = cur_e;
             sp<Environment> inner = std::make_shared<Environment>(cur_e);
             cur_e = inner;
@@ -136,13 +155,15 @@ namespace shiranui{
                 }
             }
             cur_e = before;
+            AFTER_VISIT_MACRO(block);
         }
         void Runner::visit(syntax::ast::Function& f){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(f);
             cur_v = std::make_shared<UserFunction>(f.parameters,f.body,cur_e);
+            AFTER_VISIT_MACRO(f);
         }
         void Runner::visit(syntax::ast::FunctionCall& fc){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(fc);
             fc.function->accept(*this);
             sp<Value> func = cur_v;
             // check func.v is really function.
@@ -156,8 +177,7 @@ namespace shiranui{
                     sp<Environment> call_env = std::make_shared<Environment>(f->env);
                     for(int i=0;i<f->parameters.size();i++){
                         fc.arguments[i]->accept(*this);
-                        // it is not const.
-                        call_env->define(f->parameters[i],cur_v,false);
+                        call_env->define(f->parameters[i],cur_v,true);
                     }
                     this->cur_e = call_env;
                     f->body->accept(*this);
@@ -168,7 +188,7 @@ namespace shiranui{
                     }else{
                         cur_v = ret->value;
                     }
-                    return;
+                    AFTER_VISIT_MACRO(fc);
                 }
             }
             {
@@ -191,7 +211,7 @@ namespace shiranui{
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                         }
                     }
-                    return;
+                    AFTER_VISIT_MACRO(fc);
                 }
             }
             {
@@ -209,14 +229,14 @@ namespace shiranui{
                         }else{
                             cur_v = ret;
                         }
-                        return;
+                        AFTER_VISIT_MACRO(fc);
                     }
                 }
             }
             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
         }
         void Runner::visit(syntax::ast::BinaryOperator& bop){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(bop);
             bop.left->accept(*this);
             sp<Value> left = cur_v;
             bop.right->accept(*this);
@@ -254,7 +274,7 @@ namespace shiranui{
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
-                    return;
+                    AFTER_VISIT_MACRO(bop);
                 }
             }
             {
@@ -272,7 +292,7 @@ namespace shiranui{
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
-                    return;
+                    AFTER_VISIT_MACRO(bop);
                 }
             }
             {
@@ -288,7 +308,7 @@ namespace shiranui{
                     }else{
                         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                     }
-                    return;
+                    AFTER_VISIT_MACRO(bop);
                 }
 
             }
@@ -307,7 +327,7 @@ namespace shiranui{
 
         }
         void Runner::visit(syntax::ast::UnaryOperator& uop){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(uop);
             uop.exp->accept(*this);
             sp<Value> v_ = cur_v;
             {
@@ -318,7 +338,7 @@ namespace shiranui{
                         return;
                     }else if(uop.op == "-"){
                         cur_v = std::make_shared<Integer>(-(v->value));
-                        return;
+                        AFTER_VISIT_MACRO(uop);
                     }
                 }
             }
@@ -327,31 +347,31 @@ namespace shiranui{
                 if(v != nullptr){
                     if(uop.op == "not"){
                         cur_v = std::make_shared<Boolean>(not (v->value));
-                        return;
+                        AFTER_VISIT_MACRO(uop);
                     }
                 }
             }
 
             throw ConvertException(std::make_shared<syntax::ast::UnaryOperator>(uop));
         }
-        void Runner::visit(syntax::ast::IfElseExpression&){
-            boost::this_thread::interruption_point();
-            return;
+        void Runner::visit(syntax::ast::IfElseExpression& iee){
+            BEFORE_VISIT_MACRO(iee);
+            AFTER_VISIT_MACRO(iee);
         }
         void Runner::visit(syntax::ast::Definement& def){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(def);
             def.value->accept(*this);
             cur_e->define(def.id,cur_v,def.is_const);
-            return;
+            AFTER_VISIT_MACRO(def);
         }
         void Runner::visit(syntax::ast::ReturnStatement& ret){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(ret);
             ret.value->accept(*this);
             cur_v = std::make_shared<Return>(cur_v);
-            return;
+            AFTER_VISIT_MACRO(ret);
         }
         void Runner::visit(syntax::ast::IfElseStatement& ies){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(ies);
             ies.pred->accept(*this);
             sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur_v);
             if(bp == nullptr){
@@ -362,10 +382,10 @@ namespace shiranui{
             }else{
                 ies.elseblock->accept(*this);
             }
-            return;
+            AFTER_VISIT_MACRO(ies);
         }
         void Runner::visit(syntax::ast::ForStatement& fors){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(fors);
             fors.loop_exp->accept(*this);
             sp<Array> arr = std::dynamic_pointer_cast<Array>(cur_v);
             if(arr == nullptr){
@@ -383,34 +403,34 @@ namespace shiranui{
                 }
             }
             cur_e = before;
-            return;
+            AFTER_VISIT_MACRO(fors);
         }
         void Runner::visit(syntax::ast::Assignment& assign){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(assign);
             if(cur_e->has(assign.id) and
                not cur_e->is_const(assign.id)){
                 assign.value->accept(*this);
                 cur_e->set(assign.id,cur_v);
             }
-            return;
+            AFTER_VISIT_MACRO(assign);
         }
 
         // do not eval firsttime.
         void Runner::visit(syntax::ast::TestFlyLine& line){
-            boost::this_thread::interruption_point();
+            //BEFORE_VISIT_MACRO(line);
             return;
         }
         void Runner::visit(syntax::ast::IdleFlyLine& line){
-            boost::this_thread::interruption_point();
+            //BEFORE_VISIT_MACRO(line);
             return;
         }
 
         void Runner::visit(syntax::ast::SourceCode& sc){
-            boost::this_thread::interruption_point();
+            BEFORE_VISIT_MACRO(sc);
             for(auto s : sc.statements){
                 s->accept(*this);
             }
-            return;
+            AFTER_VISIT_MACRO(sc);
         }
     }
 }
