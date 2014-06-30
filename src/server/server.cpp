@@ -5,7 +5,8 @@
 namespace shiranui{
     namespace server{
         const std::string COMMAND_CHANGE = "change";
-        const std::string COMMAND_INSPECT = "inspect";
+        const std::string COMMAND_DIVE = "dive";
+        const std::string COMMAND_DIVE_START = "dive_start";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
@@ -13,8 +14,8 @@ namespace shiranui{
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
 
-        const std::string COMMAND_INSPECT_STRIKE = "inspect_strike";
-        const std::string COMMAND_INSPECT_CLEAR = "inspect_clear";
+        const std::string COMMAND_DIVE_STRIKE = "dive_strike";
+        const std::string COMMAND_DIVE_CLEAR = "dive_clear";
 
         std::string to_reproductive(sp<runtime::value::Value>);
         int how_many_lines(const std::string&);
@@ -76,12 +77,12 @@ namespace shiranui{
             return send_command(COMMAND_DEBUG_PRINT,value);
         }
 
-        void PipeServer::send_inspect_strike(const int& start_point,const int& end_point){
-            return send_command_with_two_points(COMMAND_INSPECT_STRIKE,start_point,end_point);
+        void PipeServer::send_dive_strike(const int& start_point,const int& end_point){
+            return send_command_with_two_points(COMMAND_DIVE_STRIKE,start_point,end_point);
         }
 
-        void PipeServer::send_inspect_clear(){
-            return send_command(COMMAND_INSPECT_CLEAR,"");
+        void PipeServer::send_dive_clear(){
+            return send_command(COMMAND_DIVE_CLEAR,"");
         }
 
         // receive
@@ -110,8 +111,8 @@ namespace shiranui{
                                          const std::string& value){
             if(command == COMMAND_CHANGE){
                 return on_change_command(value);
-            }else if(command == COMMAND_INSPECT){
-                return on_inspect_command(value);
+            }else if(command == COMMAND_DIVE_START){
+                return on_dive_start_command(value);
             }
         }
 
@@ -141,7 +142,7 @@ namespace shiranui{
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
-        void PipeServer::on_inspect_command(const std::string& value){
+        void PipeServer::on_dive_start_command(const std::string& value){
             std::stringstream ss(value);
             int point;ss >> point;
             // TODO: check main_thread,flyline_threads condition.
@@ -149,25 +150,33 @@ namespace shiranui{
                 int start_point = program_per_flyline[i]->flylines[i]->point;
                 int end_point = start_point + program_per_flyline[i]->flylines[i]->length;
                 if(start_point <= point and point <= end_point){
-                    std::stringstream out;
-                    out << "inspect -> " << i;
-                    send_debug_print(out.str());
-                    inspect(program_per_flyline[i],
-                            program_per_flyline[i]->flylines[i]);
+                    // currently running
+                    if(diver_per_flyline[i] == nullptr){
+                        std::stringstream out;
+                        out << "dive_start -> " << i << std::endl
+                            << " but currently running.";
+                        send_debug_print(out.str());
+                    }else{
+                        std::stringstream out;
+                        out << "dive_start -> " << i;
+                        send_debug_print(out.str());
+                        dive_start(diver_per_flyline[i],
+                                program_per_flyline[i]->flylines[i]);
+
+                    }
                     return;
                 }
             }
             //boost::unique_lock<boost::mutex> lock(main_thread_end_mutex);
             //main_thread_waiting.wait(lock);
         }
-        void PipeServer::inspect(sp<syntax::ast::SourceCode> program,sp<syntax::ast::FlyLine> sf){
+        void PipeServer::dive_start(sp<runtime::diver::Diver> diver,sp<syntax::ast::FlyLine> sf){
             using namespace shiranui::runtime::diver;
             using namespace shiranui::syntax::ast;
-            Diver diver(program);
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver.dive(l->left);
+                    DivingMessage ms = diver->dive(l->left);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
@@ -175,7 +184,7 @@ namespace shiranui{
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver.dive(l->left);
+                    DivingMessage ms = diver->dive(l->left);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
@@ -187,6 +196,7 @@ namespace shiranui{
             using namespace shiranui::syntax;
             using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
+            using namespace shiranui::runtime::diver;
             const auto start_time = std::chrono::system_clock::now();
 
             pos_iterator_t first(source.begin()),last(source.end());
@@ -225,6 +235,7 @@ namespace shiranui{
                 }
 
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
+                diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
                 for(int i=0;i<program->flylines.size();i++){
                     flyline_threads.create_thread(boost::bind(&PipeServer::run_flyline,
                                 this,source,i));
@@ -244,6 +255,7 @@ namespace shiranui{
             using namespace shiranui::syntax;
             using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
+            using namespace shiranui::runtime::diver;
 
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
@@ -265,6 +277,7 @@ namespace shiranui{
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr) run_idleflyline(source,r,l);
             }
+            diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
         }
 
         void PipeServer::run_testflyline(std::string source,
@@ -343,14 +356,14 @@ namespace shiranui{
                                              runtime::diver::DivingMessage message){
             using namespace runtime::diver;
             std::stringstream ss(message.str());
-            send_inspect_clear();
+            send_dive_clear();
             std::string command;
             while(ss >> command){
                 if(command == STRIKE){
                     int start_point,length;
                     ss >> start_point >> length;
                     int end_point = start_point + length;
-                    send_inspect_strike(start_point,end_point);
+                    send_dive_strike(start_point,end_point);
                 }
             }
         }

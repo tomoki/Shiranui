@@ -18,8 +18,26 @@ namespace shiranui{
             }
 
             Diver::Diver(sp<syntax::ast::SourceCode> source_)
-                : source(source_){
+                : source(source_),current_id(0){
             }
+
+            // TODO: should treat for.
+            DivingMessage Diver::dive(int point){
+                using namespace shiranui::syntax::ast;
+                auto exp_or_for = use_swimfin(*source,point);
+                {
+                    auto p = std::dynamic_pointer_cast<Expression>(exp_or_for);
+                    if(p != nullptr){
+                        return dive(p);
+                    }
+                }
+                return DivingMessage();
+            }
+
+            DivingMessage Diver::dive(sp<syntax::ast::Expression> exp){
+                return dive(exp,current_id);
+            }
+
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp,int lower_id){
                 using namespace shiranui::syntax::ast;
                 {
@@ -30,7 +48,9 @@ namespace shiranui{
                 }
                 return DivingMessage();
             }
-
+            DivingMessage Diver::dive(syntax::ast::FunctionCall& fc){
+                return dive(fc,current_id);
+            }
             DivingMessage Diver::dive(syntax::ast::FunctionCall& fc,int lower_id){
                 using namespace shiranui::syntax::ast;
                 using namespace shiranui::runtime::value;
@@ -38,9 +58,9 @@ namespace shiranui{
                 auto function = std::dynamic_pointer_cast<UserFunction>(p.second);
                 auto message = see(*function->body,p.first);
 
-                // calc return_value for id.
-                undo_stack.push(std::make_pair(return_value(fc,lower_id).first,
-                                           std::make_shared<FunctionCall>(fc)));
+                current_id = return_value(fc,lower_id).first;
+                undo_stack.push(std::make_pair(current_id,
+                                               std::make_shared<FunctionCall>(fc)));
                 return message;
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int lower_id){
@@ -103,43 +123,129 @@ namespace shiranui{
             }
 
             using namespace syntax::ast;
-            SwimFin::SwimFin()
-                : treasure(nullptr){
+            SwimFin::SwimFin(int point_)
+                : treasure(nullptr),point(point_){
             }
             void SwimFin::visit(Identifier& node){
                 throw InternalException(std::make_shared<Identifier>(node));
             }
-            void SwimFin::visit(Variable& node){}
-            void SwimFin::visit(Number& node){}
-            void SwimFin::visit(String& node){}
+            void SwimFin::visit(Variable& node){
+                if(not in_range(node)) return;
+            }
+            void SwimFin::visit(Number& node){
+                if(not in_range(node)) return;
+            }
+            void SwimFin::visit(String& node){
+                if(not in_range(node)) return;
+            }
             void SwimFin::visit(Enum& node){
+                if(not in_range(node)) return;
                 for(sp<Expression> e : node.expressions){
+                    e->accept(*this);
                 }
             }
-            void SwimFin::visit(Interval& node){}
-            void SwimFin::visit(Block& node){}
-            void SwimFin::visit(Function& node){}
-            void SwimFin::visit(FunctionCall& node){}
-            void SwimFin::visit(BinaryOperator& node){}
-            void SwimFin::visit(UnaryOperator& node){}
-            void SwimFin::visit(IfElseExpression& node){}
-            void SwimFin::visit(Definement& node){}
-            void SwimFin::visit(ReturnStatement& node){}
-            void SwimFin::visit(IfElseStatement& node){}
-            void SwimFin::visit(ForStatement& node){}
-            void SwimFin::visit(Assignment& node){}
-            void SwimFin::visit(TestFlyLine& node){}
-            void SwimFin::visit(IdleFlyLine& node){}
-            void SwimFin::visit(SourceCode& node){}
+            void SwimFin::visit(Interval& node){
+                if(not in_range(node)) return;
+                if(node.start != nullptr){
+                    node.start->accept(*this);
+                }
+                if(node.end != nullptr){
+                    node.end->accept(*this);
+                }
+                if(node.next != nullptr){
+                    node.next->accept(*this);
+                }
+            }
+            void SwimFin::visit(Block& node){
+                if(not in_range(node)) return;
+                for(sp<Statement> s : node.statements){
+                    s->accept(*this);
+                }
+            }
+            void SwimFin::visit(Function& node){
+                if(not in_range(node)) return;
+                node.body->accept(*this);
+            }
+            void SwimFin::visit(FunctionCall& node){
+                if(not in_range(node)) return;
+                if(in_range(node.function)){
+                    treasure = node.function;
+                }
+                node.function->accept(*this);
+                for(sp<Expression> a : node.arguments){
+                    a->accept(*this);
+                }
+            }
+            void SwimFin::visit(BinaryOperator& node){
+                if(not in_range(node)) return;
+                node.left->accept(*this);
+                node.right->accept(*this);
+            }
+            void SwimFin::visit(UnaryOperator& node){
+                if(not in_range(node)) return;
+                node.exp->accept(*this);
+            }
+            void SwimFin::visit(IfElseExpression& node){
+                if(not in_range(node)) return;
+                node.pred->accept(*this);
+                node.ife->accept(*this);
+                node.elsee->accept(*this);
+            }
+            void SwimFin::visit(Definement& node){
+                if(not in_range(node)) return;
+                node.value->accept(*this);
+            }
+            void SwimFin::visit(ReturnStatement& node){
+                if(not in_range(node)) return;
+                node.value->accept(*this);
+            }
+            void SwimFin::visit(IfElseStatement& node){
+                if(not in_range(node)) return;
+                node.pred->accept(*this);
+                node.ifblock->accept(*this);
+                node.elseblock->accept(*this);
+            }
+            // should return forstatement?
+            void SwimFin::visit(ForStatement& node){
+                if(not in_range(node)) return;
+                node.loop_exp->accept(*this);
+                node.block->accept(*this);
+            }
+            void SwimFin::visit(Assignment& node){
+                if(not in_range(node)) return;
+                node.value->accept(*this);
+            }
+            void SwimFin::visit(TestFlyLine& node){
+                if(not in_range(node)) return;
+                throw InternalException(std::make_shared<TestFlyLine>(node));
+            }
+            void SwimFin::visit(IdleFlyLine& node){
+                if(not in_range(node)) return;
+                throw InternalException(std::make_shared<IdleFlyLine>(node));
+            }
+            void SwimFin::visit(SourceCode& node){
+                if(not in_range(node)) return;
+                for(sp<Statement> s : node.statements){
+                    s->accept(*this);
+                }
+            }
             template<typename T>
-            bool SwimFin::in_range(T& t,int point){
+            bool SwimFin::in_range(T& t){
                 int start_point = t.point;
                 int end_point = start_point + t.length;
                 return start_point <= point and point <= end_point;
             }
+            template<typename T>
+            bool SwimFin::in_range(sp<T> t){
+                int start_point = t->point;
+                int end_point = start_point + t->length;
+                return start_point <= point and point <= end_point;
+            }
 
             sp<syntax::ast::LocationInfo> use_swimfin(SourceCode& sc,int point){
-                return nullptr;
+                SwimFin sf(point);
+                sf.visit(sc);
+                return sf.treasure; // can be
             }
         }
     }

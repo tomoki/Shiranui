@@ -10,6 +10,7 @@ namespace shiranui{
     namespace runtime{
         namespace diver{
             const std::string STRIKE = "strike";
+            sp<syntax::ast::LocationInfo> use_swimfin(syntax::ast::SourceCode&,int);
             struct DivingMessage{
                 std::string cache;
                 std::string str();
@@ -20,17 +21,23 @@ namespace shiranui{
 
             struct Diver{
                 sp<syntax::ast::SourceCode> source;
+                int current_id;
                 std::stack<std::pair<int,sp<syntax::ast::Expression>>> undo_stack;
                 Diver(sp<syntax::ast::SourceCode>);
-                DivingMessage dive(sp<syntax::ast::Expression>,int=0);
-                DivingMessage dive(syntax::ast::FunctionCall&,int=0);
+
+                DivingMessage dive(int);
+                DivingMessage dive(sp<syntax::ast::Expression>);
+                DivingMessage dive(syntax::ast::FunctionCall&);
+
+                DivingMessage dive(sp<syntax::ast::Expression>,int);
+                DivingMessage dive(syntax::ast::FunctionCall&,int);
                 DivingMessage see(syntax::ast::Block&,int);
                 DivingMessage undo();
             };
-            struct SwimFin{
+            struct SwimFin : syntax::ast::VisitorForAST{
                 sp<syntax::ast::Expression> treasure;
-                int lower_id;
-                SwimFin();
+                int point;
+                SwimFin(int);
                 void visit(syntax::ast::Identifier&);
                 void visit(syntax::ast::Variable&);
                 void visit(syntax::ast::Number&);
@@ -53,7 +60,10 @@ namespace shiranui{
                 void visit(syntax::ast::SourceCode&);
 
                 template<typename T>
-                bool in_range(T&,int);
+                bool in_range(T&);
+                template<typename T>
+                bool in_range(sp<T>);
+
             };
         }
     }

@@ -1,7 +1,7 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" 'kasumi-inspect) ;; inspect?
+    (define-key map "\C-\\" 'kasumi-dive-start) ;; dive?
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
@@ -27,8 +27,10 @@
   "load")
 (defconst kasumi-command-change
   "change")
-(defconst kasumi-command-inspect
-  "inspect")
+(defconst kasumi-command-dive-start
+  "dive_start")
+(defconst kasumi-command-dive
+  "dive")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
 (defconst kasumi-command-runtimeerror
@@ -41,10 +43,10 @@
   "badflyline")
 (defconst kasumi-command-debug-print
   "debug")
-(defconst kasumi-command-inspect-strike
-  "inspect_strike")
-(defconst kasumi-command-inspect-clear
-  "inspect_clear")
+(defconst kasumi-command-dive-strike
+  "dive_strike")
+(defconst kasumi-command-dive-clear
+  "dive_clear")
 
 
 ;; getline needs newline("\n")
@@ -141,10 +143,10 @@
            (kasumi-debug-print value))
           ((string= command kasumi-command-runtimeerror)
            (kasumi-receive-runtimeerror value))
-          ((string= command kasumi-command-inspect-strike)
-           (kasumi-receive-inspect-strike value))
-          ((string= command kasumi-command-inspect-clear)
-           (kasumi-remove-all-inspect-overlay))
+          ((string= command kasumi-command-dive-strike)
+           (kasumi-receive-dive-strike value))
+          ((string= command kasumi-command-dive-clear)
+           (kasumi-remove-all-dive-overlay))
           (t (message "unknown command:%s " command))
           )))
 
@@ -206,9 +208,9 @@
                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
-(defun kasumi-receive-inspect-strike (value)
+(defun kasumi-receive-dive-strike (value)
   (let ((beg-end-list (split-string value " ")))
-    (kasumi-put-inspect-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
+    (kasumi-put-dive-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
                                (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
@@ -301,10 +303,10 @@
      :underline t :inherit error))
     "Used for flyline that run")
 
-(defface kasumi-inspect-strike-face
+(defface kasumi-dive-strike-face
   '((t :strike-through t)
     )
-  "strike for inspect")
+  "strike for dive")
 
 (defun kasumi-put-face (face beg end)
   (save-restriction
@@ -314,11 +316,11 @@
         (overlay-put ol 'face face)
         ol))))
 
-(defun kasumi-put-inspect-face (face beg end)
+(defun kasumi-put-dive-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
       (progn
-        (overlay-put ol 'category 'kasumi-inspect-face)
+        (overlay-put ol 'category 'kasumi-dive-face)
         (overlay-put ol 'face face)
         ol))))
 
@@ -337,15 +339,15 @@
 (defun kasumi-put-runtimeerror (beg end)
   (kasumi-put-face 'kasumi-runtimeerror-face beg end))
 
-(defun kasumi-put-inspect-strike (beg end)
-  (kasumi-put-inspect-face 'kasumi-inspect-strike-face beg end))
+(defun kasumi-put-dive-strike (beg end)
+  (kasumi-put-dive-face 'kasumi-dive-strike-face beg end))
 
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
 
-(defun kasumi-remove-all-inspect-overlay ()
+(defun kasumi-remove-all-dive-overlay ()
   (interactive)
-  (remove-overlays (point-min) (point-max) 'category 'kasumi-inspect-face))
+  (remove-overlays (point-min) (point-max) 'category 'kasumi-dive-face))
 
 (defun add-change (begin length insertion)
   (setq changes (cons (list begin length insertion) changes)))
@@ -368,10 +370,11 @@
       (beginning-of-line)
       (1+ (count-lines 1 (point))))))
 
-(defun kasumi-inspect ()
+(defun kasumi-dive-start ()
   (interactive)
   (progn
-    (kasumi-send-command kasumi-command-inspect (number-to-string (kasumi-orig-point (point))))
+    (kasumi-send-command kasumi-command-dive-start
+                         (number-to-string (kasumi-orig-point (point))))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
 
