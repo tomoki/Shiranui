@@ -371,8 +371,7 @@
 (defun kasumi-inspect ()
   (interactive)
   (progn
-    (kasumi-debug-print (number-to-string (kasumi-orig-point (point))))
-    (kasumi-send-command kasumi-command-inspect (number-to-string (kasumi-count-lines)))
+    (kasumi-send-command kasumi-command-inspect (number-to-string (kasumi-orig-point (point))))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
 

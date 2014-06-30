@@ -143,10 +143,12 @@ namespace shiranui{
 
         void PipeServer::on_inspect_command(const std::string& value){
             std::stringstream ss(value);
-            int line;ss >> line;
+            int point;ss >> point;
             // TODO: check main_thread,flyline_threads condition.
             for(int i=0;i<program_per_flyline.size();i++){
-                if(program_per_flyline[i]->flylines[i]->line == line){
+                int start_point = program_per_flyline[i]->flylines[i]->point;
+                int end_point = start_point + program_per_flyline[i]->flylines[i]->length;
+                if(start_point <= point and point <= end_point){
                     std::stringstream out;
                     out << "inspect -> " << i;
                     send_debug_print(out.str());
