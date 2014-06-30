@@ -7,7 +7,7 @@
 #include "../runtime/runner.hpp"
 #include "../syntax/parser.hpp"
 #include "../runtime/value.hpp"
-#include "../runtime/diver.hpp"
+#include "../runtime/diver/diver.hpp"
 
 namespace shiranui{
     namespace server{

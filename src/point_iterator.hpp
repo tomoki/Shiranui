@@ -7,34 +7,27 @@
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 
-#if !defined(BOOST_SPIRIT_SUPPORT_LINE_POS_ITERATOR)
-#define BOOST_SPIRIT_SUPPORT_LINE_POS_ITERATOR
+#ifndef POINT_ITERATOR_HPP_INCLUDED
+#define POINT_ITERATOR_HPP_INCLUDED
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/range/iterator_range.hpp>
 
-namespace boost { namespace spirit
-{
-    //[line_pos_iterator_class
-    /*`The `line_pos_iterator` is a lightweight line position iterator.
-       This iterator adapter only stores the current line number, nothing else.
-       Unlike __classic__'s `position_iterator`, it does not store the
-       column number and does not need an end iterator. The current column can
-       be computed, if needed. */
-    //`[heading Class Reference]
+namespace shiranui{
     template <class Iterator>
-    class line_pos_iterator : public boost::iterator_adaptor<
-        line_pos_iterator<Iterator>  // Derived
+    class point_iterator : public boost::iterator_adaptor<
+        point_iterator<Iterator>  // Derived
       , Iterator                     // Base
       , boost::use_default           // Value
       , boost::forward_traversal_tag // CategoryOrTraversal
     > {
     public:
-        line_pos_iterator();
+        point_iterator();
 
-        explicit line_pos_iterator(Iterator);
+        explicit point_iterator(Iterator);
 
         std::size_t position() const;
+        std::size_t position_point() const;
 
     private:
         friend class boost::iterator_core_access;
@@ -42,30 +35,36 @@ namespace boost { namespace spirit
         void increment();
 
         std::size_t line; // The line position.
+        std::size_t point;
         typename std::iterator_traits<Iterator>::value_type prev;
     };
     //]
 
     template <class Iterator>
-    line_pos_iterator<Iterator>::line_pos_iterator() :
-        line_pos_iterator::iterator_adaptor_(), line(1), prev(0) { }
+    point_iterator<Iterator>::point_iterator() :
+        point_iterator::iterator_adaptor_(), line(1), point(1), prev(0) { }
 
     template <class Iterator>
-    line_pos_iterator<Iterator>::line_pos_iterator(Iterator base) :
-        line_pos_iterator::iterator_adaptor_(base), line(1), prev(0) { }
+    point_iterator<Iterator>::point_iterator(Iterator base) :
+        point_iterator::iterator_adaptor_(base), line(1), point(1), prev(0) { }
 
     template <class Iterator>
-    std::size_t line_pos_iterator<Iterator>::position() const
+    std::size_t point_iterator<Iterator>::position() const
     {
         return line;
     }
- 
+    template <class Iterator>
+    std::size_t point_iterator<Iterator>::position_point() const
+    {
+        return point;
+    }
+
     template<class Iterator>
-    void line_pos_iterator<Iterator>::increment()
+    void point_iterator<Iterator>::increment()
     {
         typename std::iterator_traits<Iterator>::reference
           ref = *(this->base());
-      
+
         switch (ref) {
           case '\r':
             if (prev != '\n')
@@ -78,38 +77,24 @@ namespace boost { namespace spirit
           default:
             break;
         }
-      
+        point++;
         prev = ref;
         ++this->base_reference();
     }
 
-    //[line_pos_iterator_utilities
-    //`[heading get_line]
     template <class Iterator>
     inline std::size_t get_line(Iterator);
-    /*`Get the line position. Returns -1 if Iterator is not a
-       `line_pos_iterator`. */
 
-    //`[heading get_line_start]
     template <class Iterator>
     inline Iterator get_line_start(Iterator lower_bound, Iterator current); 
-    /*`Get an iterator to the beginning of the line. Applicable to any
-       iterator. */
 
-    //`[heading get_current_line]
     template <class Iterator>
-    inline iterator_range<Iterator>
+    inline boost::iterator_range<Iterator>
     get_current_line(Iterator lower_bound, Iterator current,
                      Iterator upper_bound); 
-    /*`Get an `iterator_range` containing the current line. Applicable to any
-       iterator. */ 
-
-    //`[heading get_column]
     template <class Iterator>
     inline std::size_t get_column(Iterator lower_bound, Iterator current,
-                                  std::size_t tabs = 4); 
-    /*`Get the current column. Applicable to any iterator. */ 
-    //]
+                                  std::size_t tabs = 4);
 
     template <class Iterator>
     inline std::size_t get_line(Iterator)
@@ -118,9 +103,21 @@ namespace boost { namespace spirit
     }
     
     template <class Iterator>
-    inline std::size_t get_line(line_pos_iterator<Iterator> i)
+    inline std::size_t get_line(point_iterator<Iterator> i)
     {
         return i.position();
+    }
+    
+    template <class Iterator>
+    inline std::size_t get_point(Iterator)
+    {
+        return -1;
+    }
+    
+    template <class Iterator>
+    inline std::size_t get_point(point_iterator<Iterator> i)
+    {
+        return i.position_point();
     }
     
     template <class Iterator>
@@ -157,7 +154,7 @@ namespace boost { namespace spirit
 
     
     template <class Iterator>
-    inline iterator_range<Iterator>
+    inline boost::iterator_range<Iterator>
     get_current_line(Iterator lower_bound,
                      Iterator current,
                      Iterator upper_bound)
@@ -165,7 +162,7 @@ namespace boost { namespace spirit
         // if *current is '\r' or '\n', result will something unexpected.
         Iterator first = get_line_start(lower_bound, current);
         Iterator last = get_line_end(current, upper_bound);
-        return iterator_range<Iterator>(first, last);
+        return boost::iterator_range<Iterator>(first, last);
     }
     
     template <class Iterator>
@@ -189,7 +186,7 @@ namespace boost { namespace spirit
         return column;
     }
 
-}}
+}
 
-#endif // BOOST_SPIRIT_SUPPORT_LINE_POS_ITERATOR
+#endif // POINT_ITERATOR_HPP_INCLUDED
 

@@ -37,12 +37,9 @@ namespace shiranui{
                 auto function = std::dynamic_pointer_cast<UserFunction>(p.second);
                 auto message = see(*function->body,p.first);
 
-                auto it = std::lower_bound(fc.runtime_info.visit_time.begin(),
-                                           fc.runtime_info.visit_time.end(),
-                                           lower_id);
-
-                undo_stack.push(std::make_pair(*it,
-                                               std::make_shared<FunctionCall>(fc)));
+                // calc return_value for id.
+                undo_stack.push(std::make_pair(return_value(fc,lower_id).first,
+                                           std::make_shared<FunctionCall>(fc)));
                 return message;
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int lower_id){
@@ -94,7 +91,7 @@ namespace shiranui{
             DivingMessage DivingMessage::add_strike(const T& t){
                 std::stringstream ss;
                 ss << cache << STRIKE << std::endl
-                   << t.line << " " << t.column << " " << t.length << std::endl;
+                   << t.point << " " << t.length << std::endl;
                 cache = ss.str();
                 return *this;
             }
@@ -102,6 +99,55 @@ namespace shiranui{
                 DivingMessage ret;
                 ret.cache = cache + message.cache;
                 return ret;
+            }
+
+            using namespace syntax::ast;
+            // SwimFin
+            // void SwimFin::visit(
+            SwimFin::SwimFin()
+                : treasure(nullptr){
+            }
+            void SwimFin::visit(Identifier& node){
+            }
+            void SwimFin::visit(Variable& node){
+            }
+            void SwimFin::visit(Number& node){
+            }
+            void SwimFin::visit(String& node){
+            }
+            void SwimFin::visit(Enum& node){
+            }
+            void SwimFin::visit(Interval& node){
+            }
+            void SwimFin::visit(Block& node){
+            }
+            void SwimFin::visit(Function& node){
+            }
+            void SwimFin::visit(FunctionCall& node){
+                // calc point.
+                //return std::make_shared<FunctionCall>(node);
+            }
+            void SwimFin::visit(BinaryOperator& node){
+            }
+            void SwimFin::visit(UnaryOperator& node){
+            }
+            void SwimFin::visit(IfElseExpression& node){
+            }
+            void SwimFin::visit(Definement& node){
+            }
+            void SwimFin::visit(ReturnStatement& node){
+            }
+            void SwimFin::visit(IfElseStatement& node){
+            }
+            void SwimFin::visit(ForStatement& node){
+            }
+            void SwimFin::visit(Assignment& node){
+            }
+            void SwimFin::visit(TestFlyLine& node){
+            }
+            void SwimFin::visit(IdleFlyLine& node){
+            }
+            void SwimFin::visit(SourceCode& node){
             }
         }
     }

@@ -22,7 +22,7 @@ namespace shiranui{
         namespace ast{
             struct LocationInfo{
                 runtime::infomation::RuntimeInfomation runtime_info;
-                unsigned int line,column,length;
+                unsigned int point,line,column,length;
                 virtual void accept(VisitorForAST&) = 0;
             };
             struct Expression : LocationInfo{

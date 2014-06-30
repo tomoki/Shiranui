@@ -167,11 +167,12 @@
 (defun kasumi-orig-point-sub (p lis)
   (cond
    ((null lis) p)
-   ((> p (car (car lis))) (kasumi-orig-point-sub (+ p (cdr (car lis))) (cdr lis)))
+   ((> p (+ (car (car lis)) (cdr (car lis))))
+    (kasumi-orig-point-sub (- p (cdr (car lis))) (cdr lis)))
    (t (kasumi-orig-point-sub p (cdr lis)))))
 
 (defun kasumi-orig-point (p)
-  (kasumi-orig-point-sub p point-diff))
+  (kasumi-orig-point-sub p (reverse point-diff)))
 
 (defun kasumi-add-diff (where size)
   (setq point-diff (cons (cons where size) point-diff)))
@@ -370,6 +371,7 @@
 (defun kasumi-inspect ()
   (interactive)
   (progn
+    (kasumi-debug-print (number-to-string (kasumi-orig-point (point))))
     (kasumi-send-command kasumi-command-inspect (number-to-string (kasumi-count-lines)))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))

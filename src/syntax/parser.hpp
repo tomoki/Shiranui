@@ -8,7 +8,6 @@
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
-#include <boost/spirit/include/support_line_pos_iterator.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
 
@@ -20,13 +19,13 @@
 
 #include "ast.hpp"
 #include "../misc.hpp"
+#include "../point_iterator.hpp"
 
 // to put line,column info to AST,see following url.
 // http://stackoverflow.com/questions/19612657/boostspirit-access-position-iterator-from-semantic-actions
 namespace shiranui{
     namespace syntax{
-        typedef boost::spirit::line_pos_iterator<std::string::const_iterator>
-                                                               pos_iterator_t;
+        typedef point_iterator<std::string::const_iterator> pos_iterator_t;
 
         template<typename T>
         struct qi_make_shared_struct{
@@ -67,11 +66,13 @@ namespace shiranui{
             }
         private:
             void static do_annotate(ast::LocationInfo& li,Iterator f,Iterator l,Iterator first){
+                li.point = get_point(f);
                 li.line = get_line(f);
                 li.column = get_column(first,f);
                 li.length = std::distance(f,l);
             }
             void static do_annotate(sp<ast::LocationInfo> li,Iterator f,Iterator l,Iterator first){
+                li->point = get_point(f);
                 li->line = get_line(f);
                 li->column = get_column(first,f);
                 li->length = std::distance(f,l);

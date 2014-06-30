@@ -17,7 +17,6 @@ namespace shiranui{
         const std::string COMMAND_INSPECT_CLEAR = "inspect_clear";
 
         std::string to_reproductive(sp<runtime::value::Value>);
-        int calc_point(const std::string&,int,int);
         int how_many_lines(const std::string&);
 
         PipeServer::PipeServer(std::istream& i,std::ostream& o)
@@ -207,17 +206,17 @@ namespace shiranui{
                 try{
                     program->accept(r);
                 }catch(NoSuchVariableException e){
-                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int start_point = e.where->point;
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point);
                     return;
                 }catch(ConvertException e){
-                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int start_point = e.where->point;
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point);
                     return;
                 }catch(RuntimeException e){
-                    int start_point = calc_point(source,e.where->line,e.where->column);
+                    int start_point = e.where->point;
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point);
                     return;
@@ -273,7 +272,7 @@ namespace shiranui{
             using namespace runtime::value;
             using namespace shiranui::runtime;
 
-            int start_point = calc_point(source,sf->line,sf->column);
+            int start_point = sf->point;
             int end_point = start_point + sf->length;
             if(sf->right != nullptr){
                 auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
@@ -311,7 +310,7 @@ namespace shiranui{
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
-            int start_point = calc_point(source,sf->line,sf->column);
+            int start_point = sf->point;
             int end_point = start_point + sf->length;
             try{
                 sf->left->accept(r);
@@ -329,7 +328,7 @@ namespace shiranui{
             sp<Value> left = r.cur_v;
             std::string left_str = to_reproductive(left);
             if(sf->right != nullptr){
-                int remove_start = calc_point(source,sf->right->line,sf->right->column);
+                int remove_start = sf->right->point;
                 int remove_end = remove_start + sf->right->length;
                 send_idle_flyline(start_point,end_point,remove_start,remove_end
                                  ,remove_start,left_str);
@@ -346,9 +345,8 @@ namespace shiranui{
             std::string command;
             while(ss >> command){
                 if(command == STRIKE){
-                    int line,column,length;
-                    ss >> line >> column >> length;
-                    int start_point = calc_point(source,line,column);
+                    int start_point,length;
+                    ss >> start_point >> length;
                     int end_point = start_point + length;
                     send_inspect_strike(start_point,end_point);
                 }
@@ -390,22 +388,6 @@ namespace shiranui{
                 }
             }
             return "unknown";
-        }
-        int calc_point(const std::string& source,int line,int column){
-            int li=1,co=1;
-            int point = 1;
-            for(const char& c : source){
-                if(line == li and column == co){
-                    return point;
-                }
-                if(c == '\n'){
-                    co = 1;li++;
-                }else{
-                    co++;
-                }
-                point++;
-            }
-            return -1;
         }
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
