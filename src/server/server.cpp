@@ -6,6 +6,7 @@ namespace shiranui{
     namespace server{
         const std::string COMMAND_CHANGE = "change";
         const std::string COMMAND_DIVE = "dive";
+        const std::string COMMAND_SURFACE = "surface";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
@@ -112,6 +113,8 @@ namespace shiranui{
                 return on_change_command(value);
             }else if(command == COMMAND_DIVE){
                 return on_dive_command(value);
+            }else if(command == COMMAND_SURFACE){
+                return on_surface_command(value);
             }
         }
 
@@ -186,7 +189,7 @@ namespace shiranui{
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left);
+                    DivingMessage ms = diver->dive(l->left,0);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
@@ -194,7 +197,7 @@ namespace shiranui{
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left);
+                    DivingMessage ms = diver->dive(l->left,0);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
@@ -206,7 +209,20 @@ namespace shiranui{
             DivingMessage ms = diver->dive(point);
             send_debug_print(ms.str());
             send_diving_message(source,ms);
-
+        }
+        void PipeServer::on_surface_command(const std::string& value){
+            // value has nothing.
+            if(current_diver != nullptr){
+                surface(current_diver);
+            }else{
+            }
+        }
+        // undo for diver.
+        void PipeServer::surface(sp<runtime::diver::Diver> diver){
+            using namespace shiranui::runtime::diver;
+            DivingMessage ms = diver->surface();
+            send_debug_print(ms.str());
+            send_diving_message(source,ms);
         }
 
         void PipeServer::exec(std::string source){

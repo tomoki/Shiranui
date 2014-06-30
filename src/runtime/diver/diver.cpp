@@ -35,7 +35,7 @@ namespace shiranui{
             }
 
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp){
-                return dive(exp,current_id);
+                return dive(exp,current_id+1);
             }
 
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp,int lower_id){
@@ -49,7 +49,7 @@ namespace shiranui{
                 return DivingMessage();
             }
             DivingMessage Diver::dive(syntax::ast::FunctionCall& fc){
-                return dive(fc,current_id);
+                return dive(fc,current_id+1);
             }
             DivingMessage Diver::dive(syntax::ast::FunctionCall& fc,int lower_id){
                 using namespace shiranui::syntax::ast;
@@ -94,7 +94,7 @@ namespace shiranui{
                 }
                 return message;
             }
-            DivingMessage Diver::undo(){
+            DivingMessage Diver::surface(){
                 if(undo_stack.empty()){
                     return DivingMessage();
                 }else{

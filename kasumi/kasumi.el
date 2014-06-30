@@ -1,7 +1,8 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" 'kasumi-dive)
+    (define-key map "\C-q" 'kasumi-dive)
+    (define-key map "\M-q" 'kasumi-surface)
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
@@ -29,6 +30,8 @@
   "change")
 (defconst kasumi-command-dive
   "dive")
+(defconst kasumi-command-surface
+  "surface")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
 (defconst kasumi-command-runtimeerror
@@ -376,6 +379,10 @@
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
 
+(defun kasumi-surface ()
+  (interactive)
+  (kasumi-send-command kasumi-command-surface ""))
+
 (defun kasumi-accept ()
   (interactive)
   (let ((is-idle-flyline
@@ -446,7 +453,7 @@
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
            (kasumi-start-shiranui kasumi-where-is-shiranui)))
-  (set-process-filter shiranui-process 'kasumi-process-filter)
+  ;; (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
 

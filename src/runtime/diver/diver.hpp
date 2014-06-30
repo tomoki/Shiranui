@@ -32,7 +32,7 @@ namespace shiranui{
                 DivingMessage dive(sp<syntax::ast::Expression>,int);
                 DivingMessage dive(syntax::ast::FunctionCall&,int);
                 DivingMessage see(syntax::ast::Block&,int);
-                DivingMessage undo();
+                DivingMessage surface(); // undo
             };
             struct SwimFin : syntax::ast::VisitorForAST{
                 sp<syntax::ast::Expression> treasure;
