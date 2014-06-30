@@ -25,6 +25,11 @@ namespace shiranui{
                 where = e;
             }
         };
+        struct InternalException : RuntimeException{
+            InternalException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;

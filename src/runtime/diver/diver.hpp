@@ -52,6 +52,8 @@ namespace shiranui{
                 void visit(syntax::ast::IdleFlyLine&);
                 void visit(syntax::ast::SourceCode&);
 
+                template<typename T>
+                bool in_range(T&,int);
             };
         }
     }

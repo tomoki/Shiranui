@@ -1,4 +1,5 @@
 #include "diver.hpp"
+#include "../runner.hpp"
 #include <sstream>
 
 namespace shiranui{
@@ -102,52 +103,43 @@ namespace shiranui{
             }
 
             using namespace syntax::ast;
-            // SwimFin
-            // void SwimFin::visit(
             SwimFin::SwimFin()
                 : treasure(nullptr){
             }
             void SwimFin::visit(Identifier& node){
+                throw InternalException(std::make_shared<Identifier>(node));
             }
-            void SwimFin::visit(Variable& node){
-            }
-            void SwimFin::visit(Number& node){
-            }
-            void SwimFin::visit(String& node){
-            }
+            void SwimFin::visit(Variable& node){}
+            void SwimFin::visit(Number& node){}
+            void SwimFin::visit(String& node){}
             void SwimFin::visit(Enum& node){
+                for(sp<Expression> e : node.expressions){
+                }
             }
-            void SwimFin::visit(Interval& node){
+            void SwimFin::visit(Interval& node){}
+            void SwimFin::visit(Block& node){}
+            void SwimFin::visit(Function& node){}
+            void SwimFin::visit(FunctionCall& node){}
+            void SwimFin::visit(BinaryOperator& node){}
+            void SwimFin::visit(UnaryOperator& node){}
+            void SwimFin::visit(IfElseExpression& node){}
+            void SwimFin::visit(Definement& node){}
+            void SwimFin::visit(ReturnStatement& node){}
+            void SwimFin::visit(IfElseStatement& node){}
+            void SwimFin::visit(ForStatement& node){}
+            void SwimFin::visit(Assignment& node){}
+            void SwimFin::visit(TestFlyLine& node){}
+            void SwimFin::visit(IdleFlyLine& node){}
+            void SwimFin::visit(SourceCode& node){}
+            template<typename T>
+            bool SwimFin::in_range(T& t,int point){
+                int start_point = t.point;
+                int end_point = start_point + t.length;
+                return start_point <= point and point <= end_point;
             }
-            void SwimFin::visit(Block& node){
-            }
-            void SwimFin::visit(Function& node){
-            }
-            void SwimFin::visit(FunctionCall& node){
-                // calc point.
-                //return std::make_shared<FunctionCall>(node);
-            }
-            void SwimFin::visit(BinaryOperator& node){
-            }
-            void SwimFin::visit(UnaryOperator& node){
-            }
-            void SwimFin::visit(IfElseExpression& node){
-            }
-            void SwimFin::visit(Definement& node){
-            }
-            void SwimFin::visit(ReturnStatement& node){
-            }
-            void SwimFin::visit(IfElseStatement& node){
-            }
-            void SwimFin::visit(ForStatement& node){
-            }
-            void SwimFin::visit(Assignment& node){
-            }
-            void SwimFin::visit(TestFlyLine& node){
-            }
-            void SwimFin::visit(IdleFlyLine& node){
-            }
-            void SwimFin::visit(SourceCode& node){
+
+            sp<syntax::ast::LocationInfo> use_swimfin(SourceCode& sc,int point){
+                return nullptr;
             }
         }
     }
