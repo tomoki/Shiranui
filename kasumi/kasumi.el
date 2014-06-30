@@ -1,7 +1,7 @@
 (defvar kasumi-mode-hook nil)
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
-    (define-key map "\C-\\" 'kasumi-dive-start) ;; dive?
+    (define-key map "\C-\\" 'kasumi-dive)
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
@@ -27,8 +27,6 @@
   "load")
 (defconst kasumi-command-change
   "change")
-(defconst kasumi-command-dive-start
-  "dive_start")
 (defconst kasumi-command-dive
   "dive")
 (defconst kasumi-command-syntaxerror
@@ -370,10 +368,10 @@
       (beginning-of-line)
       (1+ (count-lines 1 (point))))))
 
-(defun kasumi-dive-start ()
+(defun kasumi-dive ()
   (interactive)
   (progn
-    (kasumi-send-command kasumi-command-dive-start
+    (kasumi-send-command kasumi-command-dive
                          (number-to-string (kasumi-orig-point (point))))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))

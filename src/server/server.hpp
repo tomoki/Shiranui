@@ -25,6 +25,7 @@ namespace shiranui{
             boost::thread_group flyline_threads;
             std::vector<sp<syntax::ast::SourceCode>> program_per_flyline;
             std::vector<sp<runtime::diver::Diver>> diver_per_flyline;
+            sp<runtime::diver::Diver> current_diver;
 
             PipeServer(std::istream&,std::ostream&);
 
@@ -45,9 +46,10 @@ namespace shiranui{
             void receive(); // run as thread.
             void receive_command(const std::string&,const std::string&);
             void on_change_command(const std::string&);
-            void on_dive_start_command(const std::string&);
+            void on_dive_command(const std::string&);
             void exec(std::string);
             void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>);
+            void dive(sp<runtime::diver::Diver>,int);
             void send_diving_message(const std::string& source,
                                      runtime::diver::DivingMessage message);
             void run_flyline(std::string,int);

@@ -6,7 +6,6 @@ namespace shiranui{
     namespace server{
         const std::string COMMAND_CHANGE = "change";
         const std::string COMMAND_DIVE = "dive";
-        const std::string COMMAND_DIVE_START = "dive_start";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
@@ -111,8 +110,8 @@ namespace shiranui{
                                          const std::string& value){
             if(command == COMMAND_CHANGE){
                 return on_change_command(value);
-            }else if(command == COMMAND_DIVE_START){
-                return on_dive_start_command(value);
+            }else if(command == COMMAND_DIVE){
+                return on_dive_command(value);
             }
         }
 
@@ -142,7 +141,7 @@ namespace shiranui{
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
-        void PipeServer::on_dive_start_command(const std::string& value){
+        void PipeServer::on_dive_command(const std::string& value){
             std::stringstream ss(value);
             int point;ss >> point;
             // TODO: check main_thread,flyline_threads condition.
@@ -167,12 +166,23 @@ namespace shiranui{
                     return;
                 }
             }
+            // maybe dive to inner function
+            if(current_diver != nullptr){
+                dive(current_diver,point);
+            }else{
+                std::stringstream out;
+                out << "cannot find where to dive." << std::endl;
+                send_debug_print(out.str());
+            }
+
             //boost::unique_lock<boost::mutex> lock(main_thread_end_mutex);
             //main_thread_waiting.wait(lock);
         }
+        // TODO: should treat point.(if left is list...)
         void PipeServer::dive_start(sp<runtime::diver::Diver> diver,sp<syntax::ast::FlyLine> sf){
             using namespace shiranui::runtime::diver;
             using namespace shiranui::syntax::ast;
+            current_diver = diver;
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
@@ -189,6 +199,14 @@ namespace shiranui{
                     send_diving_message(source,ms);
                 }
             }
+        }
+
+        void PipeServer::dive(sp<runtime::diver::Diver> diver,int point){
+            using namespace shiranui::runtime::diver;
+            DivingMessage ms = diver->dive(point);
+            send_debug_print(ms.str());
+            send_diving_message(source,ms);
+
         }
 
         void PipeServer::exec(std::string source){
@@ -236,6 +254,9 @@ namespace shiranui{
 
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
                 diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
+                // TODO:should kill diver process
+                current_diver = nullptr;
+
                 for(int i=0;i<program->flylines.size();i++){
                     flyline_threads.create_thread(boost::bind(&PipeServer::run_flyline,
                                 this,source,i));

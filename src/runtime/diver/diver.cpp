@@ -168,9 +168,7 @@ namespace shiranui{
             }
             void SwimFin::visit(FunctionCall& node){
                 if(not in_range(node)) return;
-                if(in_range(node.function)){
-                    treasure = node.function;
-                }
+                treasure = std::make_shared<FunctionCall>(node);
                 node.function->accept(*this);
                 for(sp<Expression> a : node.arguments){
                     a->accept(*this);
