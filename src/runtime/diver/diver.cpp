@@ -6,19 +6,19 @@ namespace shiranui{
     namespace runtime{
         namespace diver{
             template<typename T>
-            std::pair<int,sp<runtime::value::Value>> return_value(T& ast_node,int lower_id){
-                auto it = std::lower_bound(ast_node.runtime_info.visit_time.begin(),
-                                           ast_node.runtime_info.visit_time.end(),
-                                           lower_id);
-                if(it == ast_node.runtime_info.visit_time.end()){
-                    return std::make_pair(-1,nullptr);
+            std::pair<int,sp<runtime::value::Value>> return_value(T& ast_node,
+                                                                  int call_under_id){
+                if(ast_node.runtime_info.call_under.find(call_under_id)
+                   != ast_node.runtime_info.call_under.end()){
+                    int id = ast_node.runtime_info.call_under[call_under_id];
+                    return std::make_pair(id,ast_node.runtime_info.return_value[id]);
                 }else{
-                    return std::make_pair(*it,ast_node.runtime_info.return_value[*it]);
+                    return std::make_pair(-2,nullptr);
                 }
             }
 
             Diver::Diver(sp<syntax::ast::SourceCode> source_)
-                : source(source_),current_id(0){
+                : source(source_),current_id(infomation::TOPLEVEL){
             }
 
             // TODO: should treat for.
@@ -34,8 +34,14 @@ namespace shiranui{
                 return DivingMessage();
             }
 
+            DivingMessage Diver::clear(){
+                undo_stack = std::stack<std::pair<int,sp<syntax::ast::Expression>>>();
+                current_id = infomation::TOPLEVEL;
+                return DivingMessage();
+            }
+
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp){
-                return dive(exp,current_id+1);
+                return dive(exp,current_id);
             }
 
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp,int lower_id){
@@ -49,21 +55,23 @@ namespace shiranui{
                 return DivingMessage();
             }
             DivingMessage Diver::dive(syntax::ast::FunctionCall& fc){
-                return dive(fc,current_id+1);
+                return dive(fc,current_id);
             }
-            DivingMessage Diver::dive(syntax::ast::FunctionCall& fc,int lower_id){
+            DivingMessage Diver::dive(syntax::ast::FunctionCall& fc,int call_under){
                 using namespace shiranui::syntax::ast;
                 using namespace shiranui::runtime::value;
-                auto p = return_value(*fc.function,lower_id);
+                auto ret = return_value(fc,call_under);
+                auto p = return_value(*fc.function,call_under);
                 auto function = std::dynamic_pointer_cast<UserFunction>(p.second);
-                auto message = see(*function->body,p.first);
+                // ret.first is new call_under
+                auto message = see(*function->body,ret.first);
 
-                current_id = return_value(fc,lower_id).first;
-                undo_stack.push(std::make_pair(current_id,
+                current_id = ret.first;
+                undo_stack.push(std::make_pair(call_under,
                                                std::make_shared<FunctionCall>(fc)));
                 return message;
             }
-            DivingMessage Diver::see(syntax::ast::Block& block,int lower_id){
+            DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
                 using namespace shiranui::syntax::ast;
                 using namespace shiranui::runtime::value;
 
@@ -72,8 +80,8 @@ namespace shiranui{
                     {
                         auto p = std::dynamic_pointer_cast<IfElseStatement>(s);
                         if(p != nullptr){
-                            auto if_p = return_value(*p->ifblock,lower_id);
-                            auto else_p = return_value(*p->elseblock,lower_id);
+                            auto if_p = return_value(*p->ifblock,call_under);
+                            auto else_p = return_value(*p->elseblock,call_under);
                             if(if_p.second == nullptr and else_p.second == nullptr){
                                 //error.
                             }else{
@@ -83,10 +91,10 @@ namespace shiranui{
                                                   or (else_p.second == nullptr);
                                 if(if_called){
                                     message.add_strike(*p->elseblock);
-                                    message = message + see(*p->ifblock,if_p.first);
+                                    message = message + see(*p->ifblock,call_under);
                                 }else{
                                     message.add_strike(*p->ifblock);
-                                    message = message + see(*p->elseblock,else_p.first);
+                                    message = message + see(*p->elseblock,call_under);
                                 }
                             }
                         }
@@ -240,10 +248,11 @@ namespace shiranui{
                 return start_point <= point and point <= end_point;
             }
 
-            sp<syntax::ast::LocationInfo> use_swimfin(SourceCode& sc,int point){
+            template<typename T>
+            sp<syntax::ast::LocationInfo> use_swimfin(T& sc,int point){
                 SwimFin sf(point);
                 sf.visit(sc);
-                return sf.treasure; // can be
+                return sf.treasure; // can be null
             }
         }
     }

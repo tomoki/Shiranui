@@ -10,7 +10,8 @@ namespace shiranui{
     namespace runtime{
         namespace diver{
             const std::string STRIKE = "strike";
-            sp<syntax::ast::LocationInfo> use_swimfin(syntax::ast::SourceCode&,int);
+            template<typename T>
+            sp<syntax::ast::LocationInfo> use_swimfin(T&,int);
             struct DivingMessage{
                 std::string cache;
                 std::string str();
@@ -25,6 +26,7 @@ namespace shiranui{
                 std::stack<std::pair<int,sp<syntax::ast::Expression>>> undo_stack;
                 Diver(sp<syntax::ast::SourceCode>);
 
+                DivingMessage clear();
                 DivingMessage dive(int);
                 DivingMessage dive(sp<syntax::ast::Expression>);
                 DivingMessage dive(syntax::ast::FunctionCall&);

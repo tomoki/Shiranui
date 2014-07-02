@@ -24,13 +24,16 @@ namespace shiranui{
         Runner::Runner() :
             cur_v(std::make_shared<Integer>(0)),
             cur_e(std::make_shared<Environment>()),
-            cur_t(-1)
-        {}
+            cur_t(infomation::COUNT_FROM-1) // cur_t++ called before use
+        {
+            call_stack.push(infomation::TOPLEVEL); // -1 is toplevel
+        }
         template<typename T>
         int Runner::before_visit(T& node){
             boost::this_thread::interruption_point();
             cur_t++;
             node.runtime_info.visit_time.push_back(cur_t);
+            node.runtime_info.call_under[call_stack.top()] = cur_t;
             return cur_t;
         }
 
@@ -179,9 +182,11 @@ namespace shiranui{
                         fc.arguments[i]->accept(*this);
                         call_env->define(f->parameters[i],cur_v,true);
                     }
+                    call_stack.push(cur_t);
                     this->cur_e = call_env;
                     f->body->accept(*this);
                     this->cur_e = before;
+                    call_stack.pop();
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if(ret == nullptr){
                         std::cerr << "WARN: this is not return value." << std::endl;

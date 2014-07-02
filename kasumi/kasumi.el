@@ -121,7 +121,7 @@
    ))
 
 (defun kasumi-process-filter (process str)
-  ;; (kasumi-debug-print str)
+  (kasumi-debug-print str)
   (let ((pairs-command-value (kasumi-parse (string-strip str))))
     (progn
       (kasumi-process-pairs pairs-command-value))))
@@ -453,7 +453,7 @@
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
            (kasumi-start-shiranui kasumi-where-is-shiranui)))
-  ;; (set-process-filter shiranui-process 'kasumi-process-filter)
+  (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   ;; (set-syntax-table kasumi-mode-syntax-table)
 

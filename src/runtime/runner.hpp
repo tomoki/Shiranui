@@ -4,6 +4,7 @@
 #include "value.hpp"
 #include "environment.hpp"
 #include <exception>
+#include <stack>
 
 namespace shiranui{
     namespace runtime{
@@ -34,6 +35,7 @@ namespace shiranui{
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;
             int cur_t;
+            std::stack<int> call_stack;
             Runner();
             template<typename T>
             int before_visit(T&);

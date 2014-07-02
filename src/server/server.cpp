@@ -186,10 +186,11 @@ namespace shiranui{
             using namespace shiranui::runtime::diver;
             using namespace shiranui::syntax::ast;
             current_diver = diver;
+            diver->clear();
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left,0);
+                    DivingMessage ms = diver->dive(l->left);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
@@ -197,7 +198,7 @@ namespace shiranui{
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left,0);
+                    DivingMessage ms = diver->dive(l->left);
                     send_debug_print(ms.str());
                     send_diving_message(source,ms);
                 }
