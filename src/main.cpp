@@ -8,6 +8,7 @@
 #include "syntax/parser.hpp"
 #include "runtime/runner.hpp"
 #include "server/server.hpp"
+#include "tester/tester.hpp"
 
 void repl(){
     using namespace shiranui;
@@ -76,7 +77,7 @@ void start_server(){
     server.start();
 }
 
-void test(const std::string content){
+void exec(const std::string content){
     using namespace shiranui;
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
@@ -127,6 +128,8 @@ void test(const std::string content){
     }
     return;
 }
+
+
 int main(int argc,char **argv){
     namespace po = boost::program_options;
     po::options_description opt("No arguments options");
@@ -135,6 +138,7 @@ int main(int argc,char **argv){
         ("server,s","run Shiranui in server mode")
         ("kagero,k",po::value<std::string>(),"Specify Kagero(Standard) library path")
         ("exec,e",po::value<std::string>(),"execute given file")
+        ("test,t","test(donot use.)")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc,argv,opt),vm);
@@ -160,7 +164,11 @@ int main(int argc,char **argv){
                   + str;
 
         }
-        test(str);
+        exec(str);
+        return 0;
+    }
+    if(vm.count("test")){
+        shiranui::tester::run_test();
         return 0;
     }
     // otherwise

@@ -11,6 +11,19 @@
 
 namespace shiranui{
     namespace server{
+        const std::string COMMAND_CHANGE = "change";
+        const std::string COMMAND_DIVE = "dive";
+        const std::string COMMAND_SURFACE = "surface";
+        const std::string COMMAND_DEBUG_PRINT = "debug";
+        const std::string COMMAND_SYNTAXEROR = "syntaxerror";
+        const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
+        const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
+        const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
+        const std::string COMMAND_BAD_FLYLINE = "badflyline";
+
+        const std::string COMMAND_DIVE_STRIKE = "dive_strike";
+        const std::string COMMAND_DIVE_CLEAR = "dive_clear";
+
         int how_many_lines(const std::string&);
         struct PipeServer{
             std::istream& is;
