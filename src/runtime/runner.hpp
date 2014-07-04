@@ -36,7 +36,8 @@ namespace shiranui{
             sp<environment::Environment> cur_e;
             int cur_t;
             std::stack<int> call_stack;
-            Runner();
+            bool is_server;
+            Runner(bool=false);
             template<typename T>
             int before_visit(T&);
             template<typename T>

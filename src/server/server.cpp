@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "../runtime/cleaner.hpp"
 #include <sstream>
 #include <chrono>
 
@@ -73,7 +74,10 @@ namespace shiranui{
             return send_command(COMMAND_IDLE_FLYLINE,ss.str());
         }
 
-        void PipeServer::send_debug_print(const std::string& value){
+        template<typename T>
+        void PipeServer::send_debug_print(const T& value){
+            std::stringstream ss;
+            ss << value;
             return send_command(COMMAND_DEBUG_PRINT,value);
         }
 
@@ -120,7 +124,10 @@ namespace shiranui{
 
         void PipeServer::on_change_command(const std::string& value){
             main_thread.interrupt();
-            flyline_threads.interrupt_all();
+            //flyline_threads.interrupt_all();
+            for(sp<boost::thread> t : flyline_threads){
+                t->interrupt();
+            }
             std::stringstream ss(value);
             while(not ss.eof()){
                 int point,remove_length,line_size;
@@ -140,8 +147,8 @@ namespace shiranui{
                 source.insert(point,insert_value);
             }
             main_thread.join();
-            flyline_threads.join_all();
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
+            flyline_threads.clear();
         }
 
         void PipeServer::on_dive_command(const std::string& value){
@@ -248,8 +255,7 @@ namespace shiranui{
             }
 
             if(ok and iter == last){
-                // find runtime bug.
-                Runner r;
+                Runner r(false); // do not hold runtime_info
                 try{
                     program->accept(r);
                 }catch(NoSuchVariableException e){
@@ -269,14 +275,18 @@ namespace shiranui{
                     return;
                 }
 
+                for(sp<SourceCode> s : program_per_flyline){
+                    runtime::infomation::Cleaner c;
+                    s->accept(c);
+                }
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
                 diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
                 // TODO:should kill diver process
                 current_diver = nullptr;
 
                 for(int i=0;i<program->flylines.size();i++){
-                    flyline_threads.create_thread(boost::bind(&PipeServer::run_flyline,
-                                this,source,i));
+                    flyline_threads.push_back(std::make_shared<boost::thread>(
+                                 boost::bind(&PipeServer::run_flyline,this,source,i)));
                 }
             }else{
                 send_syntaxerror(std::distance(first,iter),std::distance(first,last));
@@ -303,7 +313,7 @@ namespace shiranui{
                                                  boost::spirit::qi::space,program);
 
             program_per_flyline[flyline_index] = program; // TODO:use better way.
-            Runner r;
+            Runner r(true);
             sp<FlyLine> sf = program->flylines[flyline_index];
             program->accept(r); // do not cause exception.
 
@@ -440,7 +450,7 @@ namespace shiranui{
                     return ss.str();
                 }
             }
-            return "unknown";
+            return "";
         }
         int how_many_lines(const std::string& s){
             if(s == "") return 0;

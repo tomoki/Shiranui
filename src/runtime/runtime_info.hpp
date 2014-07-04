@@ -24,6 +24,10 @@ namespace shiranui{
                 std::unordered_map<int,int> call_under;
                 std::unordered_map<int,sp<value::Value>> return_value;
                 std::unordered_map<int,std::string> memo;
+
+                void clear(){
+                    return_value.clear();
+                }
             };
         }
     }

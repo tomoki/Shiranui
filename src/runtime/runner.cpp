@@ -21,10 +21,11 @@ namespace shiranui{
         using shiranui::runtime::value::BuiltinFunction;
         using shiranui::runtime::value::builtin::PrintFunction;
         using shiranui::runtime::value::builtin::LengthFunction;
-        Runner::Runner() :
+        Runner::Runner(bool is_server_):
             cur_v(std::make_shared<Integer>(0)),
             cur_e(std::make_shared<Environment>()),
-            cur_t(infomation::COUNT_FROM-1) // cur_t++ called before use
+            cur_t(infomation::COUNT_FROM-1), // cur_t++ called before use
+            is_server(is_server_)
         {
             call_stack.push(infomation::TOPLEVEL); // -1 is toplevel
         }
@@ -32,14 +33,18 @@ namespace shiranui{
         int Runner::before_visit(T& node){
             boost::this_thread::interruption_point();
             cur_t++;
-            node.runtime_info.visit_time.push_back(cur_t);
-            node.runtime_info.call_under[call_stack.top()] = cur_t;
+            if(is_server){
+                node.runtime_info.visit_time.push_back(cur_t);
+                node.runtime_info.call_under[call_stack.top()] = cur_t;
+            }
             return cur_t;
         }
 
         template<typename T>
         void Runner::after_visit(T& node,int cur_t){
-            node.runtime_info.return_value[cur_t] = cur_v;
+            if(is_server){
+                node.runtime_info.return_value[cur_t] = cur_v;
+            }
             boost::this_thread::interruption_point();
         }
 

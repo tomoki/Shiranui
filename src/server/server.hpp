@@ -22,7 +22,7 @@ namespace shiranui{
             //boost::mutex main_thread_waiting_mutex;
             //boost::condition main_thread_waiting;
 
-            boost::thread_group flyline_threads;
+            std::vector<sp<boost::thread>> flyline_threads;
             std::vector<sp<syntax::ast::SourceCode>> program_per_flyline;
             std::vector<sp<runtime::diver::Diver>> diver_per_flyline;
             sp<runtime::diver::Diver> current_diver;
@@ -39,7 +39,8 @@ namespace shiranui{
             void send_idle_flyline(const int&,const int&, const int&,const int&,
                                    const int&,const std::string&);
 
-            void send_debug_print(const std::string&);
+            template<typename T>
+            void send_debug_print(const T&);
             void send_dive_strike(const int&,const int&);
             void send_dive_clear();
 
