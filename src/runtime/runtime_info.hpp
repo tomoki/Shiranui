@@ -27,6 +27,8 @@ namespace shiranui{
 
                 void clear(){
                     return_value.clear();
+                    call_under.clear();
+                    memo.clear();
                 }
             };
         }

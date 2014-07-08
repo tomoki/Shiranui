@@ -32,6 +32,16 @@ namespace shiranui{
                 template<typename T>
                 void clear_it(T& t);
             };
+            struct ValueCleaner : runtime::value::VisitorForValue{
+                void visit(runtime::value::Integer&);
+                void visit(runtime::value::String&);
+                void visit(runtime::value::Boolean&);
+                void visit(runtime::value::Array&);
+                void visit(runtime::value::UserFunction&);
+                void visit(runtime::value::Return&);
+                void visit(runtime::value::SystemCall&);
+                void visit(runtime::value::BuiltinFunction&);
+            };
         }
     }
 }

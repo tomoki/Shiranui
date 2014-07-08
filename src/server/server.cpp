@@ -111,8 +111,10 @@ namespace shiranui{
 
         void PipeServer::on_change_command(const std::string& value){
             main_thread.interrupt();
+            main_thread.join();
             for(sp<boost::thread> t : flyline_threads){
                 t->interrupt();
+                t->join();
             }
             flyline_threads.clear();
             std::stringstream ss(value);
@@ -133,7 +135,6 @@ namespace shiranui{
                 source.erase(point,remove_length);
                 source.insert(point,insert_value);
             }
-            main_thread.join();
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
@@ -241,7 +242,7 @@ namespace shiranui{
             }
 
             if(ok and iter == last){
-                Runner r(false); // do not hold runtime_info
+                Runner r(true);
                 try{
                     program->accept(r);
                 }catch(NoSuchVariableException e){
@@ -260,6 +261,8 @@ namespace shiranui{
                     send_runtimeerror(start_point,end_point);
                     return;
                 }
+                runtime::infomation::Cleaner c;
+                program->accept(c);
 
                 for(sp<SourceCode> s : program_per_flyline){
                     runtime::infomation::Cleaner c;
@@ -300,9 +303,9 @@ namespace shiranui{
             boost::spirit::qi::phrase_parse(iter,last,resolver,
                                             boost::spirit::qi::space,program);
 
+            boost::this_thread::interruption_point();
             program_per_flyline[flyline_index] = program; // TODO:use better way.
             Runner r(true);
-            //Runner r(false);
             sp<FlyLine> sf = program->flylines[flyline_index];
             program->accept(r); // do not cause exception.
 

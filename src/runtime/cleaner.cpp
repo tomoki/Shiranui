@@ -1,4 +1,5 @@
 #include "cleaner.hpp"
+#include "environment.hpp"
 
 namespace shiranui{
     namespace runtime{
@@ -116,8 +117,38 @@ namespace shiranui{
             }
             template<typename T>
             void Cleaner::clear_it(T& t){
+                ValueCleaner c;
+                for(auto p : t.runtime_info.return_value){
+                    p.second->accept(c);
+                }
                 t.runtime_info.clear();
+            }
+
+            using namespace runtime::value;
+            void ValueCleaner::visit(Integer& v){
+            }
+            void ValueCleaner::visit(String& v){
+                v.value = "";
+            }
+            void ValueCleaner::visit(Boolean& v){
+            }
+            void ValueCleaner::visit(Array& v){
+                for(sp<Value> p : v.value){
+                    p->accept(*this);
+                }
+                v.value.clear();
+            }
+            void ValueCleaner::visit(UserFunction& v){
+                v.env->clear();
+            }
+            void ValueCleaner::visit(Return& v){
+                v.value->accept(*this);
+            }
+            void ValueCleaner::visit(SystemCall& v){
+            }
+            void ValueCleaner::visit(BuiltinFunction& v){
             }
         }
     }
 }
+

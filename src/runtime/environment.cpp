@@ -65,6 +65,11 @@ namespace shiranui{
                     vars[id] = v;
                 }
             }
+            void Environment::clear(){
+                vars.clear();
+                consts.clear();
+                parent = nullptr;
+            }
         }
     }
 }

@@ -21,6 +21,8 @@ namespace shiranui{
                 sp<value::Value> get(syntax::ast::Identifier);
                 void set(syntax::ast::Identifier,sp<value::Value>);
                 void define(syntax::ast::Identifier,sp<value::Value>,bool);
+
+                void clear();
             };
         }
     }
