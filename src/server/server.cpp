@@ -111,10 +111,10 @@ namespace shiranui{
 
         void PipeServer::on_change_command(const std::string& value){
             main_thread.interrupt();
-            //flyline_threads.interrupt_all();
             for(sp<boost::thread> t : flyline_threads){
                 t->interrupt();
             }
+            flyline_threads.clear();
             std::stringstream ss(value);
             while(not ss.eof()){
                 int point,remove_length,line_size;
@@ -135,7 +135,6 @@ namespace shiranui{
             }
             main_thread.join();
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
-            flyline_threads.clear();
         }
 
         void PipeServer::on_dive_command(const std::string& value){
@@ -264,7 +263,9 @@ namespace shiranui{
 
                 for(sp<SourceCode> s : program_per_flyline){
                     runtime::infomation::Cleaner c;
-                    s->accept(c);
+                    if(s != nullptr){
+                        s->accept(c);
+                    }
                 }
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
                 diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
@@ -296,27 +297,27 @@ namespace shiranui{
             pos_iterator_t iter = first;
             Parser<pos_iterator_t> resolver(first);
             sp<SourceCode> program;
-            bool ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
-                                                 boost::spirit::qi::space,program);
+            boost::spirit::qi::phrase_parse(iter,last,resolver,
+                                            boost::spirit::qi::space,program);
 
             program_per_flyline[flyline_index] = program; // TODO:use better way.
             Runner r(true);
+            //Runner r(false);
             sp<FlyLine> sf = program->flylines[flyline_index];
             program->accept(r); // do not cause exception.
 
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
-                if(l != nullptr) run_testflyline(source,r,l);
+                if(l != nullptr) run_testflyline(r,l);
             }
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
-                if(l != nullptr) run_idleflyline(source,r,l);
+                if(l != nullptr) run_idleflyline(r,l);
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
         }
 
-        void PipeServer::run_testflyline(std::string source,
-                                         runtime::Runner r,
+        void PipeServer::run_testflyline(runtime::Runner& r,
                                          sp<syntax::ast::TestFlyLine> sf){
             using namespace syntax::ast;
             using namespace runtime::value;
@@ -354,8 +355,7 @@ namespace shiranui{
             }
         }
 
-        void PipeServer::run_idleflyline(std::string source,
-                                         runtime::Runner r,
+        void PipeServer::run_idleflyline(runtime::Runner& r,
                                          sp<syntax::ast::IdleFlyLine> sf){
             using namespace syntax::ast;
             using namespace runtime::value;

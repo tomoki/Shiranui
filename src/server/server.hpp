@@ -69,8 +69,8 @@ namespace shiranui{
             void send_diving_message(const std::string& source,
                                      runtime::diver::DivingMessage message);
             void run_flyline(std::string,int);
-            void run_testflyline(std::string,runtime::Runner,sp<syntax::ast::TestFlyLine>);
-            void run_idleflyline(std::string,runtime::Runner,sp<syntax::ast::IdleFlyLine>);
+            void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>);
+            void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>);
         };
     }
 }
