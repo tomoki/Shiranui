@@ -375,7 +375,7 @@
   (progn
     (add-change beg length (buffer-substring-no-properties beg end))
     (kasumi-add-diff beg (- (- end beg) length))
-    (accept-process-output shiranui-process 0.01)
+    (accept-process-output shiranui-process 0)
     (kasumi-send-change)
     (setq changes '())
     (setq point-diff '())
