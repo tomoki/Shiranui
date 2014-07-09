@@ -121,7 +121,10 @@
    ))
 
 (defun kasumi-process-filter (process str)
-  (kasumi-debug-print str)
+  ;; (kasumi-debug-print "--receive--")
+  ;; (kasumi-debug-print str)
+  ;; (kasumi-debug-print "-----------")
+
   (let ((pairs-command-value (kasumi-parse (string-strip str))))
     (progn
       (kasumi-process-pairs pairs-command-value))))
@@ -234,10 +237,27 @@
       (progn
         (goto-char (kasumi-fix-point add-point))
 
+        ;; (kasumi-debug-print (concat "--current--\n" (buffer-substring-no-properties (point-min)
+        ;;                                                                             (point-max))
+        ;;                             "-----------"))
+        ;; (kasumi-debug-print (concat "remove '"
+        ;;                             (buffer-substring-no-properties (kasumi-fix-point remove-start)
+        ;;                                                             (kasumi-fix-point remove-end))
+        ;;                             "'"))
+        ;; (kasumi-debug-print (concat "remove fixed ["
+        ;;                             (number-to-string (kasumi-fix-point remove-start))
+        ;;                             ","
+        ;;                             (number-to-string (kasumi-fix-point remove-end))
+        ;;                             "]"))
         (delete-region (kasumi-fix-point remove-start)
                        (kasumi-fix-point remove-end))
 
         (insert value)
+        ;; (kasumi-debug-print (concat "insert '" value "'"))
+        ;; (kasumi-debug-print (concat "--after--\n" (buffer-substring-no-properties (point-min)
+        ;;                                                                           (point-max))
+        ;;                             "---------"))
+
 
         (add-change (kasumi-fix-point add-point)
                     (- (kasumi-fix-point remove-end)
@@ -249,10 +269,7 @@
                                (kasumi-fix-point remove-end))
                             (length value)))
 
-        ;; (kasumi-add-diff (kasumi-string-to-fix-point (nth 0 where))
-        ;;                  (length value))
-
-
+        ;; (kasumi-debug-print "add-diff")
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
@@ -266,6 +283,7 @@
       (concat point " " remove_length " " (number-to-string (count-line-string value)) "\n" value))))
 
 (defun kasumi-send-change ()
+  ;; (kasumi-debug-print "change")
   (kasumi-send-command kasumi-command-change
    (mapconcat 'kasumi-send-change-sub (reverse changes) "\n")))
 
@@ -356,6 +374,8 @@
 (defun kasumi-refresh (beg end length)
   (progn
     (add-change beg length (buffer-substring-no-properties beg end))
+    (kasumi-add-diff beg (- (- end beg) length))
+    (accept-process-output shiranui-process 0.01)
     (kasumi-send-change)
     (setq changes '())
     (setq point-diff '())
