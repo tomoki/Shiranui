@@ -135,6 +135,7 @@ namespace shiranui{
                 source.erase(point,remove_length);
                 source.insert(point,insert_value);
             }
+
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source));
         }
 
@@ -142,7 +143,7 @@ namespace shiranui{
             std::stringstream ss(value);
             int point;ss >> point;
             // TODO: check main_thread,flyline_threads condition.
-            for(int i=0;i<program_per_flyline.size();i++){
+            for(int i=0;i<static_cast<int>(program_per_flyline.size());i++){
                 int start_point = program_per_flyline[i]->flylines[i]->point;
                 int end_point = start_point + program_per_flyline[i]->flylines[i]->length;
                 if(start_point <= point and point <= end_point){
@@ -205,7 +206,7 @@ namespace shiranui{
             send_debug_print(ms.str());
             send_diving_message(source,ms);
         }
-        void PipeServer::on_surface_command(const std::string& value){
+        void PipeServer::on_surface_command(const std::string&){
             // value has nothing.
             if(current_diver != nullptr){
                 surface(current_diver);
@@ -275,7 +276,7 @@ namespace shiranui{
                 // TODO:should kill diver process
                 current_diver = nullptr;
 
-                for(int i=0;i<program->flylines.size();i++){
+                for(int i=0;i<static_cast<int>(program->flylines.size());i++){
                     flyline_threads.push_back(std::make_shared<boost::thread>(
                                  boost::bind(&PipeServer::run_flyline,this,source,i)));
                 }
@@ -390,7 +391,7 @@ namespace shiranui{
                 send_idle_flyline(start_point,end_point,1,1,end_point-1,left_str);
             }
         }
-        void PipeServer::send_diving_message(const std::string& source,
+        void PipeServer::send_diving_message(const std::string&,
                                              runtime::diver::DivingMessage message){
             using namespace runtime::diver;
             std::stringstream ss(message.str());
@@ -430,9 +431,9 @@ namespace shiranui{
                 if(v != nullptr){
                     std::stringstream ss;
                     ss << "[";
-                    for(int i=0;i<v->value.size();i++){
+                    for(int i=0;i<static_cast<int>(v->value.size());i++){
                         ss << to_reproductive(v->value[i]);
-                        if(i != v->value.size()-1){
+                        if(i != static_cast<int>(v->value.size())-1){
                             ss << ",";
                         }
                     }

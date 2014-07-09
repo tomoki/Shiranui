@@ -149,7 +149,7 @@ namespace shiranui{
             }
 
             // builtin
-            void PrettyPrinterForValue::visit(SystemCall& sc){
+            void PrettyPrinterForValue::visit(SystemCall&){
                 os << "system_call";
             }
 

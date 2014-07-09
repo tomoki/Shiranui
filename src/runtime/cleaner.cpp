@@ -125,12 +125,11 @@ namespace shiranui{
             }
 
             using namespace runtime::value;
-            void ValueCleaner::visit(Integer& v){
+            void ValueCleaner::visit(Integer&){
             }
-            void ValueCleaner::visit(String& v){
-                v.value = "";
+            void ValueCleaner::visit(String&){
             }
-            void ValueCleaner::visit(Boolean& v){
+            void ValueCleaner::visit(Boolean&){
             }
             void ValueCleaner::visit(Array& v){
                 for(sp<Value> p : v.value){
@@ -144,9 +143,9 @@ namespace shiranui{
             void ValueCleaner::visit(Return& v){
                 v.value->accept(*this);
             }
-            void ValueCleaner::visit(SystemCall& v){
+            void ValueCleaner::visit(SystemCall&){
             }
-            void ValueCleaner::visit(BuiltinFunction& v){
+            void ValueCleaner::visit(BuiltinFunction&){
             }
         }
     }

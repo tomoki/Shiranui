@@ -48,7 +48,7 @@ namespace shiranui{
             boost::this_thread::interruption_point();
         }
 
-        void Runner::visit(syntax::ast::Identifier& id){
+        void Runner::visit(syntax::ast::Identifier&){
             throw RuntimeException(); // never occur.
             return;
         }
@@ -183,7 +183,7 @@ namespace shiranui{
                     }
                     sp<Environment> before = this->cur_e;
                     sp<Environment> call_env = std::make_shared<Environment>(f->env);
-                    for(int i=0;i<f->parameters.size();i++){
+                    for(int i=0;i<static_cast<int>(f->parameters.size());i++){
                         fc.arguments[i]->accept(*this);
                         call_env->define(f->parameters[i],cur_v,true);
                     }
@@ -426,11 +426,11 @@ namespace shiranui{
         }
 
         // do not eval firsttime.
-        void Runner::visit(syntax::ast::TestFlyLine& line){
+        void Runner::visit(syntax::ast::TestFlyLine&){
             //BEFORE_VISIT_MACRO(line);
             return;
         }
-        void Runner::visit(syntax::ast::IdleFlyLine& line){
+        void Runner::visit(syntax::ast::IdleFlyLine&){
             //BEFORE_VISIT_MACRO(line);
             return;
         }
