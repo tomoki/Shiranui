@@ -262,8 +262,10 @@ namespace shiranui{
                     send_runtimeerror(start_point,end_point);
                     return;
                 }
-                runtime::infomation::Cleaner c;
-                program->accept(c);
+                {
+                    runtime::infomation::Cleaner c;
+                    program->accept(c);
+                }
 
                 for(sp<SourceCode> s : program_per_flyline){
                     runtime::infomation::Cleaner c;
@@ -297,6 +299,7 @@ namespace shiranui{
             using namespace shiranui::runtime;
             using namespace shiranui::runtime::diver;
 
+            const auto start_time = std::chrono::system_clock::now();
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             Parser<pos_iterator_t> resolver(first);
@@ -319,6 +322,11 @@ namespace shiranui{
                 if(l != nullptr) run_idleflyline(r,l);
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
+            const auto end_time = std::chrono::system_clock::now();
+            const auto time_span = end_time - start_time;
+            std::stringstream ts;
+            ts << "Exec [" << flyline_index << "]: " << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
+            send_debug_print(ts.str());
         }
 
         void PipeServer::run_testflyline(runtime::Runner& r,
@@ -388,7 +396,7 @@ namespace shiranui{
                                  ,remove_start,left_str);
             }else{ // right == null
                 // do not delete anything
-                send_idle_flyline(start_point,end_point,1,1,end_point-1,left_str);
+                send_idle_flyline(start_point,end_point,end_point-1,end_point-1,end_point-1,left_str);
             }
         }
         void PipeServer::send_diving_message(const std::string&,
