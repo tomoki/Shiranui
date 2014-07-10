@@ -32,7 +32,7 @@ void repl(){
         sp<ast::SourceCode> program;
         bool ok = false;
         try{
-            Parser<pos_iterator_t> resolver(first);
+            Parser<pos_iterator_t> resolver;
             ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
         }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
             std::cerr << "expected: ";
@@ -87,7 +87,7 @@ void exec(const std::string content){
     sp<ast::SourceCode> program;
     bool ok = false;
     try{
-        Parser<pos_iterator_t> resolver(first);
+        Parser<pos_iterator_t> resolver;
         ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
     }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
         std::cerr << "expected: ";
@@ -151,11 +151,11 @@ int main(int argc,char **argv){
         std::string str((std::istreambuf_iterator<char>(fs)),
                          std::istreambuf_iterator<char>());
         if(vm.count("kagero")){
-            std::string filename = vm["kagero"].as<std::string>();
-            std::fstream fs(filename);
-            str = (std::string((std::istreambuf_iterator<char>(fs)),
-                               (std::istreambuf_iterator<char>()))) 
-                  + str;
+            std::string kagerofile = vm["kagero"].as<std::string>();
+            std::fstream kagero_fs(kagerofile);
+            std::string kagero_str((std::istreambuf_iterator<char>(kagero_fs)),
+                                   (std::istreambuf_iterator<char>()));
+            str = kagero_str + str;
 
         }
         exec(str);

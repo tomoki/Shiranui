@@ -58,18 +58,17 @@ namespace shiranui{
         template<typename Iterator>
         struct annotation_f{
             typedef void result_type;
-            const Iterator first;
-            annotation_f(Iterator first_) : first(first_){}
+            annotation_f(){}
             template<typename Val,typename First,typename Last>
             void operator()(Val& v,First f,Last l) const{
-                do_annotate(v,f,l,first);
+                do_annotate(v,f,l);
             }
         private:
-            void static do_annotate(ast::LocationInfo& li,Iterator f,Iterator l,Iterator first){
+            void static do_annotate(ast::LocationInfo& li,Iterator f,Iterator l){
                 li.point = get_point(f);
                 li.length = std::distance(f,l);
             }
-            void static do_annotate(sp<ast::LocationInfo> li,Iterator f,Iterator l,Iterator first){
+            void static do_annotate(sp<ast::LocationInfo> li,Iterator f,Iterator l){
                 li->point = get_point(f);
                 li->length = std::distance(f,l);
             }
@@ -82,8 +81,8 @@ namespace shiranui{
         template<typename Iterator=pos_iterator_t,typename Skipper=boost::spirit::qi::space_type>
         struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>(),Skipper>{
             // change const_definement to sourcecode.
-            Parser(Iterator first) : Parser::base_type(source),
-                                     annotate(first){
+            Parser() : Parser::base_type(source),
+                       annotate(){
                 namespace ph = boost::phoenix;
                 namespace qi = boost::spirit::qi;
                 using namespace qi::ascii;

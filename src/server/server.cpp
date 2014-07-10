@@ -232,7 +232,7 @@ namespace shiranui{
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
-            Parser<pos_iterator_t> resolver(first);
+            Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
             try{
                 ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
@@ -288,7 +288,7 @@ namespace shiranui{
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;
             std::stringstream ts;
-            ts << "First parse:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
+            ts << "First:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
             send_debug_print(ts.str());
         }
 
@@ -302,7 +302,7 @@ namespace shiranui{
             const auto start_time = std::chrono::system_clock::now();
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
-            Parser<pos_iterator_t> resolver(first);
+            Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
             boost::spirit::qi::phrase_parse(iter,last,resolver,
                                             boost::spirit::qi::space,program);

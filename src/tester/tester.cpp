@@ -278,7 +278,9 @@ string long_code =
 "let unit = print(g());\n"
 "let unit = print(f2());\n"
 "let unit = print(g2());\n";
-            long_code = long_code + long_code + long_code + long_code + long_code;
+            for(int i=0;i<3;i++){
+                long_code = long_code + long_code;
+            }
             for(int i=0;i<10;i++){
                 const auto start_time = std::chrono::system_clock::now();
                 pos_iterator_t first(long_code.begin()),last(long_code.end());
@@ -286,7 +288,7 @@ string long_code =
                 sp<ast::SourceCode> program;
                 bool ok = false;
                 try{
-                    Parser<pos_iterator_t> resolver(first);
+                    Parser<pos_iterator_t> resolver;
                     ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
                 }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                     std::cerr << "expected: ";
