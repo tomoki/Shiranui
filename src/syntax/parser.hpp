@@ -67,14 +67,10 @@ namespace shiranui{
         private:
             void static do_annotate(ast::LocationInfo& li,Iterator f,Iterator l,Iterator first){
                 li.point = get_point(f);
-                li.line = get_line(f);
-                li.column = get_column(first,f);
                 li.length = std::distance(f,l);
             }
             void static do_annotate(sp<ast::LocationInfo> li,Iterator f,Iterator l,Iterator first){
                 li->point = get_point(f);
-                li->line = get_line(f);
-                li->column = get_column(first,f);
                 li->length = std::distance(f,l);
             }
 
@@ -352,7 +348,7 @@ namespace shiranui{
                 {
                     source.name("source");
                     source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
-                          >> *(statement 
+                          > *(statement 
                                 [ph::bind(&ast::SourceCode::add_statement,*qi::_val,qi::_1)]
                               |flyline
                                 [ph::bind(&ast::SourceCode::add_flyline,*qi::_val,qi::_1)]

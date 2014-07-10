@@ -60,11 +60,8 @@ void repl(){
                 std::cerr << std::endl;
             }
         }else{
-            int line = get_line(iter);
-            int column = get_column(first,iter);
             std::cout << "-------------------------\n";
             std::cout << "ERROR: Parsing failed or not complete\n";
-            std::cout << "stopped at: " << line  << ":" << column << "\n";
             std::cout << "remaining: '" << std::string(iter, last) << "'\n";
             std::cout << "-------------------------\n";
         }
@@ -118,11 +115,8 @@ void exec(const std::string content){
             std::cerr << std::endl;
         }
     }else{
-        int line = get_line(iter);
-        int column = get_column(first,iter);
         std::cout << "-------------------------\n";
         std::cout << "ERROR: Parsing failed or not complete\n";
-        std::cout << "stopped at: " << line  << ":" << column << "\n";
         std::cout << "remaining: '" << std::string(iter, last) << "'\n";
         std::cout << "-------------------------\n";
     }
