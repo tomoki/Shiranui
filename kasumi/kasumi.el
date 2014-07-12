@@ -219,57 +219,29 @@
     ))
 
 ;; beg end <- target
-;; beg end <- remove
-;; beg   <- insert here
-;; value <- this.
+;; beg remove_length
+;; value
 (defun kasumi-receive-idleflyline (value)
-  (let* ((lines (split-string value "\n"))
-         (target (split-string (nth 0 lines) " "))
-         (remove (split-string (nth 1 lines) " "))
-         (where  (split-string (nth 2 lines) " "))
-         (remove-start (string-to-number (nth 0 remove)))
-         (remove-end   (string-to-number (nth 1 remove)))
-         (add-point    (string-to-number (nth 0 where)))
-         ;; TODO: string-join.
-         (value  (nth 3 lines))
+  (let* ((lines         (split-string value "\n"))
+         (target        (split-string (nth 0 lines) " "))
+         (where         (string-to-number (nth 0 (split-string (nth 1 lines) " "))))
+         (remove_length (string-to-number (nth 1 (split-string (nth 1 lines) " "))))
+         ;; TODO:support newline.
+         (value (nth 2 lines))
          (inhibit-modification-hooks t))
     (save-excursion
       (progn
-        (goto-char (kasumi-fix-point add-point))
-
-        ;; (kasumi-debug-print (concat "--current--\n" (buffer-substring-no-properties (point-min)
-        ;;                                                                             (point-max))
-        ;;                             "-----------"))
-        ;; (kasumi-debug-print (concat "remove '"
-        ;;                             (buffer-substring-no-properties (kasumi-fix-point remove-start)
-        ;;                                                             (kasumi-fix-point remove-end))
-        ;;                             "'"))
-        ;; (kasumi-debug-print (concat "remove fixed ["
-        ;;                             (number-to-string (kasumi-fix-point remove-start))
-        ;;                             ","
-        ;;                             (number-to-string (kasumi-fix-point remove-end))
-        ;;                             "]"))
-        (delete-region (kasumi-fix-point remove-start)
-                       (kasumi-fix-point remove-end))
+        (goto-char (kasumi-fix-point where))
+        (delete-region (kasumi-fix-point where)
+                       (+ (kasumi-fix-point where) remove_length))
 
         (insert value)
-        ;; (kasumi-debug-print (concat "insert '" value "'"))
-        ;; (kasumi-debug-print (concat "--after--\n" (buffer-substring-no-properties (point-min)
-        ;;                                                                           (point-max))
-        ;;                             "---------"))
 
+        (add-change (kasumi-fix-point where) remove_length value)
 
-        (add-change (kasumi-fix-point add-point)
-                    (- (kasumi-fix-point remove-end)
-                       (kasumi-fix-point remove-start))
-                    value)
+        (kasumi-add-diff (kasumi-fix-point where)
+                         (- (length value) remove_length))
 
-        (kasumi-add-diff (kasumi-fix-point remove-start)
-                         (+ (- (kasumi-fix-point remove-start)
-                               (kasumi-fix-point remove-end))
-                            (length value)))
-
-        ;; (kasumi-debug-print "add-diff")
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
@@ -376,10 +348,10 @@
     (add-change beg length (buffer-substring-no-properties beg end))
     (kasumi-add-diff beg (- (- end beg) length))
     (accept-process-output shiranui-process 0)
+    (setq load-count (+ load-count 1))
     (kasumi-send-change)
     (setq changes '())
     (setq point-diff '())
-    (setq load-count (+ load-count 1))
     (kasumi-remove-all-overlay)))
 
 (defun kasumi-count-lines ()

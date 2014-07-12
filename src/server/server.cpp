@@ -5,9 +5,6 @@
 
 namespace shiranui{
     namespace server{
-
-        std::string to_reproductive(sp<runtime::value::Value>);
-
         PipeServer::PipeServer(std::istream& i,std::ostream& o)
             : is(i),os(o){
         }
@@ -51,12 +48,11 @@ namespace shiranui{
 
 
         void PipeServer::send_idle_flyline(const int& start_point,const int& end_point,
-                                           const int& remove_start,const int& remove_end,
-                                           const int& insert_point,const std::string& value){
+                                           const int& insert_point,const int& remove_length,
+                                           const std::string& value){
             std::stringstream ss;
             ss << start_point << " " << end_point << std::endl
-               << remove_start << " " << remove_end << std::endl
-               << insert_point << std::endl
+               << insert_point << " " << remove_length << std::endl
                << value;
             return send_command(COMMAND_IDLE_FLYLINE,ss.str());
         }
@@ -392,11 +388,10 @@ namespace shiranui{
             if(sf->right != nullptr){
                 int remove_start = sf->right->point;
                 int remove_end = remove_start + sf->right->length;
-                send_idle_flyline(start_point,end_point,remove_start,remove_end
-                                 ,remove_start,left_str);
+                int remove_length = remove_end - remove_start;
+                send_idle_flyline(start_point,end_point,remove_start,remove_length,left_str);
             }else{ // right == null
-                // do not delete anything
-                send_idle_flyline(start_point,end_point,end_point-1,end_point-1,end_point-1,left_str);
+                send_idle_flyline(start_point,end_point,end_point-1,0,left_str);
             }
         }
         void PipeServer::send_diving_message(const std::string&,
@@ -453,11 +448,7 @@ namespace shiranui{
         }
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
-            int cnt = 1;
-            for(char c : s){
-                if(c == '\n') cnt++;
-            }
-            return cnt;
+            return count(s.begin(),s.end(),'\n')+1;
         }
     }
 }

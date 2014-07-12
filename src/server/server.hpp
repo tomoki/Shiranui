@@ -20,11 +20,12 @@ namespace shiranui{
         const std::string COMMAND_IDLE_FLYLINE = "idleflyline";
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
-
         const std::string COMMAND_DIVE_STRIKE = "dive_strike";
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
 
         int how_many_lines(const std::string&);
+        std::string to_reproductive(sp<runtime::value::Value>);
+
         struct PipeServer{
             std::istream& is;
             std::ostream& os;
@@ -45,11 +46,12 @@ namespace shiranui{
             void start();
             void send_command(const std::string&,const std::string&);
             void send_command_with_two_points(const std::string&,const int&,const int&);
+
             void send_syntaxerror(const int&,const int&);
             void send_runtimeerror(const int&,const int&);
             void send_good_flyline(const int&,const int&);
             void send_bad_flyline(const int&,const int&);
-            void send_idle_flyline(const int&,const int&, const int&,const int&,
+            void send_idle_flyline(const int&,const int&,const int&,
                                    const int&,const std::string&);
 
             template<typename T>

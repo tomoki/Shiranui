@@ -4,8 +4,8 @@
 #include <memory>
 #include <boost/thread/thread.hpp>
 
-#define BEFORE_VISIT_MACRO(NODE) int cur_t = before_visit(NODE)
-#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t)
+#define BEFORE_VISIT_MACRO(NODE) int cur_t_ = before_visit(NODE)
+#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t_)
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::environment::Environment;
@@ -41,9 +41,9 @@ namespace shiranui{
         }
 
         template<typename T>
-        void Runner::after_visit(T& node,int cur_t){
+        void Runner::after_visit(T& node,int cur_t_){
             if(is_server){
-                node.runtime_info.return_value[cur_t] = cur_v;
+                node.runtime_info.return_value[cur_t_] = cur_v;
             }
             boost::this_thread::interruption_point();
         }
