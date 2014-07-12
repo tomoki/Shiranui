@@ -40,20 +40,20 @@ namespace shiranui{
             return boost::phoenix::function<qi_make_shared_struct<T>>()(std::forward<Args>(args)...);
         }
 
-        struct error_handler_f{
-            typedef boost::spirit::qi::error_handler_result result_type;
-            // does'nt work currently.(may need space skipping?)
-            // get_line,get_column is defined in
-            //   http://www.boost.org/doc/libs/1_47_0/boost/spirit/home/support/iterators/line_pos_iterator.hpp
-
-            template<typename T1,typename T2,typename T3,typename T4>
-            result_type operator()(T1 b,T2 e,T3 where,const T4& what) const{
-                std::cerr << "Error expecting " << what << " in line " << get_line(where) << ":" << std::endl
-                          << std::string(b,e) << std::endl
-                          << std::setw(std::distance(b,where)) << "^---- here" << std::endl;
-                return boost::spirit::qi::fail;
-            }
-        };
+//        struct error_handler_f{
+//            typedef boost::spirit::qi::error_handler_result result_type;
+//            // does'nt work currently.(may need space skipping?)
+//            // get_line,get_column is defined in
+//            //   http://www.boost.org/doc/libs/1_47_0/boost/spirit/home/support/iterators/line_pos_iterator.hpp
+//
+//            template<typename T1,typename T2,typename T3,typename T4>
+//            result_type operator()(T1 b,T2 e,T3 where,const T4& what) const{
+//                std::cerr << "Error expecting " << what << " in line " << get_line(where) << ":" << std::endl
+//                          << std::string(b,e) << std::endl
+//                          << std::setw(std::distance(b,where)) << "^---- here" << std::endl;
+//                return boost::spirit::qi::fail;
+//            }
+//        };
 
         template<typename Iterator>
         struct annotation_f{
@@ -356,7 +356,7 @@ namespace shiranui{
                     on_success(source,set_location_info);
                 }
             }
-            boost::phoenix::function<error_handler_f> handler;
+            //boost::phoenix::function<error_handler_f> handler;
             boost::phoenix::function<annotation_f<Iterator>> annotate;
 
             boost::spirit::qi::rule<Iterator,ast::Identifier()>                identifier;
