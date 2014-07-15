@@ -44,35 +44,36 @@ namespace shiranui{
             PipeServer(std::istream&,std::ostream&);
 
             void start();
-            void send_command(const std::string&,const std::string&);
-            void send_command_with_two_points(const std::string&,const int&,const int&);
+            void send_command(const std::string&,const std::string&,const int);
+            void send_command_with_two_points(const std::string&,const int,const int,
+                                              const int);
 
-            void send_syntaxerror(const int&,const int&);
-            void send_runtimeerror(const int&,const int&);
-            void send_good_flyline(const int&,const int&);
-            void send_bad_flyline(const int&,const int&);
-            void send_idle_flyline(const int&,const int&,const int&,
-                                   const int&,const std::string&);
+            void send_syntaxerror(const int,const int,const int);
+            void send_runtimeerror(const int,const int,const int);
+            void send_good_flyline(const int,const int,const int);
+            void send_bad_flyline(const int,const int,const int);
+            void send_idle_flyline(const int,const int,const int,
+                                   const int,const std::string&,const int);
 
             template<typename T>
-            void send_debug_print(const T&);
-            void send_dive_strike(const int&,const int&);
-            void send_dive_clear();
+            void send_debug_print(const T&,const int);
+            void send_dive_strike(const int,const int,const int);
+            void send_dive_clear(const int);
 
             void receive(); // run as thread.
-            void receive_command(const std::string&,const std::string&);
-            void on_change_command(const std::string&);
-            void on_dive_command(const std::string&);
-            void on_surface_command(const std::string&);
-            void exec(std::string);
+            void receive_command(const std::string&,const std::string&,const int);
+            void on_change_command(const std::string&,const int);
+            void on_dive_command(const std::string&,const int);
+            void on_surface_command(const std::string&,const int);
+            void exec(std::string,const int);
             void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>);
-            void dive(sp<runtime::diver::Diver>,int);
+            void dive(sp<runtime::diver::Diver>,int,const int);
             void surface(sp<runtime::diver::Diver>);
             void send_diving_message(const std::string& source,
                                      runtime::diver::DivingMessage message);
-            void run_flyline(std::string,int);
-            void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>);
-            void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>);
+            void run_flyline(std::string,int,const int);
+            void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);
+            void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>,const int);
         };
     }
 }

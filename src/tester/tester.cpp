@@ -28,10 +28,10 @@ namespace shiranui{
                             "};\n";
 
 
-            ps.on_change_command(make_change(1,0,tosend));
+            ps.on_change_command(make_change(1,0,tosend),1);
             for(int i=0;i<30000;i++){
                 cerr << i << endl;
-                ps.on_change_command(make_change(1,tosend.size(),tosend));
+                ps.on_change_command(make_change(1,tosend.size(),tosend),1);
                 wait(1000);
             }
             cerr << "check memory state" << endl;
@@ -303,9 +303,9 @@ string long_code =
                             "    }\n"
                             "};\n";
 
-            ps.on_change_command(make_change(1,0,tosend));
+            ps.on_change_command(make_change(1,0,tosend),1);
             wait(100);
-            ps.on_dive_command("3");
+            ps.on_dive_command("3",1);
             wait(100);
         }
 

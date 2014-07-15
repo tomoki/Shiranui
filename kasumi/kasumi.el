@@ -86,23 +86,27 @@
     ;; start-process needs absolute path?
   (apply 'start-process "shiranui" "shiranui" (file-truename program) '("--server"))))
 
-;; string -> (command value rest)
+;; string -> (command loadcount value rest)
 (defun kasumi-parse-sub (str)
   (let* ((lines (split-string str "\n"))
          (first-line (split-string (car lines) " "))
          (command-line-length (string-to-number (car first-line)))
-         (command (string-join (cdr first-line) " "))
+         ;; (loadcount (string-to-number (cadr first-line)))
+         (loadcount (cadr first-line))
+         (command (string-join (cddr first-line) " "))
          (value-and-rest (take-nth (cdr lines) command-line-length)))
-    (list command (string-join (car value-and-rest) "\n")
-                  (string-join (cdr value-and-rest) "\n"))))
+    (list command loadcount (string-join (car value-and-rest) "\n")
+          (string-join (cdr value-and-rest) "\n"))))
 
 ;; string -> [(command . value)]
 (defun kasumi-parse (str)
   (if (= (length str) 0)
       '()
-    (let ((command-value-rest (kasumi-parse-sub str)))
-      (cons (cons (car command-value-rest) (cadr command-value-rest))
-            (kasumi-parse (caddr command-value-rest))))))
+    (let ((command-loadcount-value-rest (kasumi-parse-sub str)))
+      (cons (car (take-nth command-loadcount-value-rest 3))
+            (kasumi-parse (cadddr command-loadcount-value-rest))))))
+      ;; (cons (cons (car command-value-rest) (cadr command-value-rest))
+      ;;       (kasumi-parse (caddr command-value-rest))))))
 
 (defun kasumi-debug-print (str)
   (let ((prev (current-buffer)))
@@ -117,7 +121,8 @@
 ;; need newline end of string?
 (defun kasumi-send-command (command value)
   (process-send-string shiranui-process
-   (concat (number-to-string (count-line-string value)) " " command "\n" value "\n")
+   (concat (number-to-string (count-line-string value)) " "
+           (number-to-string load-count) " " command "\n" value "\n")
    ))
 
 (defun kasumi-process-filter (process str)
@@ -125,23 +130,26 @@
   ;; (kasumi-debug-print str)
   ;; (kasumi-debug-print "-----------")
 
-  (let ((pairs-command-value (kasumi-parse (string-strip str))))
+  (let ((list-command-loadcount-value (kasumi-parse (string-strip str))))
     (progn
-      (kasumi-process-pairs pairs-command-value))))
+      (kasumi-process-pairs list-command-loadcount-value))))
 
 (defun kasumi-process-sentinel (process stat)
   (message "something occured in shiranui"))
 
-(defun kasumi-process-pair (pair-command-value)
-  (let ((command (car pair-command-value))
-        (value   (cdr pair-command-value)))
+(defun kasumi-process-pair (list-command-loadcount-value)
+  (let* ((command (car list-command-loadcount-value))
+         (lc      (string-to-number (cadr list-command-loadcount-value)))
+         (correct-load-count (= lc load-count))
+         (value   (caddr list-command-loadcount-value))
+        )
     (cond ((string= command kasumi-command-syntaxerror)
            (kasumi-receive-syntaxerror value))
           ((string= command kasumi-command-goodflyline)
            (kasumi-receive-goodflyline value))
           ((string= command kasumi-command-badflyline)
            (kasumi-receive-badflyline value))
-          ((string= command kasumi-command-idleflyline)
+          ((and (string= command kasumi-command-idleflyline) correct-load-count)
            (kasumi-receive-idleflyline value))
           ((string= command kasumi-command-debug-print)
            (kasumi-debug-print value))
@@ -151,14 +159,16 @@
            (kasumi-receive-dive-strike value))
           ((string= command kasumi-command-dive-clear)
            (kasumi-remove-all-dive-overlay))
+          ((not correct-load-count)
+           (kasumi-debug-print (format "loadcount %d is old.ignore it." lc)))
           (t (message "unknown command:%s " command))
           )))
 
-(defun kasumi-process-pairs (pairs-command-value)
-  (if (null pairs-command-value)
+(defun kasumi-process-pairs (list-command-loadcount-value)
+  (if (null list-command-loadcount-value)
       '()
-    (cons (kasumi-process-pair (car pairs-command-value))
-          (kasumi-process-pairs (cdr pairs-command-value)))))
+    (cons (kasumi-process-pair (car list-command-loadcount-value))
+          (kasumi-process-pairs (cdr list-command-loadcount-value)))))
 
 ;; Should use original position?
 (defun kasumi-fix-point-sub (p lis)
@@ -168,7 +178,7 @@
    (t (kasumi-fix-point-sub p (cdr lis)))))
 
 (defun kasumi-fix-point (p)
-  (kasumi-fix-point-sub p point-diff))
+  (kasumi-fix-point-sub p (reverse point-diff)))
 
 (defun kasumi-orig-point-sub (p lis)
   (cond
@@ -178,7 +188,7 @@
    (t (kasumi-orig-point-sub p (cdr lis)))))
 
 (defun kasumi-orig-point (p)
-  (kasumi-orig-point-sub p (reverse point-diff)))
+  (kasumi-orig-point-sub p point-diff))
 
 (defun kasumi-add-diff (where size)
   (setq point-diff (cons (cons where size) point-diff)))
@@ -238,10 +248,10 @@
         (insert value)
 
         (add-change (kasumi-fix-point where) remove_length value)
-
         (kasumi-add-diff (kasumi-fix-point where)
                          (- (length value) remove_length))
 
+        ;; (kasumi-debug-print (format "%S" point-diff))
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
@@ -255,7 +265,6 @@
       (concat point " " remove_length " " (number-to-string (count-line-string value)) "\n" value))))
 
 (defun kasumi-send-change ()
-  ;; (kasumi-debug-print "change")
   (kasumi-send-command kasumi-command-change
    (mapconcat 'kasumi-send-change-sub (reverse changes) "\n")))
 
@@ -349,6 +358,7 @@
     (kasumi-add-diff beg (- (- end beg) length))
     (accept-process-output shiranui-process 0)
     (setq load-count (+ load-count 1))
+    (kasumi-debug-print (concat "loadcount: " (number-to-string load-count)))
     (kasumi-send-change)
     (setq changes '())
     (setq point-diff '())
