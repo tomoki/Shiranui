@@ -72,35 +72,7 @@ namespace shiranui{
                 return message;
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
-                using namespace shiranui::syntax::ast;
-                using namespace shiranui::runtime::value;
-
-                DivingMessage message;
-                for(sp<Statement> s : block.statements){
-                    {
-                        auto p = std::dynamic_pointer_cast<IfElseStatement>(s);
-                        if(p != nullptr){
-                            auto if_p = return_value(*p->ifblock,call_under);
-                            auto else_p = return_value(*p->elseblock,call_under);
-                            if(if_p.second == nullptr and else_p.second == nullptr){
-                                //error.
-                            }else{
-                                bool if_called = (if_p.second != nullptr
-                                                   and else_p.second != nullptr
-                                                   and if_p.first < else_p.first)
-                                                  or (else_p.second == nullptr);
-                                if(if_called){
-                                    message.add_strike(*p->elseblock);
-                                    message = message + see(*p->ifblock,call_under);
-                                }else{
-                                    message.add_strike(*p->ifblock);
-                                    message = message + see(*p->elseblock,call_under);
-                                }
-                            }
-                        }
-                    }
-                }
-                return message;
+                return use_snorkel(block,call_under);
             }
             DivingMessage Diver::surface(){
                 if(undo_stack.empty()){
@@ -124,6 +96,15 @@ namespace shiranui{
                 cache = ss.str();
                 return *this;
             }
+            template<typename T>
+            DivingMessage DivingMessage::add_explore(const T& t,const std::string& what){
+                std::stringstream ss;
+                ss << cache << EXPLORE << std::endl
+                   << t.point << " " << t.length << std::endl
+                   << what << std::endl;
+                cache = ss.str();
+                return *this;
+            }
             DivingMessage DivingMessage::operator+(DivingMessage message){
                 DivingMessage ret;
                 ret.cache = cache + message.cache;
@@ -133,7 +114,7 @@ namespace shiranui{
             using namespace syntax::ast;
             SwimFin::SwimFin(int point_)
                 : treasure(nullptr),point(point_){
-            }
+                }
             void SwimFin::visit(Identifier& node){
                 throw InternalException(std::make_shared<Identifier>(node));
             }
@@ -210,6 +191,7 @@ namespace shiranui{
                 node.pred->accept(*this);
                 node.ifblock->accept(*this);
                 node.elseblock->accept(*this);
+
             }
             // should return forstatement?
             void SwimFin::visit(ForStatement& node){
@@ -253,6 +235,120 @@ namespace shiranui{
                 SwimFin sf(point);
                 sf.visit(sc);
                 return sf.treasure; // can be null
+            }
+            template<typename T>
+            DivingMessage use_snorkel(T& block,int call_under){
+                Snorkel s(call_under);
+                s.visit(block);
+                return s.message;
+            }
+
+
+            // Snorkel
+            Snorkel::Snorkel(int c) : 
+                call_under(c){
+            }
+            void Snorkel::visit(Identifier& node){
+                throw InternalException(std::make_shared<Identifier>(node));
+            }
+            void Snorkel::visit(Variable& node){
+                auto p = return_value(node,call_under);
+                if(p.second != nullptr){
+                    //message.add_explore(node,to_reproductive(p.second));
+                }
+            }
+            void Snorkel::visit(Number& node){
+            }
+            void Snorkel::visit(String& node){
+            }
+            void Snorkel::visit(Enum& node){
+                for(sp<Expression> e : node.expressions){
+                    e->accept(*this);
+                }
+            }
+            void Snorkel::visit(Interval& node){
+                if(node.start != nullptr){
+                    node.start->accept(*this);
+                }
+                if(node.end != nullptr){
+                    node.end->accept(*this);
+                }
+                if(node.next != nullptr){
+                    node.next->accept(*this);
+                }
+            }
+            void Snorkel::visit(Block& node){
+                for(sp<Statement> s : node.statements){
+                    s->accept(*this);
+                }
+            }
+            void Snorkel::visit(Function& node){
+                node.body->accept(*this);
+            }
+            void Snorkel::visit(FunctionCall& node){
+                node.function->accept(*this);
+                for(sp<Expression> a : node.arguments){
+                    a->accept(*this);
+                }
+            }
+            void Snorkel::visit(BinaryOperator& node){
+                node.left->accept(*this);
+                node.right->accept(*this);
+            }
+            void Snorkel::visit(UnaryOperator& node){
+                node.exp->accept(*this);
+            }
+            void Snorkel::visit(IfElseExpression& node){
+                node.pred->accept(*this);
+                node.ife->accept(*this);
+                node.elsee->accept(*this);
+            }
+            void Snorkel::visit(Definement& node){
+                node.value->accept(*this);
+            }
+            void Snorkel::visit(ReturnStatement& node){
+                node.value->accept(*this);
+            }
+            void Snorkel::visit(IfElseStatement& node){
+                node.pred->accept(*this);
+                node.ifblock->accept(*this);
+                node.elseblock->accept(*this);
+                if(return_value(node,call_under).second != nullptr){
+                    auto if_p = return_value(*(node.ifblock),call_under);
+                    auto else_p = return_value(*(node.elseblock),call_under);
+                    if(if_p.second == nullptr and else_p.second == nullptr){
+                        //error.
+                    }else{
+                        bool if_called = (if_p.second != nullptr
+                                and else_p.second != nullptr
+                                and if_p.first < else_p.first)
+                            or (else_p.second == nullptr);
+                        if(if_called){
+                            message.add_strike(*(node.elseblock));
+                        }else{
+                            message.add_strike(*(node.ifblock));
+                        }
+                    }
+                }
+            }
+            // should return forstatement?
+            void Snorkel::visit(ForStatement& node){
+                node.loop_exp->accept(*this);
+                node.block->accept(*this);
+            }
+            void Snorkel::visit(Assignment& node){
+                node.value->accept(*this);
+            }
+            void Snorkel::visit(TestFlyLine& node){
+                throw InternalException(std::make_shared<TestFlyLine>(node));
+            }
+            void Snorkel::visit(IdleFlyLine& node){
+                throw InternalException(std::make_shared<IdleFlyLine>(node));
+            }
+            void Snorkel::visit(SourceCode& node){
+                for(sp<Statement> s : node.statements){
+                    s->accept(*this);
+                }
             }
         }
     }

@@ -426,46 +426,17 @@ namespace shiranui{
                     ss >> start_point >> length;
                     int end_point = start_point + length;
                     send_dive_strike(start_point,end_point,-1);
+                }else if(command == EXPLORE){
+                    int start_point,length;
+                    ss >> start_point >> length;
+                    int end_point = start_point + length;
+                    std::string value;
+                    ss.ignore();
+                    std::getline(ss,value);
                 }
             }
         }
 
-        // helper functions.
-        std::string to_reproductive(sp<runtime::value::Value> vi){
-            using namespace runtime::value;
-            {
-                sp<Integer> v = std::dynamic_pointer_cast<Integer>(vi);
-                if(v != nullptr){
-                    std::stringstream ss;
-                    ss << v->value;
-                    return ss.str();
-                }
-            }
-            {
-                sp<String> v = std::dynamic_pointer_cast<String>(vi);
-                if(v != nullptr){
-                    std::stringstream ss;
-                    ss << '"' << v->value << '"';
-                    return ss.str();
-                }
-            }
-            {
-                sp<Array> v = std::dynamic_pointer_cast<Array>(vi);
-                if(v != nullptr){
-                    std::stringstream ss;
-                    ss << "[";
-                    for(int i=0;i<static_cast<int>(v->value.size());i++){
-                        ss << to_reproductive(v->value[i]);
-                        if(i != static_cast<int>(v->value.size())-1){
-                            ss << ",";
-                        }
-                    }
-                    ss << "]";
-                    return ss.str();
-                }
-            }
-            return "";
-        }
         int how_many_lines(const std::string& s){
             if(s == "") return 0;
             return count(s.begin(),s.end(),'\n')+1;

@@ -1,5 +1,6 @@
 #include "value.hpp"
 #include "runner.hpp"
+#include <sstream>
 
 namespace shiranui{
     namespace runtime{
@@ -155,6 +156,48 @@ namespace shiranui{
 
             void PrettyPrinterForValue::visit(BuiltinFunction& f){
                 os << f.name;
+            }
+        }
+    }
+}
+
+namespace shiranui{
+    namespace runtime{
+        namespace value{
+            // helper functions.
+            std::string to_reproductive(sp<Value> vi){
+                {
+                    sp<Integer> v = std::dynamic_pointer_cast<Integer>(vi);
+                    if(v != nullptr){
+                        std::stringstream ss;
+                        ss << v->value;
+                        return ss.str();
+                    }
+                }
+                {
+                    sp<String> v = std::dynamic_pointer_cast<String>(vi);
+                    if(v != nullptr){
+                        std::stringstream ss;
+                        ss << '"' << v->value << '"';
+                        return ss.str();
+                    }
+                }
+                {
+                    sp<Array> v = std::dynamic_pointer_cast<Array>(vi);
+                    if(v != nullptr){
+                        std::stringstream ss;
+                        ss << "[";
+                        for(int i=0;i<static_cast<int>(v->value.size());i++){
+                            ss << to_reproductive(v->value[i]);
+                            if(i != static_cast<int>(v->value.size())-1){
+                                ss << ",";
+                            }
+                        }
+                        ss << "]";
+                        return ss.str();
+                    }
+                }
+                return "";
             }
         }
     }

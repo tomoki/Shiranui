@@ -92,6 +92,7 @@ namespace shiranui{
                     sp<Value> run(std::vector<sp<Value>>);
                 };
             }
+            std::string to_reproductive(sp<runtime::value::Value>);
         }
     }
 }

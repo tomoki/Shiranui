@@ -10,15 +10,21 @@ namespace shiranui{
     namespace runtime{
         namespace diver{
             const std::string STRIKE = "strike";
-            template<typename T>
-            sp<syntax::ast::LocationInfo> use_swimfin(T&,int);
+            const std::string EXPLORE = "explore";
+
             struct DivingMessage{
                 std::string cache;
                 std::string str();
                 template<typename T>
                 DivingMessage add_strike(const T&);
+                template<typename T>
+                DivingMessage add_explore(const T&,const std::string&);
                 DivingMessage operator+(DivingMessage);
             };
+            template<typename T>
+            sp<syntax::ast::LocationInfo> use_swimfin(T&,int);
+            template<typename T>
+            DivingMessage use_snorkel(T&,int);
 
             struct Diver{
                 sp<syntax::ast::SourceCode> source;
@@ -65,7 +71,31 @@ namespace shiranui{
                 bool in_range(T&);
                 template<typename T>
                 bool in_range(sp<T>);
-
+            };
+            struct Snorkel : syntax::ast::VisitorForAST{
+                int call_under;
+                DivingMessage message;
+                Snorkel(int);
+                void visit(syntax::ast::Identifier&);
+                void visit(syntax::ast::Variable&);
+                void visit(syntax::ast::Number&);
+                void visit(syntax::ast::String&);
+                void visit(syntax::ast::Enum&);
+                void visit(syntax::ast::Interval&);
+                void visit(syntax::ast::Block&);
+                void visit(syntax::ast::Function&);
+                void visit(syntax::ast::FunctionCall&);
+                void visit(syntax::ast::BinaryOperator&);
+                void visit(syntax::ast::UnaryOperator&);
+                void visit(syntax::ast::IfElseExpression&);
+                void visit(syntax::ast::Definement&);
+                void visit(syntax::ast::ReturnStatement&);
+                void visit(syntax::ast::IfElseStatement&);
+                void visit(syntax::ast::ForStatement&);
+                void visit(syntax::ast::Assignment&);
+                void visit(syntax::ast::TestFlyLine&);
+                void visit(syntax::ast::IdleFlyLine&);
+                void visit(syntax::ast::SourceCode&);
             };
         }
     }

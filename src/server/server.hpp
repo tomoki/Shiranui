@@ -24,7 +24,6 @@ namespace shiranui{
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
 
         int how_many_lines(const std::string&);
-        std::string to_reproductive(sp<runtime::value::Value>);
 
         struct PipeServer{
             std::istream& is;
