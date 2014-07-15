@@ -254,7 +254,7 @@ namespace shiranui{
             void Snorkel::visit(Variable& node){
                 auto p = return_value(node,call_under);
                 if(p.second != nullptr){
-                    //message.add_explore(node,to_reproductive(p.second));
+                    message.add_explore(node,to_reproductive(p.second));
                 }
             }
             void Snorkel::visit(Number& node){

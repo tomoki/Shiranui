@@ -71,13 +71,20 @@ namespace shiranui{
         void PipeServer::send_debug_print(const T& value,const int loadcount){
             std::stringstream ss;
             ss << value;
-            return send_command(COMMAND_DEBUG_PRINT,value,loadcount);
+            return send_command(COMMAND_DEBUG_PRINT,ss.str(),loadcount);
         }
 
         void PipeServer::send_dive_strike(const int start_point,const int end_point,
                                           const int loadcount){
             return send_command_with_two_points(COMMAND_DIVE_STRIKE,
                                                 start_point,end_point,loadcount);
+        }
+        void PipeServer::send_dive_explore(const int start_point,const int end_point,
+                                           const std::string& what,const int loadcount){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl
+               << what;
+            return send_command(COMMAND_DIVE_EXPLORE,ss.str(),loadcount);
         }
 
         void PipeServer::send_dive_clear(const int loadcount){
@@ -196,7 +203,7 @@ namespace shiranui{
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
                     DivingMessage ms = diver->dive(l->left);
-                    send_debug_print(ms.str(),-1);
+                    //send_debug_print(ms.str(),-1);
                     send_diving_message(source,ms);
                 }
             }
@@ -204,7 +211,7 @@ namespace shiranui{
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
                     DivingMessage ms = diver->dive(l->left);
-                    send_debug_print(ms.str(),-1);
+                    //send_debug_print(ms.str(),-1);
                     send_diving_message(source,ms);
                 }
             }
@@ -433,6 +440,7 @@ namespace shiranui{
                     std::string value;
                     ss.ignore();
                     std::getline(ss,value);
+                    send_dive_explore(start_point,end_point,value,-1);
                 }
             }
         }

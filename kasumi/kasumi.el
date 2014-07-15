@@ -44,6 +44,8 @@
   "badflyline")
 (defconst kasumi-command-debug-print
   "debug")
+(defconst kasumi-command-dive-explore
+  "dive_explore")
 (defconst kasumi-command-dive-strike
   "dive_strike")
 (defconst kasumi-command-dive-clear
@@ -159,6 +161,8 @@
            (kasumi-receive-dive-strike value))
           ((string= command kasumi-command-dive-clear)
            (kasumi-remove-all-dive-overlay))
+          ((string= command kasumi-command-dive-explore)
+           (kasumi-receive-dive-explore value))
           ((not correct-load-count)
            (kasumi-debug-print (format "loadcount %d is old.ignore it." lc)))
           (t (message "unknown command:%s " command))
@@ -227,6 +231,17 @@
     (kasumi-put-dive-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
                                (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
+
+(defun kasumi-receive-dive-explore (value)
+  (let* ((lines (split-string value "\n"))
+         (beg-end-list (split-string (car lines) " "))
+         (start (kasumi-string-to-fix-point (nth 0 beg-end-list)))
+         (end (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+         (value (string-join (cdr lines) "\n"))
+         )
+    ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
+    (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
+                                start end value))))
 
 ;; beg end <- target
 ;; beg remove_length

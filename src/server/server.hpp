@@ -21,6 +21,7 @@ namespace shiranui{
         const std::string COMMAND_GOOD_FLYLINE = "goodflyline";
         const std::string COMMAND_BAD_FLYLINE = "badflyline";
         const std::string COMMAND_DIVE_STRIKE = "dive_strike";
+        const std::string COMMAND_DIVE_EXPLORE = "dive_explore";
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
 
         int how_many_lines(const std::string&);
@@ -57,6 +58,7 @@ namespace shiranui{
             template<typename T>
             void send_debug_print(const T&,const int);
             void send_dive_strike(const int,const int,const int);
+            void send_dive_explore(const int,const int,const std::string&,const int);
             void send_dive_clear(const int);
 
             void receive(); // run as thread.
