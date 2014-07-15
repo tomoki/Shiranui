@@ -4,8 +4,8 @@
 #include <memory>
 #include <boost/thread/thread.hpp>
 
-#define BEFORE_VISIT_MACRO(NODE) int cur_t_ = before_visit(NODE)
-#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t_)
+#define BEFORE_VISIT_MACRO(NODE) int cur_t = before_visit(NODE)
+#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t)
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::environment::Environment;

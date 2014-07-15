@@ -20,15 +20,6 @@ namespace shiranui{
         void run_memory_test(){
             stringstream in,out;
             PipeServer ps(in,cerr);
-            // donot start.
-//            string tosend = "#+f(100000) -> 55;\n"
-//                            "let f = \\(n){\n"
-//                            "  if n = 0 {\n"
-//                            "    return 0\n;"
-//                            "  } else { \n"
-//                            "    return n * f(n-1);\n"
-//                            "}};\n";
-//
             string tosend = "#+f(100000) -> 55;\n"
                             "let f = \\(n){\n"
                             "  mut ret = 0;\n"
@@ -300,9 +291,28 @@ string long_code =
                 cerr << "First parse:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]" << endl;
             }
         }
+        void run_dive_test(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string tosend = "#- fact(2) -> 2;"
+                            "let fact = \\(n){"
+                            "    if n = 0 {\n"
+                            "        return 1;\n"
+                            "    } else {\n"
+                            "        return n * fact(n-1);\n"
+                            "    }\n"
+                            "};\n";
+
+            ps.on_change_command(make_change(1,0,tosend));
+            wait(100);
+            ps.on_dive_command("3");
+            wait(100);
+        }
+
         void run_test(){
             //run_memory_test();
-            parser_time_test();
+            //parser_time_test();
+            run_dive_test();
         }
 
     }
