@@ -169,11 +169,11 @@ namespace shiranui{
                         std::stringstream out;
                         out << "dive_start -> " << i << std::endl
                             << " but currently running.";
-                        send_debug_print(out.str(),loadcount);
+                        //send_debug_print(out.str(),loadcount);
                     }else{
                         std::stringstream out;
                         out << "dive_start -> " << i;
-                        send_debug_print(out.str(),loadcount);
+                        //send_debug_print(out.str(),loadcount);
                         dive_start(diver_per_flyline[i],
                                 program_per_flyline[i]->flylines[i]);
 
@@ -220,7 +220,6 @@ namespace shiranui{
         void PipeServer::dive(sp<runtime::diver::Diver> diver,int point,const int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->dive(point);
-            send_debug_print(ms.str(),-1);
             send_diving_message(source,ms);
         }
         void PipeServer::on_surface_command(const std::string&,const int loadcount){
@@ -234,7 +233,6 @@ namespace shiranui{
         void PipeServer::surface(sp<runtime::diver::Diver> diver){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->surface();
-            send_debug_print(ms.str(),-1);
             send_diving_message(source,ms);
         }
 
