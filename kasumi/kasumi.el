@@ -451,6 +451,54 @@
           )
         (message "This is not idle-flyline"))))
 
+;; (defun kasumi-indent ()
+;;   (interactive)
+;;   (if (bobp)
+;;       (indent-line-to 0)
+;;     (let ((not-indented t)
+;;           cur-indent)
+;;       (save-excursion
+;;         (while not-indented
+          
+;;           )
+;;       )
+;;       (if cur-indent
+;;           (indent-line-to cur-indent)
+;;         (indent-line-to 0) ;; ?
+;;         ))))
+
+(defun kasumi-indent ()
+  (interactive)
+  (beginning-of-line)
+  (if (bobp)
+      (indent-line-to 0)
+    (let ((not-indented t)
+          cur-indent)
+      (if (looking-at "^[ \t]*}")
+          (save-excursion
+            (while not-indented
+              (forward-line -1)
+              (setq cur-indent (max (- (current-indentation) default-tab-width) 0))
+              (setq not-indented nil)))
+        (save-excursion
+          (while not-indented
+            (forward-line -1)
+            (cond
+             ((looking-at "^.*{")
+              (progn
+                (setq cur-indent (+ (current-indentation) default-tab-width))
+                (setq not-indented nil)))
+             ((looking-at "^[ \t]*}")
+              (progn
+                (setq cur-indent (current-indentation))
+                (setq not-indented nil)))
+             ((bobp)
+              (progn
+                (setq cur-indent 0)
+                (setq not-indented nil)))))))
+      (if cur-indent
+          (indent-line-to cur-indent)
+        (indent-line-to 0)))))
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
   "Major mode for editing Shiranui files"
@@ -465,7 +513,7 @@
   (set (make-local-variable 'load-count) 0)
   ;; changes ((point remove_length insert))
   (set (make-local-variable 'changes) '())
-
+  (set (make-local-variable 'indent-line-function) 'kasumi-indent)
   (set (make-local-variable 'shiranui-process)
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
