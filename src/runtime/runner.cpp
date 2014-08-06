@@ -4,8 +4,8 @@
 #include <memory>
 #include <boost/thread/thread.hpp>
 
-#define BEFORE_VISIT_MACRO(NODE) int cur_t = before_visit(NODE)
-#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t)
+#define BEFORE_VISIT_MACRO(NODE) int cur_t_ = before_visit(NODE)
+#define AFTER_VISIT_MACRO(NODE) return after_visit(NODE,cur_t_)
 namespace shiranui{
     namespace runtime{
         using shiranui::runtime::environment::Environment;
@@ -187,7 +187,7 @@ namespace shiranui{
                         fc.arguments[i]->accept(*this);
                         call_env->define(f->parameters[i],cur_v,true);
                     }
-                    call_stack.push(cur_t);
+                    call_stack.push(cur_t_);
                     this->cur_e = call_env;
                     f->body->accept(*this);
                     this->cur_e = before;
@@ -277,6 +277,9 @@ namespace shiranui{
                     }else if(bop.op == "*"){
                         cur_v = std::make_shared<Integer>(l->value*r->value);
                     }else if(bop.op == "/"){
+                        if(r->value == 0){
+                            throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
+                        }
                         cur_v = std::make_shared<Integer>(l->value/r->value);
                     }else if(bop.op == "%"){
                         cur_v = std::make_shared<Integer>(l->value%r->value);

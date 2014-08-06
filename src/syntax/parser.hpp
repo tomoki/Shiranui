@@ -10,6 +10,7 @@
 #include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
+#include <boost/spirit/repository/include/qi_iter_pos.hpp>
 
 #include <boost/fusion/include/io.hpp>
 
@@ -85,6 +86,7 @@ namespace shiranui{
                        annotate(){
                 namespace ph = boost::phoenix;
                 namespace qi = boost::spirit::qi;
+                using boost::spirit::repository::qi::iter_pos;
                 using namespace qi::ascii;
                 using qi::lit;
                 auto set_location_info = annotate(qi::_val,qi::_1,qi::_3);
@@ -222,17 +224,17 @@ namespace shiranui{
                 }
                 {
                     or_test.name("or_test");
-                    or_test    = and_test [qi::_val = qi::_1] >>
-                                  *(("or" >> and_test)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("or",qi::_val,qi::_1)])
+                    or_test    = (iter_pos >> and_test) [qi::_val = qi::_2,qi::_a = qi::_1] >>
+                                  *(("or" >> and_test >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("or",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
                                ;
                     on_success(or_test,set_location_info);
                 }
                 {
                     and_test.name("and_test");
-                    and_test   = not_test [qi::_val = qi::_1] >> 
-                                 *(("and" >> not_test)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("and",qi::_val,qi::_1)])
+                    and_test   = (iter_pos >> not_test) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
+                                 *(("and" >> not_test >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("and",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
                                ;
                     on_success(and_test,set_location_info);
                 }
@@ -247,19 +249,19 @@ namespace shiranui{
 
                 {
                     comparison.name("comparison");
-                    comparison = addi [qi::_val = qi::_1] >> 
-                                 *(("=" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1)]
-                                 | ("/=" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/=",qi::_val,qi::_1)]
-                                 | ("<" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<",qi::_val,qi::_1)]
-                                 | ("<=" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<=",qi::_val,qi::_1)]
-                                 | (">" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">",qi::_val,qi::_1)]
-                                 | (">=" >> addi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">=",qi::_val,qi::_1)]
+                    comparison = (iter_pos >> addi) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
+                                 *(("=" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ("/=" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ("<" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | (">" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | (">=" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ("<=" >> addi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  )
                                ;
                     on_success(comparison,set_location_info);
@@ -267,11 +269,11 @@ namespace shiranui{
 
                 {
                     addi.name("addi");
-                    addi       = multi [qi::_val = qi::_1] >> 
-                                 *(('+' >> multi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("+",qi::_val,qi::_1)]
-                                 | ('-' >> multi)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("-",qi::_val,qi::_1)]
+                    addi       = (iter_pos >> multi) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
+                                 *(('+' >> multi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("+",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ('-' >> multi >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("-",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                   )
                                ;
                     on_success(addi,set_location_info);
@@ -279,14 +281,13 @@ namespace shiranui{
 
                 {
                     multi.name("multi");
-                    multi      = unary [qi::_val = qi::_1] >>
-                                 *(('*' >> unary)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("*",qi::_val,qi::_1)]
-                                 | ('/' >> unary)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/",qi::_val,qi::_1)]
-                                 | ('%' >> unary)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("%",qi::_val,qi::_1)]
-
+                    multi      = (iter_pos >> unary) [qi::_val = qi::_2,qi::_a = qi::_1] >>
+                                 *(('*' >> unary >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("*",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ('/' >> unary >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ('%' >> unary >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("%",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                   )
                                ;
                     on_success(multi,set_location_info);
@@ -294,23 +295,23 @@ namespace shiranui{
                 {
                     unary.name("unary");
                     unary      = power [qi::_val = qi::_1]
-                               | ("+" >> unary)
+                               | ("+" >> power)
                                   [qi::_val = qi_make_shared<ast::UnaryOperator>("+",qi::_1)]
-                               | ("-" >> unary)
+                               | ("-" >> power)
                                   [qi::_val = qi_make_shared<ast::UnaryOperator>("-",qi::_1)]
                                ;
                     on_success(unary,set_location_info);
                 }
                 {
                     power.name("power");
-                    power      = atom [qi::_val = qi::_1] >>
-                                 *(('^' >> atom)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("^",qi::_val,qi::_1)]
-                                 | ('(' >> (expression % ',') >> ')')
-                                   [qi::_val = qi_make_shared<ast::FunctionCall>(qi::_val,qi::_1)]
-                                 | (lit('(') >> ')')
+                    power      = (iter_pos >> atom) [qi::_val = qi::_2,qi::_a = qi::_1] >>
+                                 *(('^' >> atom >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("^",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | ('(' >> (expression % ',') >> ')' >> iter_pos)
+                                   [qi::_val = qi_make_shared<ast::FunctionCall>(qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                 | (lit('(') >> ')' >> iter_pos)
                                    [qi::_val = qi_make_shared<ast::FunctionCall>(
-                                                        qi::_val,std::vector<sp<ast::Expression>>())]
+                                                        qi::_val,std::vector<sp<ast::Expression>>()),annotate(qi::_val,qi::_a,qi::_1)]
                                   )
                                ;
                     on_success(power,set_location_info);
@@ -362,14 +363,14 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,ast::Identifier()>                identifier;
             boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       expression;
             boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       test;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       or_test;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       and_test;
             boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       not_test;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       comparison;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       multi;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       addi;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       and_test;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       or_test;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       comparison;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       multi;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       addi;
+            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       power;
             boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       unary;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       power;
             boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       atom;
             boost::spirit::qi::rule<Iterator,sp<ast::SourceCode>(),Skipper>       source;
             boost::spirit::qi::rule<Iterator,sp<ast::Number>()>                   integer;

@@ -439,6 +439,17 @@ namespace shiranui{
                     ss.ignore();
                     std::getline(ss,value);
                     send_dive_explore(start_point,end_point,value,-1);
+                }else if(command == ERROR){
+                    int start_point,length;
+                    std::string what;
+                    ss >> start_point >> length;
+                    ss.ignore();
+                    std::getline(ss,what);
+
+                    std::stringstream out;
+                    out << "ERROR: " << what << " (" << start_point 
+                                     << "," << start_point + length << ")";
+                    send_debug_print(out.str(),-1);
                 }
             }
         }

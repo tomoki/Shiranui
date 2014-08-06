@@ -3,3 +3,4 @@ let unit = print(1-2);
 let unit = print(2*3);
 let unit = print(3/2);
 
+let unit = print(1-1-1-1);

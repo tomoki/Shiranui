@@ -11,6 +11,7 @@ namespace shiranui{
         namespace diver{
             const std::string STRIKE = "strike";
             const std::string EXPLORE = "explore";
+            const std::string ERROR = "error";
 
             struct DivingMessage{
                 std::string cache;
@@ -19,6 +20,9 @@ namespace shiranui{
                 DivingMessage add_strike(const T&);
                 template<typename T>
                 DivingMessage add_explore(const T&,const std::string&);
+                template<typename T>
+                DivingMessage add_error(const T&,const std::string&);
+
                 DivingMessage operator+(DivingMessage);
             };
             template<typename T>

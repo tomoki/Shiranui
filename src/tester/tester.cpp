@@ -14,6 +14,53 @@ namespace shiranui{
             return ss.str();
         }
         void run_memory_test();
+        void run_program(std::string str){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+
+            shiranui::runtime::Runner r;
+            shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
+            shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
+
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            bool ok = false;
+            try{
+                Parser<pos_iterator_t> resolver;
+                ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+                                     boost::spirit::qi::space,program);
+            }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
+                std::cerr << "expected: ";
+                std::cerr << x.what_ << std::endl;
+                std::cerr << "got: \"" << std::string(x.first, x.last) << '"' << std::endl;
+            }
+            if(ok and iter == last){
+                program->accept(printer);
+                try{
+                    program->accept(r);
+                    r.cur_v->accept(printer_for_value);
+                    std::cerr << std::endl;
+                }catch(NoSuchVariableException e){
+                    std::cerr << "No such variable: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }catch(ConvertException e){
+                    std::cerr << "Convert Error: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }catch(RuntimeException e){
+                    std::cerr << "Something RuntimeException: ";
+                    e.where->accept(printer);
+                    std::cerr << std::endl;
+                }catch(exception e){
+                    std::cerr << "what?" << std::endl;
+                }
+            }
+
+        }
+
         void wait(int milli){
             boost::this_thread::sleep(boost::posix_time::milliseconds(milli));
         }
@@ -308,11 +355,54 @@ string long_code =
             ps.on_dive_command("3",1);
             wait(100);
         }
+        void run_dive_tri(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string tosend = "#- tri(5) -> 9;\n"
+                            "let tri = \\(n){\n"
+                            "    if n = 0 or n = 1 or n = 2 {\n"
+                            "        return 1;\n"
+                            "    } else {\n"
+                            "        return tri(n-1) + tri(n-2) + tri(n-3);\n"
+                            "    }\n"
+                            "};";
 
+            run_program(tosend);
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(100);
+            cerr << "first" << endl;
+            ps.on_dive_command("3",1);
+            wait(100);
+            cerr << "second" << endl;
+            ps.on_dive_command("112",1);
+            wait(100);
+            //ps.on_surface_command("",1);
+            //wait(100);
+            //for(int i=0;i<tosend.size();i++){
+            //    cerr << i << " : " << tosend[i] << endl;;
+            //}
+        }
+        void run_bad_program(){
+            std::string str = "let h = \\(){ return h();};\n"
+                              "let unit = h();\n";
+            run_program(str);
+        }
+        void run_zero_div(){
+            std::string str = "let a = 0;let h = 1 / a;";
+            run_program(str);
+        }
+        void run_plus(){
+            std::string str = "let a = 1+1+1+1;";
+            run_program(str);
+        }
         void run_test(){
             //run_memory_test();
             //parser_time_test();
-            run_dive_test();
+            //run_dive_test();
+            //run_bad_program();
+            //run_zero_div();
+            run_dive_tri();
+            //run_plus();
         }
 
     }

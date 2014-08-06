@@ -451,21 +451,6 @@
           )
         (message "This is not idle-flyline"))))
 
-;; (defun kasumi-indent ()
-;;   (interactive)
-;;   (if (bobp)
-;;       (indent-line-to 0)
-;;     (let ((not-indented t)
-;;           cur-indent)
-;;       (save-excursion
-;;         (while not-indented
-          
-;;           )
-;;       )
-;;       (if cur-indent
-;;           (indent-line-to cur-indent)
-;;         (indent-line-to 0) ;; ?
-;;         ))))
 
 (defun kasumi-indent ()
   (interactive)
@@ -499,6 +484,7 @@
       (if cur-indent
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
+
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
   "Major mode for editing Shiranui files"
@@ -524,7 +510,6 @@
 
   ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Setting-Hooks.html
   ;; append to last,local.
-  ;; (add-hook 'before-change-functions 'kasumi-before-change t t)
   (add-hook 'after-change-functions 'kasumi-refresh t t)
   (setq major-mode 'kasumi-mode)
   (setq mode-name "Kasumi")

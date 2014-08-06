@@ -52,7 +52,9 @@ namespace shiranui{
                         return dive(*p,lower_id);
                     }
                 }
-                return DivingMessage();
+                DivingMessage d;
+                d.add_error(*exp,"It is not functioncall");
+                return d;
             }
             DivingMessage Diver::dive(syntax::ast::FunctionCall& fc){
                 return dive(fc,current_id);
@@ -63,6 +65,12 @@ namespace shiranui{
                 auto ret = return_value(fc,call_under);
                 auto p = return_value(*fc.function,call_under);
                 auto function = std::dynamic_pointer_cast<UserFunction>(p.second);
+                if(p.second == nullptr){
+                    // send error
+                    DivingMessage m;
+                    m.add_error(fc,"Not called function");
+                    return m;
+                }
                 // ret.first is new call_under
                 auto message = see(*function->body,ret.first);
 
@@ -100,6 +108,15 @@ namespace shiranui{
             DivingMessage DivingMessage::add_explore(const T& t,const std::string& what){
                 std::stringstream ss;
                 ss << cache << EXPLORE << std::endl
+                   << t.point << " " << t.length << std::endl
+                   << what << std::endl;
+                cache = ss.str();
+                return *this;
+            }
+            template<typename T>
+            DivingMessage DivingMessage::add_error(const T& t,const std::string& what){
+                std::stringstream ss;
+                ss << cache << ERROR << std::endl
                    << t.point << " " << t.length << std::endl
                    << what << std::endl;
                 cache = ss.str();
@@ -289,6 +306,10 @@ namespace shiranui{
                 node.function->accept(*this);
                 for(sp<Expression> a : node.arguments){
                     a->accept(*this);
+                }
+                auto p = return_value(node,call_under);
+                if(p.second != nullptr){
+                    message.add_explore(node,to_reproductive(p.second));
                 }
             }
             void Snorkel::visit(BinaryOperator& node){
