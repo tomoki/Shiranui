@@ -33,7 +33,7 @@ void repl(){
         bool ok = false;
         try{
             Parser<pos_iterator_t> resolver;
-            ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
+            ok = parse(iter,last,resolver,program);
         }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
             std::cerr << "expected: ";
             std::cerr << x.what_ << std::endl;
@@ -88,7 +88,7 @@ void exec(const std::string content){
     bool ok = false;
     try{
         Parser<pos_iterator_t> resolver;
-        ok = boost::spirit::qi::phrase_parse(iter,last,resolver,boost::spirit::qi::space,program);
+        ok = parse(iter,last,resolver,program);
     }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
         std::cerr << "expected: ";
         std::cerr << x.what_ << std::endl;

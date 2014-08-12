@@ -250,8 +250,9 @@ namespace shiranui{
             Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
             try{
-                ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
-                                                     boost::spirit::qi::space,program);
+                // ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
+                //                                      boost::spirit::qi::space,program);
+                ok = parse(iter,last,resolver,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                 send_syntaxerror(std::distance(first,x.first),
                                  std::distance(first,x.last),loadcount);
@@ -322,8 +323,7 @@ namespace shiranui{
             pos_iterator_t iter = first;
             Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
-            boost::spirit::qi::phrase_parse(iter,last,resolver,
-                                            boost::spirit::qi::space,program);
+            parse(iter,last,resolver,program);
 
             boost::this_thread::interruption_point();
             program_per_flyline[flyline_index] = program; // TODO:use better way.

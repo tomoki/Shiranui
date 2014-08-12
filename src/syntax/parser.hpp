@@ -21,11 +21,13 @@
 #include "ast.hpp"
 #include "../misc.hpp"
 #include "../point_iterator.hpp"
+#include "skipper.hpp"
 
 // to put line,column info to AST,see following url.
 // http://stackoverflow.com/questions/19612657/boostspirit-access-position-iterator-from-semantic-actions
 namespace shiranui{
     namespace syntax{
+        namespace qi = boost::spirit::qi;
         typedef point_iterator<std::string::const_iterator> pos_iterator_t;
 
         template<typename T>
@@ -78,14 +80,21 @@ namespace shiranui{
                 std::cerr << "(not having LocationInfo)" << std::endl;
             }
         };
-
-        template<typename Iterator=pos_iterator_t,typename Skipper=boost::spirit::qi::space_type>
-        struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>(),Skipper>{
+        template<typename Iterator=pos_iterator_t,typename Skipper=CommentSkipper<Iterator>>
+        struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>()
+                      ,Skipper>{
+            using skip_type = Skipper;
+            template<typename T>
+            using rule_no_skip = qi::rule<Iterator,T>;
+            template<typename T>
+            using rule_with_skip = qi::rule<Iterator,T,Skipper>;
+            template<typename T>
+            using rule_with_local_for_binary = qi::rule<Iterator,boost::spirit::locals<Iterator>,T,Skipper>;
             // change const_definement to sourcecode.
             Parser() : Parser::base_type(source),
                        annotate(){
                 namespace ph = boost::phoenix;
-                namespace qi = boost::spirit::qi;
+
                 using boost::spirit::repository::qi::iter_pos;
                 using namespace qi::ascii;
                 using qi::lit;
@@ -346,55 +355,58 @@ namespace shiranui{
                     on_success(flyline,set_location_info);
                 }
                 {
-                    comment.name("comment");
-                    comment = (lit("//") >> *(qi::char_ - qi::eol) >> qi::eol);
-                }
-                {
                     source.name("source");
                     source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
                           > *(statement 
                                 [ph::bind(&ast::SourceCode::add_statement,*qi::_val,qi::_1)]
                               |flyline
                                 [ph::bind(&ast::SourceCode::add_flyline,*qi::_val,qi::_1)]
-                              |comment
                               )
                            ;
                     on_success(source,set_location_info);
                 }
             }
+
             //boost::phoenix::function<error_handler_f> handler;
             boost::phoenix::function<annotation_f<Iterator>> annotate;
 
-            boost::spirit::qi::rule<Iterator,ast::Identifier()>                identifier;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       expression;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       test;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       not_test;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       and_test;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       or_test;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       comparison;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       multi;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       addi;
-            boost::spirit::qi::rule<Iterator,boost::spirit::locals<Iterator>,sp<ast::Expression>(),Skipper>       power;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       unary;
-            boost::spirit::qi::rule<Iterator,sp<ast::Expression>(),Skipper>       atom;
-            boost::spirit::qi::rule<Iterator,sp<ast::SourceCode>(),Skipper>       source;
-            boost::spirit::qi::rule<Iterator,sp<ast::Number>()>                   integer;
-            boost::spirit::qi::rule<Iterator,sp<ast::String>()>                   string;
-            boost::spirit::qi::rule<Iterator,sp<ast::Array>(),Skipper>            array;
-            boost::spirit::qi::rule<Iterator,sp<ast::Function>(),Skipper>         function;
-            boost::spirit::qi::rule<Iterator,sp<ast::Variable>()>                 variable;
-            boost::spirit::qi::rule<Iterator,sp<ast::Definement>(),Skipper>       definement;
-            boost::spirit::qi::rule<Iterator,sp<ast::IfElseStatement>(),Skipper>  ifelse_stmt;
-            boost::spirit::qi::rule<Iterator,sp<ast::ForStatement>(),Skipper>     for_stmt;
-            boost::spirit::qi::rule<Iterator,sp<ast::ReturnStatement>(),Skipper>  return_stmt;
-            boost::spirit::qi::rule<Iterator,sp<ast::IfElseExpression>(),Skipper> ifelse_expr;
-            boost::spirit::qi::rule<Iterator,sp<ast::Block>(),Skipper>            block;
-            boost::spirit::qi::rule<Iterator,sp<ast::Assignment>(),Skipper>        assignment;
-            boost::spirit::qi::rule<Iterator,sp<ast::FlyLine>(),Skipper>          flyline;
-            boost::spirit::qi::rule<Iterator,sp<ast::Statement>(),Skipper>        statement;
+            rule_no_skip<ast::Identifier()> identifier;
+            rule_with_skip<sp<ast::Expression>()> expression;
+            rule_with_skip<sp<ast::Expression>()> test;
 
-            boost::spirit::qi::rule<Iterator> comment;
+
+            rule_with_local_for_binary<sp<ast::Expression>()> and_test;
+            rule_with_local_for_binary<sp<ast::Expression>()> or_test;
+            rule_with_local_for_binary<sp<ast::Expression>()> comparison;
+            rule_with_local_for_binary<sp<ast::Expression>()> multi;
+            rule_with_local_for_binary<sp<ast::Expression>()> addi;
+            rule_with_local_for_binary<sp<ast::Expression>()> power;
+            rule_with_skip<sp<ast::Expression>()> not_test;
+            rule_with_skip<sp<ast::Expression>()> unary;
+            rule_with_skip<sp<ast::Expression>()> atom;
+            rule_with_skip<sp<ast::SourceCode>()> source;
+
+            rule_no_skip<sp<ast::Number>()> integer;
+            rule_no_skip<sp<ast::String>()> string;
+            rule_no_skip<sp<ast::Variable>()> variable;
+
+            rule_with_skip<sp<ast::Array>()> array;
+            rule_with_skip<sp<ast::Function>()> function;
+            rule_with_skip<sp<ast::Definement>()> definement;
+            rule_with_skip<sp<ast::IfElseStatement>()>  ifelse_stmt;
+            rule_with_skip<sp<ast::ForStatement>()> for_stmt;
+            rule_with_skip<sp<ast::ReturnStatement>()> return_stmt;
+            rule_with_skip<sp<ast::IfElseExpression>()> ifelse_expr;
+            rule_with_skip<sp<ast::Block>()> block;
+            rule_with_skip<sp<ast::Assignment>()> assignment;
+            rule_with_skip<sp<ast::FlyLine>()> flyline;
+            rule_with_skip<sp<ast::Statement>()> statement;
         };
+        template<typename IT>
+        bool parse(IT& iter,IT& last,Parser<IT>& resolver,sp<ast::SourceCode>& program){
+            typename Parser<IT>::skip_type skipper;
+            return boost::spirit::qi::phrase_parse(iter,last,resolver,skipper,program);
+        }
     }
 }
 
