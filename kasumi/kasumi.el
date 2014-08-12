@@ -22,6 +22,7 @@
    '("\\<\\(and\\|or\\|in\\)\\>" 0 font-lock-builtin-face)
    '("not\\>" 0 font-lock-builtin-face)
    '("\\<[\\-+]*[0-9]*\\.?[0-9]+\\>" 0 font-lock-constant-face)
+   '("\/\/[^\n]*\n" 0 font-lock-comment-face t)
    ))
 
 (defconst kasumi-command-load

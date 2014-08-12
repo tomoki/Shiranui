@@ -346,12 +346,17 @@ namespace shiranui{
                     on_success(flyline,set_location_info);
                 }
                 {
+                    comment.name("comment");
+                    comment = (lit("//") >> *(qi::char_ - qi::eol) >> qi::eol);
+                }
+                {
                     source.name("source");
                     source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
                           > *(statement 
                                 [ph::bind(&ast::SourceCode::add_statement,*qi::_val,qi::_1)]
                               |flyline
                                 [ph::bind(&ast::SourceCode::add_flyline,*qi::_val,qi::_1)]
+                              |comment
                               )
                            ;
                     on_success(source,set_location_info);
@@ -387,6 +392,8 @@ namespace shiranui{
             boost::spirit::qi::rule<Iterator,sp<ast::Assignment>(),Skipper>        assignment;
             boost::spirit::qi::rule<Iterator,sp<ast::FlyLine>(),Skipper>          flyline;
             boost::spirit::qi::rule<Iterator,sp<ast::Statement>(),Skipper>        statement;
+
+            boost::spirit::qi::rule<Iterator> comment;
         };
     }
 }
