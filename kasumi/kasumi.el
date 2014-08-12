@@ -493,6 +493,7 @@
   (kill-all-local-variables)
   (use-local-map kasumi-mode-map)
   (set (make-local-variable 'font-lock-defaults) '(kasumi-font-lock-keywords))
+  (set (make-local-variable 'comment-start) "//")
   (make-local-variable 'receive-in-progress)
   (make-local-variable 'receiving-str)
   ;; ((where diff))
