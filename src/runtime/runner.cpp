@@ -194,7 +194,7 @@ namespace shiranui{
                     call_stack.pop();
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if(ret == nullptr){
-                        std::cerr << "WARN: this is not return value." << std::endl;
+                        //std::cerr << "WARN: this is not return value." << std::endl;
                     }else{
                         cur_v = ret->value;
                     }
@@ -383,6 +383,21 @@ namespace shiranui{
             cur_v = std::make_shared<Return>(cur_v);
             AFTER_VISIT_MACRO(ret);
         }
+        void Runner::visit(syntax::ast::AssertStatement& as){
+            BEFORE_VISIT_MACRO(as);
+            as.value->accept(*this);
+            sp<Boolean> bp = std::dynamic_pointer_cast<Boolean>(cur_v);
+            if(bp == nullptr){
+                throw ConvertException(as.value);
+            }else{
+                if(bp->value){
+                }else{
+                    throw AssertException(as.value);
+                }
+            }
+            AFTER_VISIT_MACRO(as);
+        }
+
         void Runner::visit(syntax::ast::IfElseStatement& ies){
             BEFORE_VISIT_MACRO(ies);
             ies.pred->accept(*this);

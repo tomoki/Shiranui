@@ -153,6 +153,11 @@ namespace shiranui{
                 ReturnStatement(sp<Expression>);
                 void accept(VisitorForAST&);
             };
+            struct AssertStatement : Statement{
+                sp<Expression> value;
+                AssertStatement(sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct FlyLine : LocationInfo{
             };
             struct TestFlyLine : FlyLine{
@@ -196,6 +201,7 @@ namespace shiranui{
                 virtual void visit(IfElseExpression&) = 0;
                 virtual void visit(Definement&)       = 0;
                 virtual void visit(ReturnStatement&)  = 0;
+                virtual void visit(AssertStatement&)  = 0;
                 virtual void visit(IfElseStatement&)  = 0;
                 virtual void visit(ForStatement&)     = 0;
                 virtual void visit(Assignment&)       = 0;
@@ -221,6 +227,7 @@ namespace shiranui{
                 void visit(IfElseExpression&);
                 void visit(Definement&);
                 void visit(ReturnStatement&);
+                void visit(AssertStatement&);
                 void visit(IfElseStatement&);
                 void visit(ForStatement&);
                 void visit(Assignment&);

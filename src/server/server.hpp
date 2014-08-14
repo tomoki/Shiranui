@@ -51,7 +51,8 @@ namespace shiranui{
             void send_syntaxerror(const int,const int,const int);
             void send_runtimeerror(const int,const int,const int);
             void send_good_flyline(const int,const int,const int);
-            void send_bad_flyline(const int,const int,const int);
+            void send_bad_flyline(const int,const int,const int,
+                                  const std::string&);
             void send_idle_flyline(const int,const int,const int,
                                    const int,const std::string&,const int);
 

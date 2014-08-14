@@ -72,7 +72,9 @@ namespace shiranui{
             ReturnStatement::ReturnStatement(sp<Expression> e)
                 : value(e){
             }
-
+            AssertStatement::AssertStatement(sp<Expression> e)
+                : value(e){
+            }
             Assignment::Assignment(Identifier i,sp<Expression> e)
                 : id(i),value(e){}
             // FlyLine
@@ -144,6 +146,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void ReturnStatement ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void AssertStatement ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void IfElseStatement ::accept(VisitorForAST& visitor){
@@ -286,6 +291,11 @@ namespace shiranui{
             void PrettyPrinterForAST::visit(syntax::ast::ReturnStatement& ret){
                 os << ind() << "return ";
                 ret.value->accept(*this);
+                os << ";";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::AssertStatement& as){
+                os << ind() << "assert ";
+                as.value->accept(*this);
                 os << ";";
             }
             void PrettyPrinterForAST::visit(syntax::ast::Assignment& l){

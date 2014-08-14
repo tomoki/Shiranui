@@ -75,6 +75,10 @@ namespace shiranui{
                 clear_it(node);
                 node.value->accept(*this);
             }
+            void Cleaner::visit(AssertStatement& node){
+                clear_it(node);
+                node.value->accept(*this);
+            }
             void Cleaner::visit(IfElseStatement& node){
                 clear_it(node);
                 node.pred->accept(*this);

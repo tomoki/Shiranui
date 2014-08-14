@@ -203,6 +203,10 @@ namespace shiranui{
                 if(not in_range(node)) return;
                 node.value->accept(*this);
             }
+            void SwimFin::visit(AssertStatement& node){
+                if(not in_range(node)) return;
+                node.value->accept(*this);
+            }
             void SwimFin::visit(IfElseStatement& node){
                 if(not in_range(node)) return;
                 node.pred->accept(*this);
@@ -328,6 +332,9 @@ namespace shiranui{
                 node.value->accept(*this);
             }
             void Snorkel::visit(ReturnStatement& node){
+                node.value->accept(*this);
+            }
+            void Snorkel::visit(AssertStatement& node){
                 node.value->accept(*this);
             }
             void Snorkel::visit(IfElseStatement& node){

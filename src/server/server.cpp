@@ -46,9 +46,11 @@ namespace shiranui{
                                                 start_point,end_point,loadcount);
         }
         void PipeServer::send_bad_flyline(const int start_point,const int end_point,
-                                          const int loadcount){
-            return send_command_with_two_points(COMMAND_BAD_FLYLINE,
-                                                start_point,end_point,loadcount);
+                                         const int loadcount,const std::string& error){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl;
+            ss << '"' << error << '"';;
+            return send_command(ss.str(),loadcount);
         }
         void PipeServer::send_runtimeerror(const int start_point,const int end_point,
                                            const int loadcount){

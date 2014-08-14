@@ -186,6 +186,13 @@ namespace shiranui{
                     on_success(return_stmt,set_location_info);
                 }
                 {
+                    assert_stmt.name("assert_statement");
+                    assert_stmt = ("assert" > expression)
+                                 [qi::_val = qi_make_shared<ast::AssertStatement>(qi::_1)]
+                                ;
+                    on_success(assert_stmt,set_location_info);
+                }
+                {
                     block.name("block");
                     block = ("{" > *statement > "}")
                              [qi::_val = qi_make_shared<ast::Block>(qi::_1)]
@@ -207,6 +214,7 @@ namespace shiranui{
                                | for_stmt
                                | block
                                | (return_stmt > ";")
+                               | (assert_stmt > ";")
                                ;
                     on_success(statement,set_location_info);
                 }
@@ -221,7 +229,7 @@ namespace shiranui{
 
                 {
                     ifelse_expr.name("if_else_expression");
-                    ifelse_expr= ("if" >> expression >> "then" 
+                    ifelse_expr= ("if" >> expression >> "then"
                                        >> expression >> "else" >> expression)
                                  [qi::_val = qi_make_shared<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
                     on_success(ifelse_expr,set_location_info);
@@ -342,6 +350,7 @@ namespace shiranui{
                     // change expression to expression or error.
                     // add eol or something like that.
                     // do not use no_skip contains expression
+
                     flyline = ("#-" >> expression >> "->" >> expression >> ";")
                                [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2)]
                             | ("#-" > expression > "->" > ";")
@@ -350,7 +359,6 @@ namespace shiranui{
                                [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,qi::_2)]
                             | ("#+" > expression > "->" > ";")
                                [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,nullptr)]
-
                             ;
                     on_success(flyline,set_location_info);
                 }
@@ -396,6 +404,8 @@ namespace shiranui{
             rule_with_skip<sp<ast::IfElseStatement>()>  ifelse_stmt;
             rule_with_skip<sp<ast::ForStatement>()> for_stmt;
             rule_with_skip<sp<ast::ReturnStatement>()> return_stmt;
+            rule_with_skip<sp<ast::AssertStatement>()> assert_stmt;
+
             rule_with_skip<sp<ast::IfElseExpression>()> ifelse_expr;
             rule_with_skip<sp<ast::Block>()> block;
             rule_with_skip<sp<ast::Assignment>()> assignment;

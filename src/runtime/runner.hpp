@@ -31,6 +31,11 @@ namespace shiranui{
                 where = e;
             }
         };
+        struct AssertException : RuntimeException{
+            AssertException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;
@@ -57,6 +62,7 @@ namespace shiranui{
             void visit(syntax::ast::IfElseExpression&);
             void visit(syntax::ast::Definement&);
             void visit(syntax::ast::ReturnStatement&);
+            void visit(syntax::ast::AssertStatement&);
             void visit(syntax::ast::IfElseStatement&);
             void visit(syntax::ast::ForStatement&);
             void visit(syntax::ast::Assignment&);
