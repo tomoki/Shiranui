@@ -1,5 +1,7 @@
 #include "tester.hpp"
 #include "../server/server.hpp"
+#include "../compiler/compiler.hpp"
+
 #include <iostream>
 #include <chrono>
 
@@ -59,7 +61,32 @@ namespace shiranui{
             }
 
         }
-
+        std::string compile(std::string content){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            using namespace shiranui::compiler;
+            std::string str = content;
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            bool ok = false;
+            try{
+                Parser<pos_iterator_t> resolver;
+                ok = parse(iter,last,resolver,program);
+            }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
+                std::cerr << "expected: ";
+                std::cerr << x.what_ << std::endl;
+                std::cerr << "got: \"" << std::string(x.first, x.last) << '"' << std::endl;
+            }
+            if(ok and iter == last){
+                Compiler c;
+                program->accept(c);
+                std::string s = c.str();
+                return s;
+            }
+            return "error";
+        }
         void wait(int milli){
             boost::this_thread::sleep(boost::posix_time::milliseconds(milli));
         }
@@ -403,8 +430,17 @@ string long_code =
             //run_zero_div();
             run_dive_tri();
             //run_plus();
-        }
 
+            string tosend = "#- fact(2) -> 2;"
+                "let fact = \\(n){"
+                "    if n = 0 {\n"
+                "        return 1;\n"
+                "    } else {\n"
+                "        return n * fact(n-1);\n"
+                "    }\n"
+                "};\n";
+            cout << compile(tosend) << endl;
+        }
     }
 }
 
