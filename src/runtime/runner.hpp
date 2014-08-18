@@ -31,6 +31,11 @@ namespace shiranui{
                 where = e;
             }
         };
+        struct ZeroDivException : RuntimeException{
+            ZeroDivException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct AssertException : RuntimeException{
             AssertException(sp<syntax::ast::LocationInfo> e){
                 where = e;

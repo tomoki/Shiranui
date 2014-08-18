@@ -49,8 +49,8 @@ namespace shiranui{
                                          const int loadcount,const std::string& error){
             std::stringstream ss;
             ss << start_point << " " << end_point << std::endl;
-            ss << '"' << error << '"';;
-            return send_command(ss.str(),loadcount);
+            ss << '"' << error << '"';
+            return send_command(COMMAND_BAD_FLYLINE,ss.str(),loadcount);
         }
         void PipeServer::send_runtimeerror(const int start_point,const int end_point,
                                            const int loadcount){
@@ -112,7 +112,7 @@ namespace shiranui{
                     }
                     receive_command(command,value,loadcount);
                 }
-                is.clear(); // remove eof flag 
+                is.clear(); // remove eof flag
             }
         }
         void PipeServer::receive_command(const std::string& command,
@@ -363,13 +363,19 @@ namespace shiranui{
                 try{
                     bin->accept(r);
                 }catch(NoSuchVariableException e){
-                    send_bad_flyline(start_point,end_point,loadcount);
+                    send_bad_flyline(start_point,end_point,loadcount,"");
                     return;
                 }catch(ConvertException e){
-                    send_bad_flyline(start_point,end_point,loadcount);
+                    send_bad_flyline(start_point,end_point,loadcount,"");
+                    return;
+                }catch(AssertException e){
+                    send_bad_flyline(start_point,end_point,loadcount,"");
+                    return;
+                }catch(ZeroDivException e){
+                    send_bad_flyline(start_point,end_point,loadcount,"");
                     return;
                 }catch(RuntimeException e){
-                    send_bad_flyline(start_point,end_point,loadcount);
+                    send_bad_flyline(start_point,end_point,loadcount,"");
                     return;
                 }
 
@@ -378,7 +384,7 @@ namespace shiranui{
                     if(b->value){
                         send_good_flyline(start_point,end_point,loadcount);
                     }else{
-                        send_bad_flyline(start_point,end_point,loadcount);
+                        send_bad_flyline(start_point,end_point,loadcount,"");
                     }
                 }else{
                     send_syntaxerror(start_point,end_point,loadcount);
@@ -394,30 +400,42 @@ namespace shiranui{
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
-            int start_point = sf->point;
-            int end_point = start_point + sf->length;
+            // TODO:save infomation.
             try{
                 sf->left->accept(r);
             }catch(NoSuchVariableException e){
-                send_bad_flyline(start_point,end_point,loadcount);
-                return;
+                auto p = std::dynamic_pointer_cast<Variable>(e.where);
+                std::stringstream ss;
+                ss << '\"' << "No such variable: " << p->value.name << '\"';
+                return run_idleflyline_sub(sf,ss.str(),loadcount);
             }catch(ConvertException e){
-                send_bad_flyline(start_point,end_point,loadcount);
-                return;
-            }catch(RuntimeException e){
-                send_bad_flyline(start_point,end_point,loadcount);
+                return run_idleflyline_sub(sf,"\"Can't convert something\"",loadcount);
+            }catch(AssertException e){
+                return run_idleflyline_sub(sf,"\"Assert violated\"",loadcount);
+            }catch(ZeroDivException e){
+                return run_idleflyline_sub(sf,"\"Division by 0\"",loadcount);
+            }
+            catch(RuntimeException e){
+                run_idleflyline_sub(sf,"\"Something occured.\"",loadcount);
                 return;
             }
 
             sp<Value> left = r.cur_v;
             std::string left_str = to_reproductive(left);
+            run_idleflyline_sub(sf,left_str,loadcount);
+        }
+        void PipeServer::run_idleflyline_sub(sp<syntax::ast::IdleFlyLine> sf,
+                                              const std::string left_str,
+                                              const int loadcount){
+            int start_point = sf->point;
+            int end_point = start_point + sf->length;
             if(sf->right != nullptr){
                 int remove_start = sf->right->point;
                 int remove_end = remove_start + sf->right->length;
                 int remove_length = remove_end - remove_start;
                 send_idle_flyline(start_point,end_point,remove_start,remove_length,
                                   left_str,loadcount);
-            }else{ // right == null
+            }else{
                 send_idle_flyline(start_point,end_point,end_point-1,0,left_str,loadcount);
             }
         }

@@ -278,7 +278,7 @@ namespace shiranui{
                         cur_v = std::make_shared<Integer>(l->value*r->value);
                     }else if(bop.op == "/"){
                         if(r->value == 0){
-                            throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
+                            throw ZeroDivException(std::make_shared<syntax::ast::BinaryOperator>(bop));
                         }
                         cur_v = std::make_shared<Integer>(l->value/r->value);
                     }else if(bop.op == "%"){

@@ -56,6 +56,7 @@ namespace shiranui{
             void send_idle_flyline(const int,const int,const int,
                                    const int,const std::string&,const int);
 
+
             template<typename T>
             void send_debug_print(const T&,const int);
             void send_dive_strike(const int,const int,const int);
@@ -76,6 +77,8 @@ namespace shiranui{
             void run_flyline(std::string,int,const int);
             void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);
             void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>,const int);
+            void run_idleflyline_sub(sp<syntax::ast::IdleFlyLine>,const std::string,
+                                      const int);
         };
     }
 }

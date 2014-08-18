@@ -161,8 +161,8 @@ namespace shiranui{
             struct FlyLine : LocationInfo{
             };
             struct TestFlyLine : FlyLine{
-                sp<Expression> left,right;
-                explicit TestFlyLine(sp<Expression>,sp<Expression>);
+                sp<Expression> left,right,error;
+                explicit TestFlyLine(sp<Expression>,sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
             struct IdleFlyLine : FlyLine{

@@ -78,8 +78,8 @@ namespace shiranui{
             Assignment::Assignment(Identifier i,sp<Expression> e)
                 : id(i),value(e){}
             // FlyLine
-            TestFlyLine::TestFlyLine(sp<Expression> l,sp<Expression> r)
-                : left(l),right(r){
+            TestFlyLine::TestFlyLine(sp<Expression> l,sp<Expression> r,sp<Expression> e)
+                : left(l),right(r),error(e){
             }
             IdleFlyLine::IdleFlyLine(sp<Expression> l,sp<Expression> r)
                 : left(l),right(r){

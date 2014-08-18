@@ -129,9 +129,9 @@
    ))
 
 (defun kasumi-process-filter (process str)
-  ;; (kasumi-debug-print "--receive--")
-  ;; (kasumi-debug-print str)
-  ;; (kasumi-debug-print "-----------")
+  (kasumi-debug-print "--receive--")
+  (kasumi-debug-print str)
+  (kasumi-debug-print "-----------")
 
   (let ((list-command-loadcount-value (kasumi-parse (string-strip str))))
     (progn
@@ -222,9 +222,14 @@
     ))
 
 (defun kasumi-receive-badflyline (value)
-  (let ((beg-end-list (split-string value " ")))
+  (let* ((lines (split-string value "\n"))
+        (beg-end-list (split-string (nth 0 lines) " "))
+        (error-info (nth 1 lines)))
     (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+    (if (= (length error-info) 0)
+        (kasumi-debug-print "there is no error")
+      (kasumi-debug-print error-info))
     ))
 
 (defun kasumi-receive-dive-strike (value)
@@ -464,7 +469,10 @@
           (save-excursion
             (while not-indented
               (forward-line -1)
-              (setq cur-indent (max (- (current-indentation) default-tab-width) 0))
+              ;; check forward-line has {.
+              (if (looking-at "^.*{")
+                  (setq cur-indent (current-indentation))
+                (setq cur-indent (max (- (current-indentation) default-tab-width) 0)))
               (setq not-indented nil)))
         (save-excursion
           (while not-indented

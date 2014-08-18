@@ -346,15 +346,21 @@ namespace shiranui{
                     on_success(atom,set_location_info);
                 }
                 {
-                    flyline.name("flyline");
+                    // #+ sum(1) -> ;
+                    // #+ sum(1) -> 1;
+                    // #+ sum(-1) -> "error";
+                    // #- sum(1) -> 1;
+                    // #- sum(1) -> 2 || 1;
+                    // #- sum(-1) -> 1 || "assert_error";
+
                     // change expression to expression or error.
                     // add eol or something like that.
                     // do not use no_skip contains expression
-
-                    flyline = ("#-" >> expression >> "->" >> expression >> ";")
-                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2)]
-                            | ("#-" > expression > "->" > ";")
-                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,nullptr)]
+                    flyline.name("flyline");
+                    flyline = ("#-" >> expression >> "->" >> expression >> "||" >> expression >> ";")
+                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2,qi::_3)]
+                            | ("#-" >> expression >> "->" >> expression >> ";")
+                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2,nullptr)]
                             | ("#+" >> expression >> "->" >> expression >> ";")
                                [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,qi::_2)]
                             | ("#+" > expression > "->" > ";")
@@ -365,7 +371,7 @@ namespace shiranui{
                 {
                     source.name("source");
                     source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
-                          > *(statement 
+                          > *(statement
                                 [ph::bind(&ast::SourceCode::add_statement,*qi::_val,qi::_1)]
                               |flyline
                                 [ph::bind(&ast::SourceCode::add_flyline,*qi::_val,qi::_1)]
