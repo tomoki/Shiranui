@@ -2,7 +2,7 @@
 #include <vector>
 #include <cassert>
 
-namespace kagero{
+namespace arare{
     template<typename T>
     std::vector<T> range(T start,T next,T end,bool right_close){
         T step = next-start;
@@ -48,8 +48,8 @@ namespace kagero{
     };
 }
 template<typename T>
-kagero::Unit print(T v){
+arare::Unit print(T v){
     std::cout << v << std::endl;
-    return kagero::Unit();
+    return arare::Unit();
 }
 

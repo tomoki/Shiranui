@@ -159,8 +159,10 @@ int main(int argc,char **argv){
         ("help,h","print help message")
         ("server,s","run Shiranui in server mode")
         ("kagero,k",po::value<std::string>(),"Specify Kagero(Standard) library path")
+        
         ("exec,e",po::value<std::string>(),"execute given file")
         ("compile,c",po::value<std::string>(),"compile file to c++")
+        ("arare,a",po::value<std::string>(),"Specify Arare(launchpad) path")
         ("test,t","test(donot use.)")
     ;
     po::variables_map vm;
@@ -207,6 +209,13 @@ int main(int argc,char **argv){
             str = kagero_str + str;
         }
         std::string compiled = compile_to_cpp(str);
+        if(vm.count("arare")){
+            std::string ararefile = vm["arare"].as<std::string>();
+            std::fstream arare_fs(ararefile);
+            std::string arare_str((std::istreambuf_iterator<char>(arare_fs)),
+                                   (std::istreambuf_iterator<char>()));
+            compiled = arare_str + compiled;
+        }
         std::cout << compiled << std::endl;
         return 0;
     }

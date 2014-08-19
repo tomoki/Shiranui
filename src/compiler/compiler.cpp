@@ -30,7 +30,7 @@ namespace shiranui{
             ss << "}";
         }
         void Compiler::visit(Interval& node){
-            ss << "kagero::range(";
+            ss << "arare::range(";
             node.start->accept(*this);
             ss << ",";
             if(node.next != nullptr){
@@ -74,6 +74,7 @@ namespace shiranui{
             ss << ")";
         }
         void Compiler::visit(BinaryOperator& node){
+            ss << "(";
             node.left->accept(*this);
             if(node.op == "="){
                 ss << "==";
@@ -83,6 +84,7 @@ namespace shiranui{
                 ss << node.op;
             }
             node.right->accept(*this);
+            ss << ")";
         }
         void Compiler::visit(UnaryOperator& node){
             ss << node.op;
@@ -94,21 +96,47 @@ namespace shiranui{
             node.elsee->accept(*this);
         }
         void Compiler::visit(Definement& node){
+            sp<Function> f = std::dynamic_pointer_cast<Function>(node.value);
+            bool is_function = f != nullptr;
             if(node.id.name == "main"){
-                sp<Function> f = std::dynamic_pointer_cast<Function>(node.value);
-                if(f == nullptr){
-                }else{
+                if(is_function){
                     ss << "int main()" << std::endl;
                     f->body->accept(*this);
+                }else{
                 }
             }else{
-                if(node.is_const){
-                    ss << "const ";
+                if(is_function){
+                    if(f->parameters.size() != 0){
+                        ss << "template<";
+                        char type = 'T';
+                        for(size_t i=0;i<f->parameters.size();i++){
+                            ss << "typename " << (char)(type+i);
+                            if(i != f->parameters.size()-1){
+                                ss << ",";
+                            }
+                        }
+                        ss << ">";
+                        ss << std::endl;
+                        ss << "auto " << node.id.name << "(";
+                        for(size_t i=0;i<f->parameters.size();i++){
+                            ss << (char)(type+i) << " ";
+                            f->parameters[i].accept(*this);
+                            if(i != f->parameters.size()-1){
+                                ss << ",";
+                            }
+                        }
+                        ss << ") -> decltype(auto)";
+                        f->body->accept(*this);
+                    }
+                }else{
+                    if(node.is_const){
+                        ss << "const ";
+                    }
+                    ss << "auto ";
+                    node.id.accept(*this);
+                    ss << " = ";
+                    node.value->accept(*this);
                 }
-                ss << "auto ";
-                node.id.accept(*this);
-                ss << " = ";
-                node.value->accept(*this);
             }
         }
         void Compiler::visit(ReturnStatement& node){
@@ -143,13 +171,45 @@ namespace shiranui{
             node.value->accept(*this);
         }
         void Compiler::visit(TestFlyLine& node){
+            ss << "//#- ";
+            node.left->accept(*this);
+            ss << " -> ";
+            node.right->accept(*this);
+            if(node.error != nullptr){
+                ss << " || ";
+                node.error->accept(*this);
+            }
         }
         void Compiler::visit(IdleFlyLine& node){
+            ss << "//#+ ";
+            node.left->accept(*this);
+            ss << " -> ";
+            if(node.right != nullptr){
+                node.right->accept(*this);
+            }
         }
         void Compiler::visit(SourceCode& node){
-            for(sp<Statement> s : node.statements){
-                s->accept(*this);
-                ss << ";" << std::endl;
+            // merge statements and flylines.
+            for(size_t si=0,fi=0;si<node.statements.size() or
+                              fi<node.flylines.size();){
+                bool statement_first = false;
+                if(si != node.statements.size() and
+                   fi != node.flylines.size() and
+                   node.statements[si]->point < node.flylines[fi]->point){
+                    statement_first = true;
+                }else if(fi == node.flylines.size()){
+                    statement_first = true;
+                }
+
+                if(statement_first){
+                    node.statements[si]->accept(*this);
+                    ss << ";" << std::endl;
+                    si++;
+                }else{
+                    node.flylines[fi]->accept(*this);
+                    ss << std::endl;
+                    fi++;
+                }
             }
         }
     }
