@@ -14,10 +14,10 @@
 
 (defconst kasumi-font-lock-keywords
   (list
-   '("let[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-function-name-face)
-   '("mut[ \t\n]*[a-zA-Z]+[0-9]*" 0 font-lock-variable-name-face)
+   '("let[ \t\n]*[a-zA-Z_]+[0-9]*" 0 font-lock-function-name-face)
+   '("mut[ \t\n]*[a-zA-Z_]+[0-9]*" 0 font-lock-variable-name-face)
    ;; overwrite for let,mut.
-   '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\|for\\)\\>" 0 font-lock-keyword-face t)
+   '( "\\<\\(else\\|if\\|let\\|mut\\|then\\|return\\|for\\|assert\\)\\>" 0 font-lock-keyword-face t)
    '("\\(\\\\\\)" 0 font-lock-constant-face)
    '("\\<\\(and\\|or\\|in\\)\\>" 0 font-lock-builtin-face)
    '("not\\>" 0 font-lock-builtin-face)

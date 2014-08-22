@@ -27,12 +27,23 @@ namespace shiranui{
                                 : start(s),end(e),next(n),right_close(r) {}
 
             // Block
-            Block::Block(std::vector<sp<Statement>> ss)
-                : statements(ss){
+            Block::Block(){
+            }
+            void Block::add_statement(sp<Statement> s){
+                statements.push_back(s);
+            }
+            void Block::add_pre(sp<Function> f){
+                pre.push_back(f);
+            }
+            void Block::add_post(sp<Function> f){
+                post.push_back(f);
             }
             // Function
             Function::Function(std::vector<Identifier> params,sp<Block> ss)
                 : parameters(params),body(ss){
+            }
+            Function::Function(Identifier param,sp<Block> ss)
+                : parameters{param},body(ss){
             }
 
             // FunctionCall
@@ -84,6 +95,7 @@ namespace shiranui{
             IdleFlyLine::IdleFlyLine(sp<Expression> l,sp<Expression> r)
                 : left(l),right(r){
             }
+            // pre,post,loop_invariant
 
             // SourceCode
             SourceCode::SourceCode(){

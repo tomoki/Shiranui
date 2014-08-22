@@ -155,6 +155,13 @@ namespace shiranui{
             sp<Environment> before = cur_e;
             sp<Environment> inner = std::make_shared<Environment>(cur_e);
             cur_e = inner;
+            for(sp<shiranui::syntax::ast::Function> f : block.pre){
+                auto fc = std::make_shared<syntax::ast::FunctionCall>(f,
+                                           std::vector<sp<syntax::ast::Expression>>());
+                fc->point = f->point;
+                fc->length = f->length;
+                fc->accept(*this);
+            }
             for(auto& st : block.statements){
                 st->accept(*this);
                 sp<Return> r = std::dynamic_pointer_cast<Return>(cur_v);
@@ -194,7 +201,7 @@ namespace shiranui{
                     call_stack.pop();
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if(ret == nullptr){
-                        //std::cerr << "WARN: this is not return value." << std::endl;
+                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     }else{
                         cur_v = ret->value;
                     }

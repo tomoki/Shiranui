@@ -1,7 +1,6 @@
 #ifndef PARSER_HPP_INCLUDED
 #define PARSER_HPP_INCLUDED
-
-// #define BOOST_SPIRIT_DEBUG
+#define BOOST_SPIRIT_UNICODE
 #define BOOST_SPIRIT_USE_PHOENIX_V3
 #include <boost/spirit/include/qi.hpp>
 
@@ -194,9 +193,16 @@ namespace shiranui{
                 }
                 {
                     block.name("block");
-                    block = ("{" > *statement > "}")
-                             [qi::_val = qi_make_shared<ast::Block>(qi::_1)]
-                          ;
+                    block = (lit("{") [qi::_val = qi_make_shared<ast::Block>()])
+                        > *(statement
+                           [ph::bind(&ast::Block::add_statement,*qi::_val,qi::_1)]
+                         | (lit("pre") > block)
+                           [ph::bind(&ast::Block::add_pre,*qi::_val,
+                                     qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_1))]
+                         | (lit("post") > '(' > identifier > ')' > block)
+                           [ph::bind(&ast::Block::add_post,*qi::_val,
+                                     qi_make_shared<ast::Function>(qi::_1,qi::_2))]
+                        ) > lit("}");
                     on_success(block,set_location_info);
                 }
                 {
@@ -387,7 +393,6 @@ namespace shiranui{
             rule_no_skip<ast::Identifier()> identifier;
             rule_with_skip<sp<ast::Expression>()> expression;
             rule_with_skip<sp<ast::Expression>()> test;
-
 
             rule_with_local_for_binary<sp<ast::Expression>()> and_test;
             rule_with_local_for_binary<sp<ast::Expression>()> or_test;

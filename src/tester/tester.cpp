@@ -428,18 +428,18 @@ string long_code =
             //run_dive_test();
             //run_bad_program();
             //run_zero_div();
-            run_dive_tri();
+            // run_dive_tri();
             //run_plus();
 
-            string tosend = "#- fact(2) -> 2;"
-                "let fact = \\(n){"
-                "    if n = 0 {\n"
-                "        return 1;\n"
-                "    } else {\n"
-                "        return n * fact(n-1);\n"
-                "    }\n"
-                "};\n";
-            cout << compile(tosend) << endl;
+            // string tosend = "#- fact(2) -> 2;"
+            //     "let fact = \\(n){"
+            //     "    if n = 0 {\n"
+            //     "        return 1;\n"
+            //     "    } else {\n"
+            //     "        return n * fact(n-1);\n"
+            //     "    }\n"
+            //     "};\n";
+            // cout << compile(tosend) << endl;
         }
     }
 }

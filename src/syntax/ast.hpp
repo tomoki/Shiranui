@@ -77,16 +77,26 @@ namespace shiranui{
                 void accept(VisitorForAST&);
             };
 
+            // pre is unit -> unit
+            // post is (type of return value) -> unit
+            struct Function;
             struct Block : Statement{
                 std::vector<sp<Statement>> statements;
-                Block(std::vector<sp<Statement>>);
+                std::vector<sp<Function>> pre;
+                std::vector<sp<Function>> post;
+                Block();
+                void add_statement(sp<Statement>);
+                void add_pre(sp<Function>);
+                void add_post(sp<Function>);
                 void accept(VisitorForAST&);
             };
+
 
             struct Function : Expression{
                 std::vector<Identifier> parameters;
                 sp<Block>               body;
                 Function(std::vector<Identifier>,sp<Block>);
+                Function(Identifier,sp<Block>);
                 void accept(VisitorForAST&);
             };
 
@@ -170,6 +180,7 @@ namespace shiranui{
                 explicit IdleFlyLine(sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
+
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
