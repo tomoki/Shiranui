@@ -40,12 +40,12 @@ No arguments options:
 ## run in IDE(Emacs)
 Shiranui's primary development environment is Emacs.
 At first,eval kasumi/kasumi.el (use "M-x eval-current-buffer").
-Next,open main.shi and run "M-x kasumi-mode".
+Next,open main.nui and run "M-x kasumi-mode".
 
 Shiranui will run in server mode and see how code changes.
 Remember,Shiranui doesn't support UTF-8 currently,so DO NOT type unicode.
 
-Opening doc/demo.shi is helpful.
+Opening doc/demo.nui is helpful.
 
 ## compile it.
 Shiranui has shiranui to C++ compiler.
