@@ -15,7 +15,7 @@ namespace shiranui{
                 using namespace qi::standard_wide;
 
                 comment = space
-                        | (qi::lit("//") >> *(char_ - qi::eol) >> qi::eol)
+                        | (qi::lit("//") >> *(char_ - (qi::eol | qi::eoi)) >> (qi::eol|qi::eoi))
                         ;
             }
             boost::spirit::qi::rule<Iterator> comment;

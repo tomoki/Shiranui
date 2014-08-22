@@ -1,0 +1,51 @@
+// this is comment.
+
+// let make constant value.
+let n = 1;
+// #+ line is like REPL.
+//  We call it IdleFlyline.
+// right side will be changed when code changed.
+#+ n -> 1;
+#+ n*3 -> 3;
+
+// let's make some function.
+// in Shiranui,\ is lambda.
+let double = \(n){
+    return n*2;
+};
+
+// Of cource,#+ left side can be function call.
+#+ double(2) -> 4;
+
+// ok,let's make more mathmatic function.
+
+// return sum of [0..n).
+#+ sum(10) -> 55;
+let sum = \(n){
+    assert n >= 0;
+    mut ret = 0;
+    for i in [0..n]{
+        ret <- ret + i;
+    }
+    return ret;
+};
+
+// Shiranui has some list syntax.
+#+ [0,1,2,3] -> [0,1,2,3];
+#+ [0..4] -> [0,1,2,3,4];
+#+ [0,2..6] -> [0,2,4,6];
+#+ [0..4) -> [0,1,2,3];
+
+// here,Shiranui's good point.
+//  On flyline,C-x a
+//    means,kasumi-accept
+
+#+ sum(4) -> 10;
+
+// will change to
+
+#- sum(4) -> 10;
+// green underline means,it pass test.
+#- sum(4) -> 11;
+// red underline means,it didn't pass test.
+

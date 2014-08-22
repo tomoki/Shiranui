@@ -1,0 +1,16 @@
+#+ sum(10) -> 55;
+
+let sum = \(n){
+    assert n >= 0;
+    mut a = 0;
+    for i in [0..n]{
+        a <- a + i;
+    }
+    return a;
+};
+
+// compile to main.
+let main = \(){
+    let unit = print(sum(10));
+    return 0;
+};
