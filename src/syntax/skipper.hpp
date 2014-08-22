@@ -7,17 +7,15 @@
 namespace shiranui{
     namespace syntax{
         namespace qi = boost::spirit::qi;
-        namespace ascii = boost::spirit::ascii;
-
 
         template<typename Iterator>
         struct CommentSkipper : public boost::spirit::qi::grammar<Iterator>{
             CommentSkipper() : CommentSkipper::base_type(comment,"comment"){
                 namespace qi = boost::spirit::qi;
-                namespace ascii = boost::spirit::qi::ascii;
+                using namespace qi::standard_wide;
 
-                comment = ascii::space
-                        | (qi::lit("//") >> *(qi::char_ - qi::eol) >> qi::eol)
+                comment = space
+                        | (qi::lit("//") >> *(char_ - qi::eol) >> qi::eol)
                         ;
             }
             boost::spirit::qi::rule<Iterator> comment;

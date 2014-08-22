@@ -95,7 +95,8 @@ namespace shiranui{
                 namespace ph = boost::phoenix;
 
                 using boost::spirit::repository::qi::iter_pos;
-                using namespace qi::ascii;
+                //using namespace qi::ascii;
+                using namespace qi::standard_wide;
                 using qi::lit;
                 auto set_location_info = annotate(qi::_val,qi::_1,qi::_3);
                 {
@@ -112,8 +113,12 @@ namespace shiranui{
 
                 {
                     string.name("string");
-                    string = qi::lexeme[lit("\"") > *(char_ - "\"") > lit("\"")]
-                               [qi::_val = qi_make_shared<ast::String>(qi::_1)];
+                    string = lit("\"") > 
+                               boost::spirit::as_string[*(char_ - "\"")]
+                                [qi::_val = qi_make_shared<ast::String>(qi::_1)]
+                           > lit("\"");
+//                    string = qi::lexeme[lit("\"") > *(char_ - "\"") > lit("\"")]
+//                               [qi::_val = qi_make_shared<ast::String>(qi::_1)];
 
                     on_success(string,set_location_info);
                 }

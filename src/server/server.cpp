@@ -136,6 +136,7 @@ namespace shiranui{
                 t->interrupt();
                 t->join();
             }
+            send_debug_print(value,loadcount);
             flyline_threads.clear();
             std::stringstream ss(value);
             while(not ss.eof()){
@@ -251,6 +252,7 @@ namespace shiranui{
             bool ok = false;
             Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
+            send_debug_print(source,loadcount);
             try{
                 // ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
                 //                                      boost::spirit::qi::space,program);

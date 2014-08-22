@@ -2,3 +2,4 @@ let unit = print(true);
 let unit = print(false);
 let unit = print(1);
 let unit = print("Shiranui");
+let unit = print("不知火");
