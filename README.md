@@ -90,3 +90,7 @@ Currenty, Shiranui doesn't have type.
 
 
 
+# License
+
+Shiranui is "New BSD License" except some file.
+See LICENSE for more info.
