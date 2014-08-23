@@ -114,7 +114,7 @@ namespace shiranui{
                         }
                     }
                     std::vector<sp<Value>> vs;
-                    if(s->value <= e->value){
+                    if(s->value <= e->value and change >= 0){
                         // if next == nullptr
                         if(change == 0) change = 1;
                         if(intr.right_close){
@@ -128,7 +128,7 @@ namespace shiranui{
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }
-                    }else{
+                    }else if(s->value >= e->value and change <= 0){
                         // if next == nullptr
                         if(change == 0) change = -1;
                         if(intr.right_close){
