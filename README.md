@@ -53,7 +53,7 @@ Opening doc/demo.nui is helpful.
 Shiranui has shiranui to C++ compiler.
 But,some function in shiranui is not supported
 
-- clojure (function + environment)
+- closure (function + environment)
 
 Remember,compiled file may lack "main".
 If you want to define main in Shiranui,use following.
