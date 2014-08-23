@@ -3,7 +3,7 @@
 Combine LiveProgramming and Design-by-Contract.
 On the fly testcase making.
 
-![shiranui logo](logo.png)
+![shiranui logo](logo_small.png)
 
 # How to build
 
