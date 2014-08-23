@@ -1,0 +1,9 @@
+let id = \(n){
+    pre {
+        assert n >= 0;
+    }
+    return n;
+};
+
+
+let unit = print(id(2));

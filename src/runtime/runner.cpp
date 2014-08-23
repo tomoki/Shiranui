@@ -154,12 +154,11 @@ namespace shiranui{
             sp<Environment> before = cur_e;
             sp<Environment> inner = std::make_shared<Environment>(cur_e);
             cur_e = inner;
-            for(sp<shiranui::syntax::ast::Function> f : block.pre){
-                auto fc = std::make_shared<syntax::ast::FunctionCall>(f,
-                                           std::vector<sp<syntax::ast::Expression>>());
-                fc->point = f->point;
-                fc->length = f->length;
-                fc->accept(*this);
+            for(sp<shiranui::syntax::ast::Block> f : block.pre){
+                f->accept(*this);
+            }
+            for(sp<shiranui::syntax::ast::Block> f : block.invariant){
+                f->accept(*this);
             }
             for(auto& st : block.statements){
                 st->accept(*this);
@@ -168,6 +167,31 @@ namespace shiranui{
                     break;
                 }
             }
+
+            sp<Value> before_post_execute = cur_v;
+            sp<Return> ret = std::dynamic_pointer_cast<Return>(cur_v);
+            bool last_was_return = ret != nullptr;
+
+            for(size_t i=0;i<block.post.size();i++){
+                if(last_was_return){
+                    syntax::ast::Identifier id = block.post_id[i];
+                    if(id.name == ""){
+                        throw ConvertException(std::make_shared<syntax::ast::Block>(block));
+                    }
+                    sp<Environment> return_added = std::make_shared<Environment>(cur_e);
+                    // convert Return to Value
+                    return_added->define(id,ret->value,true);
+                    cur_e = return_added;
+                    block.post[i]->accept(*this);
+                    cur_e = return_added->parent;
+                }else{
+                    block.post[i]->accept(*this);
+                }
+            }
+            for(sp<shiranui::syntax::ast::Block> f : block.invariant){
+                f->accept(*this);
+            }
+            cur_v = before_post_execute;
             cur_e = before;
             AFTER_VISIT_MACRO(block);
         }

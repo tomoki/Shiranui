@@ -79,15 +79,17 @@ namespace shiranui{
 
             // pre is unit -> unit
             // post is (type of return value) -> unit
-            struct Function;
             struct Block : Statement{
                 std::vector<sp<Statement>> statements;
-                std::vector<sp<Function>> pre;
-                std::vector<sp<Function>> post;
+                std::vector<sp<Block>> pre;
+                std::vector<sp<Block>> post;
+                std::vector<sp<Block>> invariant;
+                std::vector<Identifier> post_id;
                 Block();
                 void add_statement(sp<Statement>);
-                void add_pre(sp<Function>);
-                void add_post(sp<Function>);
+                void add_pre(sp<Block>);
+                void add_post(Identifier i,sp<Block>);
+                void add_invariant(sp<Block>);
                 void accept(VisitorForAST&);
             };
 

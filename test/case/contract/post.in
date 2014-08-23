@@ -1,0 +1,9 @@
+let id = \(n){
+    return n;
+    post(ret){
+        assert ret = 1;
+    }
+};
+
+
+let unit = print(id(1));

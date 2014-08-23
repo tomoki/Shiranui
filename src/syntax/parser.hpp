@@ -202,11 +202,13 @@ namespace shiranui{
                         > *(statement
                            [ph::bind(&ast::Block::add_statement,*qi::_val,qi::_1)]
                          | (lit("pre") > block)
-                           [ph::bind(&ast::Block::add_pre,*qi::_val,
-                                     qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_1))]
-                         | (lit("post") > '(' > identifier > ')' > block)
-                           [ph::bind(&ast::Block::add_post,*qi::_val,
-                                     qi_make_shared<ast::Function>(qi::_1,qi::_2))]
+                           [ph::bind(&ast::Block::add_pre,*qi::_val,qi::_1)]
+                         | (lit("post") >> '(' >> identifier >> ')' >> block)
+                           [ph::bind(&ast::Block::add_post,*qi::_val,qi::_1,qi::_2)]
+                         | (lit("post") >> block)
+                           [ph::bind(&ast::Block::add_post,*qi::_val,ast::Identifier(""),qi::_1)]
+                         | (lit("invariant") > block)
+                           [ph::bind(&ast::Block::add_invariant,*qi::_val,qi::_1)]
                         ) > lit("}");
                     on_success(block,set_location_info);
                 }

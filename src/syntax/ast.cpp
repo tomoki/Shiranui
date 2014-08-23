@@ -32,11 +32,15 @@ namespace shiranui{
             void Block::add_statement(sp<Statement> s){
                 statements.push_back(s);
             }
-            void Block::add_pre(sp<Function> f){
+            void Block::add_pre(sp<Block> f){
                 pre.push_back(f);
             }
-            void Block::add_post(sp<Function> f){
+            void Block::add_post(Identifier i,sp<Block> f){
+                post_id.push_back(i);
                 post.push_back(f);
+            }
+            void Block::add_invariant(sp<Block> i){
+                invariant.push_back(i);
             }
             // Function
             Function::Function(std::vector<Identifier> params,sp<Block> ss)
