@@ -14,3 +14,7 @@ config.status
 configure
 aclocal.m4
 depcomp
+compile
+config.guess
+config.sub
+/src/shiranui
