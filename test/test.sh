@@ -7,7 +7,7 @@
 CURDIR=`dirname $0`
 INPUTS=`find $CURDIR/case -type f -name "*.in" | sort`
 PROG=$CURDIR/../src/shiranui
-KAGERO=$CURDIR/../lib/kagero.shi
+KAGERO=$CURDIR/../lib/kagero.nui
 TIME=2s
 
 # if [ $# -le 1  ]
