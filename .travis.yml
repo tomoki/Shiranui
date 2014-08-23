@@ -6,7 +6,8 @@ before_install:
     - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
     - sudo apt-get update -qq
 install:
-    - sudo apt-get install -qq libboost1.55-all-dev clang-3.4 lldb-3.4
+    - sudo apt-get install -qq libboost1.55-all-dev autoconf automake autoconf-archive
 script:
-    - make -j8 CXX=clang++
+    - autoreconf;automake --add-missing;autoreconf
+    - ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
     - make -j8 CXX=clang++ check
