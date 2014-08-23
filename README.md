@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/tomoki/Shiranui.svg)](https://travis-ci.org/tomoki/Shiranui)
 # Programming Language Shiranui
 
 Combine LiveProgramming and Design-by-Contract.
