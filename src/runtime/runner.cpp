@@ -128,9 +128,8 @@ namespace shiranui{
                                 vs.push_back(std::make_shared<Integer>(i));
                             }
                         }
-                    }else if(s->value >= e->value and change <= 0){
+                    }else if(s->value >= e->value and change < 0){
                         // if next == nullptr
-                        if(change == 0) change = -1;
                         if(intr.right_close){
                             for(int i=s->value;i>=e->value;i+=change){
                                 boost::this_thread::interruption_point();

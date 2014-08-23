@@ -38,10 +38,10 @@ namespace arare{
     }
     template<typename T>
     std::vector<T> range(T start,T end,bool right_close){
-        if(start < end){
+        if(start <= end){
             return range(start,start+1,end,right_close);
         }else{
-            return range(start,start-1,end,right_close);
+            return {};
         }
     }
     struct Unit{
@@ -52,4 +52,5 @@ arare::Unit print(T v){
     std::cout << v << std::endl;
     return arare::Unit();
 }
+
 
