@@ -3,6 +3,8 @@
 Combine LiveProgramming and Design-by-Contract.
 On the fly testcase making.
 
+![shiranui logo](logo.png)
+
 # How to build
 
 You must have following softwares installed.
