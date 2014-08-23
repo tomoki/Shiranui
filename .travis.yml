@@ -1,0 +1,12 @@
+language: cpp
+compiler:
+    - clang
+before_install:
+    - sudo apt-add-repository -y ppa:boost-latest/ppa
+    - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
+    - sudo apt-get update -qq
+install:
+    - sudo apt-get install -qq libboost1.55-all-dev clang-3.4 lldb-3.4
+script:
+    - make -j8 CXX=clang++
+    - make -j8 CXX=clang++ check
