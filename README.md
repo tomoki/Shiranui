@@ -8,7 +8,7 @@ On the fly testcase making.
 # How to build
 
 You must have following softwares installed.
-- Autotools(autoconf,automake)
+- Autotools(autoconf,automake,autoconf-archive)
 - C++ Compiler that supports c++11(I recommend gcc or clang)
 
 At first,cd to shiranui dir.
