@@ -1,8 +1,7 @@
 [![Build Status](https://travis-ci.org/tomoki/Shiranui.svg)](https://travis-ci.org/tomoki/Shiranui)
 # Programming Language Shiranui
 
-Combine LiveProgramming and Design-by-Contract.
-On the fly testcase making.
+Shiranui combines Live programming and Design-by-Contract,on-the-fly testcase making.
 
 ![shiranui logo](logo_small.png)
 
@@ -52,7 +51,8 @@ Opening doc/demo.nui is helpful.
 
 ## compile it.
 Shiranui has shiranui to C++ compiler.
-But,some function in shiranui is not supported
+But,some functions in shiranui are not supported
+For example,
 
 - closure (function + environment)
 
@@ -71,7 +71,7 @@ $ clang++ test.cpp -std=c++1y -o a.out
 $ ./a.out
 ```
 
-## run REPL(read-eval-print-loop)
+## Run REPL(read-eval-print-loop)
 
 ```
 $ src/shiranui
@@ -90,8 +90,8 @@ let unit = system_call(print)(a);
 Currenty, Shiranui doesn't have type.
 
 
-
 # License
 
-Shiranui is "New BSD License" except some file.
+Shiranui is "New BSD License" except some files.
 See LICENSE for more info.
+
