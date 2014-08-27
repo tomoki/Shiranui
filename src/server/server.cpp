@@ -427,6 +427,8 @@ namespace shiranui{
                 return run_idleflyline_sub("\"Assert violated\"");
             }catch(ZeroDivException e){
                 return run_idleflyline_sub("\"Division by 0\"");
+            }catch(MaxDepthExceededException e){
+                return run_idleflyline_sub("\"Max call-depth exceeded\"");
             }catch(RuntimeException e){
                 return run_idleflyline_sub("\"Something occured.\"");
             }
