@@ -417,10 +417,23 @@ namespace shiranui{
             try{
                 sf->left->accept(r);
             }catch(NoSuchVariableException e){
-                auto p = std::dynamic_pointer_cast<Variable>(e.where);
-                std::stringstream ss;
-                ss << '\"' << "No such variable: " << p->value.name << '\"';
-                return run_idleflyline_sub(ss.str());
+                {
+                    auto p = std::dynamic_pointer_cast<Variable>(e.where);
+                    if(p != nullptr){
+                        std::stringstream ss;
+                        ss << '\"' << "No such variable: " << p->value.name << '\"';
+                        return run_idleflyline_sub(ss.str());
+                    }
+                }
+                {
+                    auto p = std::dynamic_pointer_cast<Assignment>(e.where);
+                    if(p != nullptr){
+                        std::stringstream ss;
+                        ss << '\"' << "No such variable: " << p->id.name << '\"';
+                        return run_idleflyline_sub(ss.str());
+                    }
+                }
+                return run_idleflyline_sub("No such variable: ????");
             }catch(ConvertException e){
                 return run_idleflyline_sub("\"Can't convert something\"");
             }catch(AssertException e){

@@ -473,6 +473,13 @@ void Runner::visit(syntax::ast::Assignment &assign) {
             not cur_e->is_const(assign.id)) {
         assign.value->accept(*this);
         cur_e->set(assign.id, cur_v);
+    } else {
+        if (cur_e->has(assign.id)) {
+            // maybe constant.
+            throw ConvertException(std::make_shared<syntax::ast::Assignment>(assign));
+        } else {
+            throw NoSuchVariableException(std::make_shared<syntax::ast::Assignment>(assign));
+        }
     }
     AFTER_VISIT_MACRO(assign);
 }
