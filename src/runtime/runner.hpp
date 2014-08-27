@@ -4,46 +4,87 @@
 #include "value.hpp"
 #include "environment.hpp"
 #include <exception>
+#include <sstream>
 #include <stack>
 
 namespace shiranui{
     namespace runtime{
         struct RuntimeException : std::exception{
             sp<syntax::ast::LocationInfo> where;
+            std::string str(){
+                return "\"Something occured.\"";
+            }
         };
         struct NoSuchVariableException : RuntimeException{
             NoSuchVariableException(sp<syntax::ast::LocationInfo> e){
                 where = e;
+            }
+            std::string str(){
+                {
+                    auto p = std::dynamic_pointer_cast<syntax::ast::Variable>(where);
+                    if (p != nullptr) {
+                        std::stringstream ss;
+                        ss << '\"' << "No such variable: " << p->value.name << '\"';
+                        return ss.str();
+                    }
+                }
+                {
+                    auto p = std::dynamic_pointer_cast<syntax::ast::Assignment>(where);
+                    if (p != nullptr) {
+                        std::stringstream ss;
+                        ss << '\"' << "No such variable: " << p->id.name << '\"';
+                        return ss.str();
+                    }
+                }
+                return "\"No such variable: ????\"";
             }
         };
         struct ConvertException : RuntimeException{
             ConvertException(sp<syntax::ast::LocationInfo> e){
                 where = e;
             }
+            std::string str(){
+                return "\"Can't convert something\"";
+            }
         };
         struct RangeException : RuntimeException{
             RangeException(sp<syntax::ast::LocationInfo> e){
                 where = e;
+            }
+            std::string str(){
+                return "\"Invalid range\"";
             }
         };
         struct InternalException : RuntimeException{
             InternalException(sp<syntax::ast::LocationInfo> e){
                 where = e;
             }
+            std::string str(){
+                return "\"Division by 0\"";
+            }
         };
         struct ZeroDivException : RuntimeException{
             ZeroDivException(sp<syntax::ast::LocationInfo> e){
                 where = e;
+            }
+            std::string str() {
+                return "\"Max call-depth exceeded\"";
             }
         };
         struct AssertException : RuntimeException{
             AssertException(sp<syntax::ast::LocationInfo> e){
                 where = e;
             }
+            std::string str() {
+                return "\"Assert violated\"";
+            }
         };
         struct MaxDepthExceededException : RuntimeException{
             MaxDepthExceededException(sp<syntax::ast::LocationInfo> e){
                 where = e;
+            }
+            std::string str(){
+                return "\"Max call-depth exceeded\"";
             }
         };
         struct Runner : shiranui::syntax::ast::VisitorForAST{

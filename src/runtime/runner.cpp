@@ -287,6 +287,15 @@ void Runner::visit(syntax::ast::BinaryOperator &bop) {
     sp<Value> left = cur_v;
     bop.right->accept(*this);
     sp<Value> right = cur_v;
+    // equality check is defined in value.hpp.
+    //  because it is used in server.
+    if(bop.op == "="){
+        cur_v = std::make_shared<Boolean>(check_equality(left,right));
+        return;
+    }else if(bop.op == "/="){
+        cur_v = std::make_shared<Boolean>(not check_equality(left, right));
+        return;
+    }
     if (typeid(*left) != typeid(*right)) {
         throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
     }
@@ -294,11 +303,7 @@ void Runner::visit(syntax::ast::BinaryOperator &bop) {
         sp<Integer> l = std::dynamic_pointer_cast<Integer>(left);
         sp<Integer> r = std::dynamic_pointer_cast<Integer>(right);
         if (l != nullptr and r != nullptr) {
-            if (bop.op == "=") {
-                cur_v = std::make_shared<Boolean>(l->value == r->value);
-            } else if (bop.op == "/=") {
-                cur_v = std::make_shared<Boolean>(l->value != r->value);
-            } else if (bop.op == "<") {
+            if (bop.op == "<") {
                 cur_v = std::make_shared<Boolean>(l->value < r->value);
             } else if (bop.op == "<=") {
                 cur_v = std::make_shared<Boolean>(l->value <= r->value);
@@ -330,11 +335,7 @@ void Runner::visit(syntax::ast::BinaryOperator &bop) {
         sp<Boolean> l = std::dynamic_pointer_cast<Boolean>(left);
         sp<Boolean> r = std::dynamic_pointer_cast<Boolean>(right);
         if (l != nullptr and r != nullptr) {
-            if (bop.op == "=") {
-                cur_v = std::make_shared<Boolean>(l->value == r->value);
-            } else if (bop.op == "/=") {
-                cur_v = std::make_shared<Boolean>(l->value != r->value);
-            } else if (bop.op == "and") {
+            if (bop.op == "and") {
                 cur_v = std::make_shared<Boolean>(l->value and r->value);
             } else if (bop.op == "or") {
                 cur_v = std::make_shared<Boolean>(l->value or r->value);
@@ -348,11 +349,7 @@ void Runner::visit(syntax::ast::BinaryOperator &bop) {
         sp<String> l = std::dynamic_pointer_cast<String>(left);
         sp<String> r = std::dynamic_pointer_cast<String>(right);
         if (l != nullptr and r != nullptr) {
-            if (bop.op == "=") {
-                cur_v = std::make_shared<Boolean>(l->value == r->value);
-            } else if (bop.op == "/=") {
-                cur_v = std::make_shared<Boolean>(l->value != r->value);
-            } else if (bop.op == "+") {
+            if (bop.op == "+") {
                 cur_v = std::make_shared<String>(l->value + r->value);
             } else {
                 throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
@@ -361,17 +358,15 @@ void Runner::visit(syntax::ast::BinaryOperator &bop) {
         }
     }
     throw ConvertException(std::make_shared<syntax::ast::BinaryOperator>(bop));
-    if (bop.op == "=") {
-    } else if (bop.op == "/=") {
-    } else if (bop.op == "+") {
-    } else if (bop.op == "-") {
-    } else if (bop.op == "*") {
-    } else if (bop.op == "/") {
-    } else if (bop.op == "%") {
-    } else if (bop.op == "^") {
-    } else if (bop.op == "and") {
-    } else if (bop.op == "or") {
-    }
+    // if (bop.op == "+") {
+    // } else if (bop.op == "-") {
+    // } else if (bop.op == "*") {
+    // } else if (bop.op == "/") {
+    // } else if (bop.op == "%") {
+    // } else if (bop.op == "^") {
+    // } else if (bop.op == "and") {
+    // } else if (bop.op == "or") {
+    // }
 }
 void Runner::visit(syntax::ast::UnaryOperator &uop) {
     BEFORE_VISIT_MACRO(uop);

@@ -216,21 +216,46 @@
         )))
 
 (defun kasumi-receive-goodflyline (value)
-  (let ((beg-end-list (split-string value " ")))
-    (kasumi-put-goodflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
-                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
-    ))
+    (let* ((lines         (split-string value "\n"))
+           (target        (split-string (nth 0 lines) " "))
+           (where         (string-to-number (nth 0 (split-string (nth 1 lines) " "))))
+           (remove_length (string-to-number (nth 1 (split-string (nth 1 lines) " "))))
+           (inhibit-modification-hooks t))
+    (save-excursion
+      (progn
+        (goto-char (kasumi-fix-point where))
+        (delete-region (kasumi-fix-point where)
+                       (+ (kasumi-fix-point where) remove_length))
+        (add-change (kasumi-fix-point where) remove_length "")
+        (kasumi-add-diff (kasumi-fix-point where)
+                         (- remove_length))
+
+        (kasumi-put-goodflyline (kasumi-string-to-fix-point (nth 0 target))
+                                (kasumi-string-to-fix-point (nth 1 target)))))))
 
 (defun kasumi-receive-badflyline (value)
-  (let* ((lines (split-string value "\n"))
-        (beg-end-list (split-string (nth 0 lines) " "))
-        (error-info (nth 1 lines)))
-    (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
-                           (kasumi-string-to-fix-point (nth 1 beg-end-list)))
-    (if (= (length error-info) 0)
-        (kasumi-debug-print "there is no error")
-      (kasumi-debug-print error-info))
-    ))
+  (let* ((lines         (split-string value "\n"))
+         (target        (split-string (nth 0 lines) " "))
+         (where         (string-to-number (nth 0 (split-string (nth 1 lines) " "))))
+         (remove_length (string-to-number (nth 1 (split-string (nth 1 lines) " "))))
+         ;; TODO:support newline.
+         (value (nth 2 lines))
+         (inhibit-modification-hooks t))
+    (save-excursion
+      (progn
+        (goto-char (kasumi-fix-point where))
+        (delete-region (kasumi-fix-point where)
+                       (+ (kasumi-fix-point where) remove_length))
+
+        (insert value)
+
+        (add-change (kasumi-fix-point where) remove_length value)
+        (kasumi-add-diff (kasumi-fix-point where)
+                         (- (length value) remove_length))
+
+        ;; (kasumi-debug-print (format "%S" point-diff))
+        (kasumi-put-badflyline (kasumi-string-to-fix-point (nth 0 target))
+                                (kasumi-string-to-fix-point (nth 1 target)))))))
 
 (defun kasumi-receive-dive-strike (value)
   (let ((beg-end-list (split-string value " ")))

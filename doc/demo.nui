@@ -46,6 +46,6 @@ let sum = \(n){
 
 #- sum(4) -> 10;
 // green underline means,it pass test.
-#- sum(4) -> 11;
+#- sum(4) -> 11 || "???";
 // red underline means,it didn't pass test.
 

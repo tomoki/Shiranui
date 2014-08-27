@@ -93,6 +93,8 @@ namespace shiranui{
                 };
             }
             std::string to_reproductive(sp<runtime::value::Value>);
+            // will be used in server.
+            bool check_equality(sp<Value> left,sp<Value> right);
         }
     }
 }

@@ -41,15 +41,20 @@ namespace shiranui{
                                                 start_point,end_point,loadcount);
         }
         void PipeServer::send_good_flyline(const int start_point,const int end_point,
+                                           const int insert_point,const int remove_length,
                                            const int loadcount){
-            return send_command_with_two_points(COMMAND_GOOD_FLYLINE,
-                                                start_point,end_point,loadcount);
-        }
-        void PipeServer::send_bad_flyline(const int start_point,const int end_point,
-                                         const int loadcount,const std::string& error){
             std::stringstream ss;
             ss << start_point << " " << end_point << std::endl;
-            ss << '"' << error << '"';
+            ss << insert_point << " " << remove_length;
+            return send_command(COMMAND_GOOD_FLYLINE, ss.str(), loadcount);
+        }
+        void PipeServer::send_bad_flyline(const int start_point,const int end_point,
+                                          const int insert_point,const int remove_length,
+                                          const std::string& error,const int loadcount){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl;
+            ss << insert_point << " " << remove_length << std::endl;
+            ss << error;
             return send_command(COMMAND_BAD_FLYLINE,ss.str(),loadcount);
         }
         void PipeServer::send_runtimeerror(const int start_point,const int end_point,
@@ -57,7 +62,6 @@ namespace shiranui{
             return send_command_with_two_points(COMMAND_RUNTIMEERROR,
                                                 start_point,end_point,loadcount);
         }
-
 
         void PipeServer::send_idle_flyline(const int start_point,const int end_point,
                                            const int insert_point,const int remove_length,
@@ -358,39 +362,37 @@ namespace shiranui{
 
             int start_point = sf->point;
             int end_point = start_point + sf->length;
+
             auto bin = std::make_shared<BinaryOperator>("=",sf->left,sf->right);
-            int remove_start = sf->right->point;
+            int remove_start = sf->right->point + sf->right->length;
             int remove_length = sf->error != nullptr ?
-                sf->error->point + sf->error->length - remove_start
-                : 0;
-            try{
-                bin->accept(r);
-            }catch(NoSuchVariableException e){
-                send_bad_flyline(start_point,end_point,loadcount,"");
-                return;
-            }catch(ConvertException e){
-                send_bad_flyline(start_point,end_point,loadcount,"");
-                return;
-            }catch(AssertException e){
-                send_bad_flyline(start_point,end_point,loadcount,"");
-                return;
-            }catch(ZeroDivException e){
-                send_bad_flyline(start_point,end_point,loadcount,"");
-                return;
-            }catch(RuntimeException e){
-                send_bad_flyline(start_point,end_point,loadcount,"");
-                return;
+                                  sf->error->point + sf->error->length - remove_start
+                                : 0;
+            sp<Value> left,right;
+            try {
+                sf->left->accept(r);
+                left = r.cur_v;
+                sf->right->accept(r);
+                right = r.cur_v;
+            } catch (NoSuchVariableException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            } catch (ConvertException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            } catch (AssertException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            } catch (ZeroDivException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            } catch (MaxDepthExceededException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            } catch (RuntimeException e) {
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
             }
 
-            sp<Boolean> b = std::dynamic_pointer_cast<Boolean>(r.cur_v);
-            if(b != nullptr){
-                if(b->value){
-                    send_good_flyline(start_point,end_point,loadcount);
-                }else{
-                    send_bad_flyline(start_point,end_point,loadcount,"");
-                }
+            if(check_equality(left,right)){
+                send_good_flyline(start_point, end_point, remove_start,remove_length,loadcount);
             }else{
-                send_syntaxerror(start_point,end_point,loadcount);
+                send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + to_reproductive(left),
+                                 loadcount);
             }
         }
 
@@ -417,33 +419,17 @@ namespace shiranui{
             try{
                 sf->left->accept(r);
             }catch(NoSuchVariableException e){
-                {
-                    auto p = std::dynamic_pointer_cast<Variable>(e.where);
-                    if(p != nullptr){
-                        std::stringstream ss;
-                        ss << '\"' << "No such variable: " << p->value.name << '\"';
-                        return run_idleflyline_sub(ss.str());
-                    }
-                }
-                {
-                    auto p = std::dynamic_pointer_cast<Assignment>(e.where);
-                    if(p != nullptr){
-                        std::stringstream ss;
-                        ss << '\"' << "No such variable: " << p->id.name << '\"';
-                        return run_idleflyline_sub(ss.str());
-                    }
-                }
-                return run_idleflyline_sub("No such variable: ????");
+                return run_idleflyline_sub(e.str());
             }catch(ConvertException e){
-                return run_idleflyline_sub("\"Can't convert something\"");
+                return run_idleflyline_sub(e.str());
             }catch(AssertException e){
-                return run_idleflyline_sub("\"Assert violated\"");
+                return run_idleflyline_sub(e.str());
             }catch(ZeroDivException e){
-                return run_idleflyline_sub("\"Division by 0\"");
+                return run_idleflyline_sub(e.str());
             }catch(MaxDepthExceededException e){
-                return run_idleflyline_sub("\"Max call-depth exceeded\"");
+                return run_idleflyline_sub(e.str());
             }catch(RuntimeException e){
-                return run_idleflyline_sub("\"Something occured.\"");
+                return run_idleflyline_sub(e.str());
             }
 
             sp<Value> left = r.cur_v;
