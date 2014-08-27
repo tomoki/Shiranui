@@ -485,39 +485,45 @@
 
 (defun kasumi-indent ()
   (interactive)
-  (beginning-of-line)
-  (if (bobp)
-      (indent-line-to 0)
-    (let ((not-indented t)
-          cur-indent)
-      (if (looking-at "^[ \t]*}")
+  (let ((cursor-depth (- (point)
+                         (line-beginning-position)
+                         (current-indentation))))
+    (beginning-of-line)
+    (if (bobp)
+        (progn
+          (indent-line-to 0)
+          (forward-char cursor-depth)
+          )
+      (let ((not-indented t)
+            cur-indent)
+        (if (looking-at "^[ \t]*}")
+            (save-excursion
+              (while not-indented
+                (forward-line -1)
+                ;; check forward-line has {.
+                (if (looking-at "^.*{")
+                    (setq cur-indent (current-indentation))
+                  (setq cur-indent (max (- (current-indentation) default-tab-width) 0)))
+                (setq not-indented nil)))
           (save-excursion
             (while not-indented
               (forward-line -1)
-              ;; check forward-line has {.
-              (if (looking-at "^.*{")
+              (cond
+               ((looking-at "^.*{")
+                (progn
+                  (setq cur-indent (+ (current-indentation) default-tab-width))
+                  (setq not-indented nil)))
+               ((looking-at "^[ \t]*}")
+                (progn
                   (setq cur-indent (current-indentation))
-                (setq cur-indent (max (- (current-indentation) default-tab-width) 0)))
-              (setq not-indented nil)))
-        (save-excursion
-          (while not-indented
-            (forward-line -1)
-            (cond
-             ((looking-at "^.*{")
-              (progn
-                (setq cur-indent (+ (current-indentation) default-tab-width))
-                (setq not-indented nil)))
-             ((looking-at "^[ \t]*}")
-              (progn
-                (setq cur-indent (current-indentation))
-                (setq not-indented nil)))
-             ((bobp)
-              (progn
-                (setq cur-indent 0)
-                (setq not-indented nil)))))))
-      (if cur-indent
-          (indent-line-to cur-indent)
-        (indent-line-to 0)))))
+                  (setq not-indented nil)))
+               ((bobp)
+                (progn
+                  (setq cur-indent 0)
+                  (setq not-indented nil)))))))
+        (indent-line-to (if cur-indent cur-indent 0))
+        (forward-char cursor-depth)
+        ))))
 
 ;; http://www.emacswiki.org/emacs/ModeTutorial
 (defun kasumi-mode ()
