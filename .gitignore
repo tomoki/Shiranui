@@ -9,6 +9,7 @@ stamp-h1
 autom4te.cache
 config.hpp
 config.hpp.in
+config.hpp.in~
 config.log
 config.status
 configure
