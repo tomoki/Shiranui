@@ -547,12 +547,14 @@
            (kasumi-start-shiranui kasumi-where-is-shiranui)))
   (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
+  (set-process-query-on-exit-flag shiranui-process nil)
   ;; (set-syntax-table kasumi-mode-syntax-table)
 
   ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Setting-Hooks.html
   ;; append to last,local.
   (add-hook 'after-change-functions 'kasumi-refresh t t)
   (setq major-mode 'kasumi-mode)
+
   (setq mode-name "Kasumi")
   ;;  first boot.
   (kasumi-refresh (point-min) (point-max) 0)
