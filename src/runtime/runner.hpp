@@ -41,10 +41,16 @@ namespace shiranui{
                 where = e;
             }
         };
+        struct MaxDepthExceededException : RuntimeException{
+            MaxDepthExceededException(sp<syntax::ast::LocationInfo> e){
+                where = e;
+            }
+        };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;
             int cur_t;
+            int call_depth;
             std::stack<int> call_stack;
             bool is_server;
             Runner(bool=false);
