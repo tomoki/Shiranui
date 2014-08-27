@@ -77,8 +77,6 @@ namespace shiranui{
             void run_flyline(std::string,int,const int);
             void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);
             void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>,const int);
-            void run_idleflyline_sub(sp<syntax::ast::IdleFlyLine>,const std::string,
-                                      const int);
         };
     }
 }
