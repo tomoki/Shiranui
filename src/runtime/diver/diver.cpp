@@ -79,6 +79,7 @@ namespace shiranui{
                                                std::make_shared<FunctionCall>(fc)));
                 return message;
             }
+
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
                 return use_snorkel(block,call_under);
             }
@@ -200,6 +201,10 @@ namespace shiranui{
                 node.value->accept(*this);
             }
             void SwimFin::visit(ReturnStatement& node){
+                if(not in_range(node)) return;
+                node.value->accept(*this);
+            }
+            void SwimFin::visit(ProbeStatement& node){
                 if(not in_range(node)) return;
                 node.value->accept(*this);
             }
@@ -332,6 +337,9 @@ namespace shiranui{
                 node.value->accept(*this);
             }
             void Snorkel::visit(ReturnStatement& node){
+                node.value->accept(*this);
+            }
+            void Snorkel::visit(ProbeStatement& node){
                 node.value->accept(*this);
             }
             void Snorkel::visit(AssertStatement& node){

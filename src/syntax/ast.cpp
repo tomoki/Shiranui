@@ -87,6 +87,9 @@ namespace shiranui{
             ReturnStatement::ReturnStatement(sp<Expression> e)
                 : value(e){
             }
+            ProbeStatement::ProbeStatement(sp<Expression> e)
+                : value(e){
+            }
             AssertStatement::AssertStatement(sp<Expression> e)
                 : value(e){
             }
@@ -162,6 +165,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void ReturnStatement ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void ProbeStatement  ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void AssertStatement ::accept(VisitorForAST& visitor){
@@ -306,6 +312,11 @@ namespace shiranui{
             }
             void PrettyPrinterForAST::visit(syntax::ast::ReturnStatement& ret){
                 os << ind() << "return ";
+                ret.value->accept(*this);
+                os << ";";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::ProbeStatement& ret){
+                os << ind() << "probe ";
                 ret.value->accept(*this);
                 os << ";";
             }

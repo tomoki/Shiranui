@@ -165,6 +165,11 @@ namespace shiranui{
                 ReturnStatement(sp<Expression>);
                 void accept(VisitorForAST&);
             };
+            struct ProbeStatement : Statement{
+                sp<Expression> value;
+                ProbeStatement(sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct AssertStatement : Statement{
                 sp<Expression> value;
                 AssertStatement(sp<Expression>);
@@ -182,7 +187,6 @@ namespace shiranui{
                 explicit IdleFlyLine(sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
-
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
@@ -214,6 +218,7 @@ namespace shiranui{
                 virtual void visit(IfElseExpression&) = 0;
                 virtual void visit(Definement&)       = 0;
                 virtual void visit(ReturnStatement&)  = 0;
+                virtual void visit(ProbeStatement&)   = 0;
                 virtual void visit(AssertStatement&)  = 0;
                 virtual void visit(IfElseStatement&)  = 0;
                 virtual void visit(ForStatement&)     = 0;
@@ -240,6 +245,7 @@ namespace shiranui{
                 void visit(IfElseExpression&);
                 void visit(Definement&);
                 void visit(ReturnStatement&);
+                void visit(ProbeStatement&);
                 void visit(AssertStatement&);
                 void visit(IfElseStatement&);
                 void visit(ForStatement&);

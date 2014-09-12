@@ -148,7 +148,6 @@ namespace shiranui{
                 r.value->accept(*this);
                 os << ")";
             }
-
             // builtin
             void PrettyPrinterForValue::visit(SystemCall&){
                 os << "system_call";

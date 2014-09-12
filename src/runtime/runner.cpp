@@ -412,6 +412,12 @@ void Runner::visit(syntax::ast::ReturnStatement &ret) {
     cur_v = std::make_shared<Return>(cur_v);
     AFTER_VISIT_MACRO(ret);
 }
+void Runner::visit(syntax::ast::ProbeStatement &probe) {
+    BEFORE_VISIT_MACRO(probe);
+    probe.value->accept(*this);
+    // cur_v = std::make_shared<Return>(cur_v);
+    AFTER_VISIT_MACRO(probe);
+}
 void Runner::visit(syntax::ast::AssertStatement &as) {
     BEFORE_VISIT_MACRO(as);
     as.value->accept(*this);

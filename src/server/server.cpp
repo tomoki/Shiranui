@@ -175,11 +175,11 @@ namespace shiranui{
                         std::stringstream out;
                         out << "dive_start -> " << i << std::endl
                             << " but currently running.";
-                        //send_debug_print(out.str(),loadcount);
+                        send_debug_print(out.str(),loadcount);
                     }else{
                         std::stringstream out;
                         out << "dive_start -> " << i;
-                        //send_debug_print(out.str(),loadcount);
+                        send_debug_print(out.str(),loadcount);
                         dive_start(diver_per_flyline[i],
                                 program_per_flyline[i]->flylines[i]);
 
@@ -256,8 +256,6 @@ namespace shiranui{
             Parser<pos_iterator_t> resolver;
             sp<SourceCode> program;
             try{
-                // ok = boost::spirit::qi::phrase_parse(iter,last,resolver,
-                //                                      boost::spirit::qi::space,program);
                 ok = parse(iter,last,resolver,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                 send_syntaxerror(std::distance(first,x.first),
@@ -287,10 +285,10 @@ namespace shiranui{
                 }
                 // TODO: when runtimeerror occured,clean it too.
                 {
+                    // there is no need to store value for toplevel.
                     runtime::infomation::Cleaner c;
                     program->accept(c);
                 }
-
                 for(sp<SourceCode> s : program_per_flyline){
                     runtime::infomation::Cleaner c;
                     if(s != nullptr){

@@ -190,6 +190,13 @@ namespace shiranui{
                     on_success(return_stmt,set_location_info);
                 }
                 {
+                    probe_stmt.name("probe_statement");
+                    probe_stmt = ("probe" > expression)
+                        [qi::_val = qi_make_shared<ast::ProbeStatement>(qi::_1)]
+                                ;
+                    on_success(probe_stmt,set_location_info);
+                }
+                {
                     assert_stmt.name("assert_statement");
                     assert_stmt = ("assert" > expression)
                                  [qi::_val = qi_make_shared<ast::AssertStatement>(qi::_1)]
@@ -228,6 +235,7 @@ namespace shiranui{
                                | block
                                | (return_stmt > ";")
                                | (assert_stmt > ";")
+                               | (probe_stmt > ";")
                                ;
                     on_success(statement,set_location_info);
                 }
@@ -422,6 +430,7 @@ namespace shiranui{
             rule_with_skip<sp<ast::IfElseStatement>()>  ifelse_stmt;
             rule_with_skip<sp<ast::ForStatement>()> for_stmt;
             rule_with_skip<sp<ast::ReturnStatement>()> return_stmt;
+            rule_with_skip<sp<ast::ProbeStatement>()> probe_stmt;
             rule_with_skip<sp<ast::AssertStatement>()> assert_stmt;
 
             rule_with_skip<sp<ast::IfElseExpression>()> ifelse_expr;

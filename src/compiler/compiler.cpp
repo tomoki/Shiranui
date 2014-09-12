@@ -148,6 +148,10 @@ namespace shiranui{
             node.value->accept(*this);
             ss << ")";
         }
+        void Compiler::visit(ProbeStatement& node){
+            ss << "// probe ";
+            node.value->accept(*this);
+        }
         void Compiler::visit(IfElseStatement& node){
             ss << "if(";
             node.pred->accept(*this);

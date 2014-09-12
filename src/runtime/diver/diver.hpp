@@ -65,6 +65,7 @@ namespace shiranui{
                 void visit(syntax::ast::Definement&);
                 void visit(syntax::ast::ReturnStatement&);
                 void visit(syntax::ast::AssertStatement&);
+                void visit(syntax::ast::ProbeStatement&);
                 void visit(syntax::ast::IfElseStatement&);
                 void visit(syntax::ast::ForStatement&);
                 void visit(syntax::ast::Assignment&);
@@ -96,6 +97,7 @@ namespace shiranui{
                 void visit(syntax::ast::Definement&);
                 void visit(syntax::ast::ReturnStatement&);
                 void visit(syntax::ast::AssertStatement&);
+                void visit(syntax::ast::ProbeStatement&);
                 void visit(syntax::ast::IfElseStatement&);
                 void visit(syntax::ast::ForStatement&);
                 void visit(syntax::ast::Assignment&);
