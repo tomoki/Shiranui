@@ -216,6 +216,8 @@ namespace shiranui{
                            [ph::bind(&ast::Block::add_post,*qi::_val,ast::Identifier(""),qi::_1)]
                          | (lit("invariant") > block)
                            [ph::bind(&ast::Block::add_invariant,*qi::_val,qi::_1)]
+                         | flymark
+                           [ph::bind(&ast::Block::add_flymark,*qi::_val,qi::_1)]
                         ) > lit("}");
                     on_success(block,set_location_info);
                 }
@@ -390,6 +392,15 @@ namespace shiranui{
                     on_success(flyline,set_location_info);
                 }
                 {
+                    flymark.name("flymark");
+                    flymark = ("#*" >> expression >> "->" >> ";")
+                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1)]
+                            | ("#*" >> expression >> "->" >> (expression % ",") >> ";")
+                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1)]
+                            ;
+                    on_success(flymark,set_location_info);
+                }
+                {
                     source.name("source");
                     source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
                           > *(statement
@@ -437,6 +448,8 @@ namespace shiranui{
             rule_with_skip<sp<ast::Block>()> block;
             rule_with_skip<sp<ast::Assignment>()> assignment;
             rule_with_skip<sp<ast::FlyLine>()> flyline;
+            rule_with_skip<sp<ast::FlyMark>()> flymark;
+            
             rule_with_skip<sp<ast::Statement>()> statement;
         };
         template<typename IT>

@@ -77,6 +77,7 @@ namespace shiranui{
                 void accept(VisitorForAST&);
             };
 
+            struct FlyMark;
             // pre is unit -> unit
             // post is (type of return value) -> unit
             struct Block : Statement{
@@ -84,12 +85,14 @@ namespace shiranui{
                 std::vector<sp<Block>> pre;
                 std::vector<sp<Block>> post;
                 std::vector<sp<Block>> invariant;
+                std::vector<sp<FlyMark>> flymarks;
                 std::vector<Identifier> post_id;
                 Block();
                 void add_statement(sp<Statement>);
                 void add_pre(sp<Block>);
                 void add_post(Identifier i,sp<Block>);
                 void add_invariant(sp<Block>);
+                void add_flymark(sp<FlyMark>);
                 void accept(VisitorForAST&);
             };
 
@@ -187,6 +190,11 @@ namespace shiranui{
                 explicit IdleFlyLine(sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
+            struct FlyMark : LocationInfo{
+                sp<Expression> left;
+                explicit FlyMark(sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct SourceCode : LocationInfo{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
@@ -225,6 +233,7 @@ namespace shiranui{
                 virtual void visit(Assignment&)       = 0;
                 virtual void visit(TestFlyLine&)      = 0;
                 virtual void visit(IdleFlyLine&)      = 0;
+                virtual void visit(FlyMark&)          = 0;
                 virtual void visit(SourceCode&)       = 0;
             };
             struct PrettyPrinterForAST : VisitorForAST{
@@ -252,6 +261,7 @@ namespace shiranui{
                 void visit(Assignment&);
                 void visit(TestFlyLine&);
                 void visit(IdleFlyLine&);
+                void visit(FlyMark&);
                 void visit(SourceCode&);
                 std::string ind();
             };

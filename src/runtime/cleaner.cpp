@@ -117,6 +117,12 @@ namespace shiranui{
                     node.right->accept(*this);
                 }
             }
+            void Cleaner::visit(FlyMark& node){
+                clear_it(node);
+                if(node.left != nullptr){
+                    node.left->accept(*this);
+                }
+            }
             void Cleaner::visit(SourceCode& node){
                 clear_it(node);
                 for(sp<Statement> s : node.statements){

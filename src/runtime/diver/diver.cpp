@@ -237,6 +237,10 @@ namespace shiranui{
                 if(not in_range(node)) return;
                 throw InternalException(std::make_shared<IdleFlyLine>(node));
             }
+            void SwimFin::visit(FlyMark& node){
+                if(not in_range(node)) return;
+                throw InternalException(std::make_shared<FlyMark>(node));
+            }
             void SwimFin::visit(SourceCode& node){
                 if(not in_range(node)) return;
                 for(sp<Statement> s : node.statements){
@@ -380,6 +384,9 @@ namespace shiranui{
             }
             void Snorkel::visit(IdleFlyLine& node){
                 throw InternalException(std::make_shared<IdleFlyLine>(node));
+            }
+            void Snorkel::visit(FlyMark& node){
+                throw InternalException(std::make_shared<FlyMark>(node));
             }
             void Snorkel::visit(SourceCode& node){
                 for(sp<Statement> s : node.statements){

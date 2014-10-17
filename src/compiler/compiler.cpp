@@ -192,6 +192,9 @@ namespace shiranui{
                 node.right->accept(*this);
             }
         }
+        void Compiler::visit(FlyMark& node){
+            return;
+        }
         void Compiler::visit(SourceCode& node){
             // merge statements and flylines.
             for(size_t si=0,fi=0;si<node.statements.size() or

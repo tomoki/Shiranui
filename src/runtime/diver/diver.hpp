@@ -71,6 +71,7 @@ namespace shiranui{
                 void visit(syntax::ast::Assignment&);
                 void visit(syntax::ast::TestFlyLine&);
                 void visit(syntax::ast::IdleFlyLine&);
+                void visit(syntax::ast::FlyMark&);
                 void visit(syntax::ast::SourceCode&);
 
                 template<typename T>
@@ -103,6 +104,7 @@ namespace shiranui{
                 void visit(syntax::ast::Assignment&);
                 void visit(syntax::ast::TestFlyLine&);
                 void visit(syntax::ast::IdleFlyLine&);
+                void visit(syntax::ast::FlyMark&);
                 void visit(syntax::ast::SourceCode&);
             };
         }

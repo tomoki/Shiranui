@@ -42,6 +42,9 @@ namespace shiranui{
             void Block::add_invariant(sp<Block> i){
                 invariant.push_back(i);
             }
+            void Block::add_flymark(sp<FlyMark> mark){
+                flymarks.push_back(mark);
+            }
             // Function
             Function::Function(std::vector<Identifier> params,sp<Block> ss)
                 : parameters(params),body(ss){
@@ -102,8 +105,10 @@ namespace shiranui{
             IdleFlyLine::IdleFlyLine(sp<Expression> l,sp<Expression> r)
                 : left(l),right(r){
             }
-            // pre,post,loop_invariant
 
+            FlyMark::FlyMark(sp<Expression> l)
+                : left(l){
+            }
             // SourceCode
             SourceCode::SourceCode(){
             }
@@ -186,6 +191,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void IdleFlyLine     ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void FlyMark         ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void SourceCode      ::accept(VisitorForAST& visitor){
@@ -348,6 +356,11 @@ namespace shiranui{
                 if(l.right != nullptr){
                     l.right->accept(*this);
                 }
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::FlyMark& m){
+                os << ind() << "#* ";
+                m.left->accept(*this);
+                os << " -> ;";
             }
 
             void PrettyPrinterForAST::visit(syntax::ast::SourceCode& sc){
