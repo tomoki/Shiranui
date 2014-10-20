@@ -278,6 +278,9 @@ namespace shiranui{
             Snorkel::Snorkel(int c) : 
                 call_under(c){
             }
+            bool Snorkel::is_used_statement(Statement& s){
+                return return_value(s,call_under).second != nullptr;
+            }
             void Snorkel::visit(Identifier& node){
                 throw InternalException(std::make_shared<Identifier>(node));
             }
@@ -308,6 +311,10 @@ namespace shiranui{
                 }
             }
             void Snorkel::visit(Block& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 for(sp<Statement> s : node.statements){
                     s->accept(*this);
                 }
@@ -337,46 +344,58 @@ namespace shiranui{
                 node.ife->accept(*this);
                 node.elsee->accept(*this);
             }
+
             void Snorkel::visit(Definement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.value->accept(*this);
             }
             void Snorkel::visit(ReturnStatement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.value->accept(*this);
             }
             void Snorkel::visit(ProbeStatement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.value->accept(*this);
             }
             void Snorkel::visit(AssertStatement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.value->accept(*this);
             }
             void Snorkel::visit(IfElseStatement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.pred->accept(*this);
                 node.ifblock->accept(*this);
                 node.elseblock->accept(*this);
-                if(return_value(node,call_under).second != nullptr){
-                    auto if_p = return_value(*(node.ifblock),call_under);
-                    auto else_p = return_value(*(node.elseblock),call_under);
-                    if(if_p.second == nullptr and else_p.second == nullptr){
-                        //error.
-                    }else{
-                        bool if_called = (if_p.second != nullptr
-                                and else_p.second != nullptr
-                                and if_p.first < else_p.first)
-                            or (else_p.second == nullptr);
-                        if(if_called){
-                            message.add_strike(*(node.elseblock));
-                        }else{
-                            message.add_strike(*(node.ifblock));
-                        }
-                    }
-                }
             }
             // should return forstatement?
             void Snorkel::visit(ForStatement& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.loop_exp->accept(*this);
                 node.block->accept(*this);
             }
             void Snorkel::visit(Assignment& node){
+                if(not is_used_statement(node)){
+                    message.add_strike(node);
+                    return;
+                }
                 node.value->accept(*this);
             }
             void Snorkel::visit(TestFlyLine& node){

@@ -83,6 +83,7 @@ namespace shiranui{
                 int call_under;
                 DivingMessage message;
                 Snorkel(int);
+                bool is_used_statement(syntax::ast::Statement& s);
                 void visit(syntax::ast::Identifier&);
                 void visit(syntax::ast::Variable&);
                 void visit(syntax::ast::Number&);
