@@ -23,14 +23,16 @@ namespace shiranui{
         const std::string COMMAND_DIVE_STRIKE = "dive_strike";
         const std::string COMMAND_DIVE_EXPLORE = "dive_explore";
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
-
+        const int FLYLINE_LOCK_FREE = -1;
         int how_many_lines(const std::string&);
+
 
         struct PipeServer{
             std::istream& is;
             std::ostream& os;
             boost::mutex os_lock;
             std::string source;
+            int flyline_lock;
 
             boost::thread main_thread;
             //boost::mutex main_thread_waiting_mutex;

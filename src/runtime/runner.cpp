@@ -497,6 +497,7 @@ namespace shiranui {
 
         void Runner::visit(syntax::ast::FlyMark& mark) {
             BEFORE_VISIT_MACRO(mark);
+            mark.left->accept(*this); // save runtimevalue
             AFTER_VISIT_MACRO(mark);
         }
 

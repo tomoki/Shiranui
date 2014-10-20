@@ -6,7 +6,7 @@
 namespace shiranui{
     namespace server{
         PipeServer::PipeServer(std::istream& i,std::ostream& o)
-            : is(i),os(o){
+            : is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE){
         }
 
         void PipeServer::start(){
@@ -182,7 +182,7 @@ namespace shiranui{
                         send_debug_print(out.str(),loadcount);
                         dive_start(diver_per_flyline[i],
                                 program_per_flyline[i]->flylines[i]);
-
+                        flyline_lock = i;
                     }
                     return;
                 }
@@ -195,9 +195,6 @@ namespace shiranui{
                 out << "cannot find where to dive." << std::endl;
                 send_debug_print(out.str(),loadcount);
             }
-
-            //boost::unique_lock<boost::mutex> lock(main_thread_end_mutex);
-            //main_thread_waiting.wait(lock);
         }
         // TODO: should treat point.(if left is list...)
         void PipeServer::dive_start(sp<runtime::diver::Diver> diver,sp<syntax::ast::FlyLine> sf){
@@ -344,6 +341,9 @@ namespace shiranui{
                 if(l != nullptr) run_idleflyline(r,l,loadcount);
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
+            if(flyline_index == flyline_lock){
+                dive_start(diver_per_flyline[flyline_index],sf);
+            }
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;
             std::stringstream ts;
