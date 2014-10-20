@@ -72,6 +72,11 @@ namespace shiranui{
                << value;
             return send_command(COMMAND_IDLE_FLYLINE,ss.str(),loadcount);
         }
+        void PipeServer::send_lock_flyline(const int start_point,const int end_point,
+                                           const int loadcount){
+            return send_command_with_two_points(COMMAND_LOCK_FLYLINE,
+                                                start_point,end_point,loadcount);
+        }
 
         template<typename T>
         void PipeServer::send_debug_print(const T& value,const int loadcount){
@@ -181,7 +186,8 @@ namespace shiranui{
                         out << "dive_start -> " << i;
                         send_debug_print(out.str(),loadcount);
                         dive_start(diver_per_flyline[i],
-                                program_per_flyline[i]->flylines[i]);
+                                   program_per_flyline[i]->flylines[i],
+                                   loadcount);
                         flyline_lock = i;
                     }
                     return;
@@ -197,7 +203,9 @@ namespace shiranui{
             }
         }
         // TODO: should treat point.(if left is list...)
-        void PipeServer::dive_start(sp<runtime::diver::Diver> diver,sp<syntax::ast::FlyLine> sf){
+        void PipeServer::dive_start(sp<runtime::diver::Diver> diver,
+                                    sp<syntax::ast::FlyLine> sf,
+                                    const int loadcount){
             using namespace shiranui::runtime::diver;
             using namespace shiranui::syntax::ast;
             current_diver = diver;
@@ -217,6 +225,11 @@ namespace shiranui{
                     //send_debug_print(ms.str(),-1);
                     send_diving_message(source,ms);
                 }
+            }
+            {
+                int start_point = sf->point;
+                int end_point = start_point + sf->length;
+                send_lock_flyline(start_point,end_point,loadcount);
             }
         }
 
@@ -342,7 +355,7 @@ namespace shiranui{
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
             if(flyline_index == flyline_lock){
-                dive_start(diver_per_flyline[flyline_index],sf);
+                dive_start(diver_per_flyline[flyline_index],sf,loadcount);
             }
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;

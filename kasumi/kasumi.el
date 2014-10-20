@@ -51,7 +51,8 @@
   "dive_strike")
 (defconst kasumi-command-dive-clear
   "dive_clear")
-
+(defconst kasumi-command-lock-flyline
+  "lock_flyline")
 
 ;; getline needs newline("\n")
 (defun buffer-string-no-properties ()
@@ -164,6 +165,8 @@
            (kasumi-remove-all-dive-overlay))
           ((string= command kasumi-command-dive-explore)
            (kasumi-receive-dive-explore value))
+          ((string= command kasumi-command-lock-flyline)
+           (kasumi-receive-lock-flyline value))
           ((not correct-load-count)
            (kasumi-debug-print (format "loadcount %d is old.ignore it." lc)))
           (t (message "unknown command:%s " command))
@@ -301,6 +304,11 @@
         (kasumi-put-idleflyline (kasumi-string-to-fix-point (nth 0 target))
                                 (kasumi-string-to-fix-point (nth 1 target)))))))
 
+(defun kasumi-receive-lock-flyline (value)
+  (let ((beg-end-list (split-string value " ")))
+    (kasumi-put-lock-flyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+    ))
 
 (defun kasumi-send-change-sub  (change)
   (let ((point         (number-to-string (nth 0 change)))
@@ -349,6 +357,11 @@
      :underline t :inherit error))
     "Used for flyline that run")
 
+(defface kasumi-lock-flyline-face
+  '((t :weight bold)
+    )
+  "lock flyline")
+
 (defface kasumi-dive-strike-face
   '((t :strike-through t)
     )
@@ -388,6 +401,8 @@
 (defun kasumi-put-dive-strike (beg end)
   (kasumi-put-dive-face 'kasumi-dive-strike-face beg end))
 
+(defun kasumi-put-lock-flyline (beg end)
+  (kasumi-put-dive-face 'kasumi-lock-flyline-face beg end))
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
 
@@ -426,6 +441,7 @@
                          (number-to-string (kasumi-orig-point (point))))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
+
 
 (defun kasumi-surface ()
   (interactive)

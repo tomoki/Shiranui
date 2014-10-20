@@ -23,6 +23,7 @@ namespace shiranui{
         const std::string COMMAND_DIVE_STRIKE = "dive_strike";
         const std::string COMMAND_DIVE_EXPLORE = "dive_explore";
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
+        const std::string COMMAND_LOCK_FLYLINE = "lock_flyline";
         const int FLYLINE_LOCK_FREE = -1;
         int how_many_lines(const std::string&);
 
@@ -52,6 +53,7 @@ namespace shiranui{
 
             void send_syntaxerror(const int,const int,const int);
             void send_runtimeerror(const int,const int,const int);
+            void send_lock_flyline(const int,const int,const int);
             void send_good_flyline(const int,const int,const int,
                                    const int,const int);
             void send_bad_flyline(const int,const int,const int,
@@ -72,7 +74,8 @@ namespace shiranui{
             void on_dive_command(const std::string&,const int);
             void on_surface_command(const std::string&,const int);
             void exec(std::string,const int);
-            void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>);
+            void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
+                            const int);
             void dive(sp<runtime::diver::Diver>,int,const int);
             void surface(sp<runtime::diver::Diver>);
             void send_diving_message(const std::string& source,
