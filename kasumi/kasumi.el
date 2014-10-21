@@ -58,6 +58,13 @@
 (defun buffer-string-no-properties ()
   (buffer-substring-no-properties (point-min) (point-max)))
 
+
+(defun filter (condp lst)
+  (delq nil
+        (mapcar (lambda (x) (and (funcall condp x) x)) lst)))
+(defun count-if (condp lst)
+  (length (filter condp lst)))
+
 (defun count-line-string (s)
   (if (= (length s) 0)
       0
@@ -83,6 +90,13 @@
   (take-nth-sub l n '()))
 (defun string-join (lis sep)
   (mapconcat 'identity lis sep))
+(defun string-rstrip (s)
+  (replace-regexp-in-string "\\'[ \r\n\t]*" "" s))
+(defun string-lstrip (s)
+  (replace-regexp-in-string "[ \r\n\t]*\\'" "" s))
+(defun string-strip (s)
+  (string-lstrip (string-rstrip s)))
+
 
 ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Asynchronous-Processes.html#Asynchronous-Processes
 (defun kasumi-start-shiranui (program)
@@ -95,8 +109,7 @@
   (let* ((lines (split-string str "\n"))
          (first-line (split-string (car lines) " "))
          (command-line-length (string-to-number (car first-line)))
-         ;; (loadcount (string-to-number (cadr first-line)))
-         (loadcount (cadr first-line))
+         (loadcount (nth 1 first-line))
          (command (string-join (cddr first-line) " "))
          (value-and-rest (take-nth (cdr lines) command-line-length)))
     (list command loadcount (string-join (car value-and-rest) "\n")
@@ -108,9 +121,7 @@
       '()
     (let ((command-loadcount-value-rest (kasumi-parse-sub str)))
       (cons (car (take-nth command-loadcount-value-rest 3))
-            (kasumi-parse (cadddr command-loadcount-value-rest))))))
-      ;; (cons (cons (car command-value-rest) (cadr command-value-rest))
-      ;;       (kasumi-parse (caddr command-value-rest))))))
+            (kasumi-parse (nth 3 command-loadcount-value-rest))))))
 
 (defun kasumi-debug-print (str)
   (let ((prev (current-buffer)))
@@ -143,9 +154,9 @@
 
 (defun kasumi-process-pair (list-command-loadcount-value)
   (let* ((command (car list-command-loadcount-value))
-         (lc      (string-to-number (cadr list-command-loadcount-value)))
+         (lc      (string-to-number (nth 1 list-command-loadcount-value)))
          (correct-load-count (= lc load-count))
-         (value   (caddr list-command-loadcount-value))
+         (value   (nth 2 list-command-loadcount-value))
         )
     (cond ((string= command kasumi-command-syntaxerror)
            (kasumi-receive-syntaxerror value))
@@ -441,7 +452,6 @@
                          (number-to-string (kasumi-orig-point (point))))
     ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
-
 
 (defun kasumi-surface ()
   (interactive)
