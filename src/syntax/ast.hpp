@@ -200,6 +200,7 @@ namespace shiranui{
                 std::vector<sp<FlyLine>> flylines;
                 explicit SourceCode(std::vector<sp<Statement>>);
                 SourceCode();
+                ~SourceCode();
                 void add_statement(sp<Statement>);
                 void add_flyline(sp<FlyLine>);
                 void accept(VisitorForAST&);

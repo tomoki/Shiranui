@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "../runtime/cleaner.hpp"
 
 namespace shiranui{
     namespace syntax{
@@ -111,6 +112,10 @@ namespace shiranui{
             }
             // SourceCode
             SourceCode::SourceCode(){
+            }
+            SourceCode::~SourceCode(){
+                runtime::infomation::Cleaner c;
+                accept(c);
             }
             SourceCode::SourceCode(std::vector<sp<Statement>> ss)
                 : statements(ss){

@@ -1,5 +1,4 @@
 #include "server.hpp"
-#include "../runtime/cleaner.hpp"
 #include <sstream>
 #include <chrono>
 
@@ -292,18 +291,6 @@ namespace shiranui{
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point,loadcount);
                     return;
-                }
-                // TODO: when runtimeerror occured,clean it too.
-                {
-                    // there is no need to store value for toplevel.
-                    runtime::infomation::Cleaner c;
-                    program->accept(c);
-                }
-                for(sp<SourceCode> s : program_per_flyline){
-                    runtime::infomation::Cleaner c;
-                    if(s != nullptr){
-                        s->accept(c);
-                    }
                 }
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
                 diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
