@@ -133,7 +133,9 @@ namespace shiranui{
             void Cleaner::clear_it(T& t){
                 ValueCleaner c;
                 for(auto p : t.runtime_info.return_value){
-                    p.second->accept(c);
+                    if(p.second != nullptr){
+                        p.second->accept(c);
+                    }
                 }
                 t.runtime_info.clear();
             }

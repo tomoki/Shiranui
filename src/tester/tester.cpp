@@ -382,6 +382,34 @@ string long_code =
             ps.on_dive_command("3",1);
             wait(100);
         }
+        void run_bad_dive_test(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string tosend = "#- hoge() -> 3;\n"
+                            "let hoge = \\(){return n;};";
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(100);
+            ps.on_dive_command("2",1);
+            wait(100);
+            for(int i=0;i<3;i++){
+                ps.on_change_command(make_change(tosend.length()-1+i,0,"\n"),2+i);
+                wait(10);
+            }
+        }
+        void run_good_dive_test(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string tosend = "#- hoge() -> 3;\n"
+                            "let hoge = \\(){return 5;};";
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(100);
+            ps.on_dive_command("2",1);
+            wait(100);
+            for(int i=0;i<3;i++){
+                ps.on_change_command(make_change(tosend.length()-1+i,0,"\n"),2+i);
+                wait(10);
+            }
+        }
         void run_dive_tri(){
             stringstream in,out;
             PipeServer ps(in,cerr);
@@ -423,13 +451,15 @@ string long_code =
             run_program(str);
         }
         void run_test(){
-            //run_memory_test();
+            // run_memory_test();
             //parser_time_test();
             //run_dive_test();
             //run_bad_program();
             //run_zero_div();
             // run_dive_tri();
             //run_plus();
+            // run_good_dive_test();
+            //run_bad_dive_test();
 
             // string tosend = "#- fact(2) -> 2;"
             //     "let fact = \\(n){"
