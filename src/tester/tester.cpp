@@ -442,6 +442,26 @@ string long_code =
                               "let unit = h();\n";
             run_program(str);
         }
+        void run_flymark(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string tosend = "#- tri(5) -> 9;\n"
+                            "let tri = \\(n){\n"
+                            "    #* n -> ;\n"
+                            "    if n = 0 or n = 1 or n = 2 {\n"
+                            "        return 1;\n"
+                            "    } else {\n"
+                            "        return tri(n-1) + tri(n-2) + tri(n-3);\n"
+                            "    }\n"
+                            "};";
+
+            run_program(tosend);
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(100);
+            cerr << "first" << endl;
+            ps.on_dive_command("3",1);
+            wait(100);
+        }
         void run_zero_div(){
             std::string str = "let a = 0;let h = 1 / a;";
             run_program(str);
@@ -460,6 +480,7 @@ string long_code =
             //run_plus();
             // run_good_dive_test();
             //run_bad_dive_test();
+            run_flymark();
 
             // string tosend = "#- fact(2) -> 2;"
             //     "let fact = \\(n){"

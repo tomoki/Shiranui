@@ -396,7 +396,7 @@ namespace shiranui{
                     flymark = ("#*" >> expression >> "->" >> ";")
                                 [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1)]
                             | ("#*" >> expression >> "->" >> (expression % ",") >> ";")
-                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1)]
+                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1,qi::_2)]
                             ;
                     on_success(flymark,set_location_info);
                 }

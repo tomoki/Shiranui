@@ -11,6 +11,7 @@ namespace shiranui{
             const std::string STRIKE = "strike";
             const std::string EXPLORE = "explore";
             const std::string ERROR = "error";
+            const std::string FLYMARK_RESULT = "flymark_result";
             struct DivingMessage{
                 std::string cache;
                 // std::string str();
@@ -40,6 +41,24 @@ namespace shiranui{
                     std::stringstream ss;
                     ss << cache << ERROR << std::endl
                        << t.point << " " << t.length << std::endl
+                       << what << std::endl;
+                    cache = ss.str();
+                    return *this;
+                }
+                DivingMessage add_flymark_result(syntax::ast::FlyMark& t,const std::string& what){
+                    std::stringstream ss;
+                    int start_point = t.point;
+                    int end_point = t.point + t.length;
+                    int insert_point = end_point - 1;
+                    int remove_length = 0;
+                    if(t.right.size() != 0){
+                        insert_point = t.right[0]->point;
+                        remove_length = (t.right.back()->point + t.right.back()->length)
+                                        - t.right[0]->point;
+                    }
+                    ss << cache << FLYMARK_RESULT << std::endl
+                       << start_point << " " << t.length << std::endl
+                       << insert_point << " " << remove_length << std::endl
                        << what << std::endl;
                     cache = ss.str();
                     return *this;

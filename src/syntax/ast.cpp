@@ -110,6 +110,9 @@ namespace shiranui{
             FlyMark::FlyMark(sp<Expression> l)
                 : left(l){
             }
+            FlyMark::FlyMark(sp<Expression> l,std::vector<sp<Expression>> r)
+                : left(l),right(r){
+            }
             // SourceCode
             SourceCode::SourceCode(){
             }

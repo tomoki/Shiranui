@@ -24,8 +24,7 @@ namespace shiranui{
         const std::string COMMAND_DIVE_EXPLORE = "dive_explore";
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
         const std::string COMMAND_LOCK_FLYLINE = "lock_flyline";
-        const std::string COMMAND_FLYMARK = "flymark";
-        const std::string COMMAND_FLYMARK_LOCATION = "flymark";
+        const std::string COMMAND_FLYMARK = "flymark_result";
         const int FLYLINE_LOCK_FREE = -1;
         int how_many_lines(const std::string&);
 
@@ -62,13 +61,16 @@ namespace shiranui{
                                   const int,const std::string&,const int);
             void send_idle_flyline(const int,const int,const int,
                                    const int,const std::string&,const int);
-            void send_flymark(const int,const int,const int,
-                              const int,const std::string&,const int);
+
+            // void send_flymark(const int,const int,const int,
+            //                   const int,const std::string&,const int);
 
             template<typename T>
             void send_debug_print(const T&,const int);
             void send_dive_strike(const int,const int,const int);
             void send_dive_explore(const int,const int,const std::string&,const int);
+            void send_dive_flymark_result(const int,const int,const int,
+                                          const int,const std::string&,const int);
             void send_dive_clear(const int);
 
             void receive(); // run as thread.
@@ -80,9 +82,8 @@ namespace shiranui{
             void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
                             sp<syntax::ast::SourceCode>,const int);
             void dive(sp<runtime::diver::Diver>,int,const int);
-            void surface(sp<runtime::diver::Diver>);
-            void send_diving_message(const std::string& source,
-                                     runtime::diver::DivingMessage message);
+            void surface(sp<runtime::diver::Diver>,int);
+            void send_diving_message(runtime::diver::DivingMessage,int);
             void run_flyline(std::string,int,const int);
             void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);
             void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>,const int);

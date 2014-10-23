@@ -71,15 +71,7 @@ namespace shiranui{
                << value;
             return send_command(COMMAND_IDLE_FLYLINE,ss.str(),loadcount);
         }
-        void PipeServer::send_flymark(const int start_point,const int end_point,
-                                      const int insert_point,const int remove_length,
-                                      const std::string& value,const int loadcount){
-            std::stringstream ss;
-            ss << start_point << " " << end_point << std::endl
-               << insert_point << " " << remove_length << std::endl
-               << value;
-            return send_command(COMMAND_FLYMARK,ss.str(),loadcount);
-        }
+
         void PipeServer::send_lock_flyline(const int start_point,const int end_point,
                                            const int loadcount){
             return send_command_with_two_points(COMMAND_LOCK_FLYLINE,
@@ -105,7 +97,15 @@ namespace shiranui{
                << what;
             return send_command(COMMAND_DIVE_EXPLORE,ss.str(),loadcount);
         }
-
+        void PipeServer::send_dive_flymark_result(const int start_point,const int end_point,
+                                      const int insert_point,const int remove_length,
+                                      const std::string& value,const int loadcount){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl
+               << insert_point << " " << remove_length << std::endl
+               << value;
+            return send_command(COMMAND_FLYMARK,ss.str(),loadcount);
+        }
         void PipeServer::send_dive_clear(const int loadcount){
             return send_command(COMMAND_DIVE_CLEAR,"",loadcount);
         }
@@ -191,11 +191,11 @@ namespace shiranui{
                         std::stringstream out;
                         out << "dive_start -> " << i << std::endl
                             << " but currently running.";
-                        send_debug_print(out.str(),loadcount);
+                        // send_debug_print(out.str(),loadcount);
                     }else{
                         std::stringstream out;
                         out << "dive_start -> " << i;
-                        send_debug_print(out.str(),loadcount);
+                        // send_debug_print(out.str(),loadcount);
                         dive_start(divers[i],
                                    programs[i]->flylines[i],
                                    programs[i],loadcount);
@@ -225,17 +225,17 @@ namespace shiranui{
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left);
-                    //send_debug_print(ms.str(),-1);
-                    send_diving_message(source,ms);
+                    DivingMessage ms = diver->scan_flymark(*source_ast);
+                    ms = ms + diver->dive(l->left);
+                    send_diving_message(ms,loadcount);
                 }
             }
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->dive(l->left);
-                    //send_debug_print(ms.str(),-1);
-                    send_diving_message(source,ms);
+                    DivingMessage ms = diver->scan_flymark(*source_ast);
+                    ms = ms + diver->dive(l->left);
+                    send_diving_message(ms,loadcount);
                 }
             }
             {
@@ -248,20 +248,20 @@ namespace shiranui{
         void PipeServer::dive(sp<runtime::diver::Diver> diver,int point,const int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->dive(point);
-            send_diving_message(source,ms);
+            send_diving_message(ms,loadcount);
         }
         void PipeServer::on_surface_command(const std::string&,const int loadcount){
             // value has nothing.
             if(current_diver != nullptr){
-                surface(current_diver);
+                surface(current_diver,loadcount);
             }else{
             }
         }
         // undo for diver.
-        void PipeServer::surface(sp<runtime::diver::Diver> diver){
+        void PipeServer::surface(sp<runtime::diver::Diver> diver,int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->surface();
-            send_diving_message(source,ms);
+            send_diving_message(ms,loadcount);
         }
 
         void PipeServer::exec(std::string source,const int loadcount){
@@ -448,8 +448,8 @@ namespace shiranui{
             run_idleflyline_sub(left_str);
         }
 
-        void PipeServer::send_diving_message(const std::string&,
-                                             runtime::diver::DivingMessage message){
+        void PipeServer::send_diving_message(runtime::diver::DivingMessage message,
+                                             int loadcount){
             using namespace runtime::diver;
             std::stringstream ss(message.str());
             send_dive_clear(-1);
@@ -459,7 +459,7 @@ namespace shiranui{
                     int start_point,length;
                     ss >> start_point >> length;
                     int end_point = start_point + length;
-                    send_dive_strike(start_point,end_point,-1);
+                    send_dive_strike(start_point,end_point,loadcount);
                 }else if(command == EXPLORE){
                     int start_point,length;
                     ss >> start_point >> length;
@@ -467,7 +467,7 @@ namespace shiranui{
                     std::string value;
                     ss.ignore();
                     std::getline(ss,value);
-                    send_dive_explore(start_point,end_point,value,-1);
+                    send_dive_explore(start_point,end_point,value,loadcount);
                 }else if(command == ERROR){
                     int start_point,length;
                     std::string what;
@@ -478,7 +478,20 @@ namespace shiranui{
                     std::stringstream out;
                     out << "ERROR: " << what << " (" << start_point 
                                      << "," << start_point + length << ")";
-                    send_debug_print(out.str(),-1);
+                    send_debug_print(out.str(),loadcount);
+                }else if(command == FLYMARK_RESULT){
+                    int start_point,end_point,length;
+                    int insert_point,remove_length;
+                    std::string what;
+                    ss >> start_point >> length;
+                    end_point = start_point + length;
+                    ss.ignore();
+                    ss >> insert_point >> remove_length;
+                    ss.ignore();
+                    std::getline(ss,what);
+                    //TODO: Add loadcount here.
+                    send_dive_flymark_result(start_point,end_point,insert_point,
+                                             remove_length,what,loadcount);
                 }
             }
         }

@@ -1,4 +1,7 @@
 #include "diver.hpp"
+#include "swimfin.hpp"
+#include "snorkel.hpp"
+#include "harpoon.hpp"
 #include "../runner.hpp"
 #include <sstream>
 
@@ -69,6 +72,9 @@ namespace shiranui{
                 return message;
             }
 
+            DivingMessage Diver::scan_flymark(syntax::ast::SourceCode& source){
+                return use_harpoon(source);
+            }
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
                 return use_snorkel(block,call_under);
             }

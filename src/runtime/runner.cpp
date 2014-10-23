@@ -160,17 +160,36 @@ namespace shiranui {
             sp<Environment> before = cur_e;
             sp<Environment> inner = std::make_shared<Environment>(cur_e);
             cur_e = inner;
-            for (sp<shiranui::syntax::ast::Block> f : block.pre) {
+            for (auto f : block.pre) {
                 f->accept(*this);
             }
-            for (sp<shiranui::syntax::ast::Block> f : block.invariant) {
+            for (auto f : block.invariant) {
                 f->accept(*this);
             }
-            for (auto &st : block.statements) {
-                st->accept(*this);
-                sp<Return> r = std::dynamic_pointer_cast<Return>(cur_v);
-                if (r != nullptr) {
-                    break;
+            for(size_t s=0,f=0;s<block.statements.size()
+                            or f<block.flymarks.size();){
+                if(s == block.statements.size()){
+                    block.flymarks[f]->accept(*this);
+                    f++;continue;
+                }
+                if(f == block.flymarks.size()){
+                    block.statements[s]->accept(*this);
+                    sp<Return> r = std::dynamic_pointer_cast<Return>(cur_v);
+                    if (r != nullptr) {
+                        break;
+                    }
+                    s++;continue;
+                }
+                if(block.statements[s]->point < block.flymarks[f]->point){
+                    block.statements[s]->accept(*this);
+                    sp<Return> r = std::dynamic_pointer_cast<Return>(cur_v);
+                    if (r != nullptr) {
+                        break;
+                    }
+                    s++;continue;
+                }else{
+                    block.flymarks[f]->accept(*this);
+                    f++;continue;
                 }
             }
 

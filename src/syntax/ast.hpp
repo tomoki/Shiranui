@@ -192,7 +192,9 @@ namespace shiranui{
             };
             struct FlyMark : LocationInfo{
                 sp<Expression> left;
+                std::vector<sp<Expression>> right;
                 explicit FlyMark(sp<Expression>);
+                FlyMark(sp<Expression>,std::vector<sp<Expression>>);
                 void accept(VisitorForAST&);
             };
             struct SourceCode : LocationInfo{

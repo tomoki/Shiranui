@@ -2,8 +2,6 @@
 #define DIVER_HPP_INCLUDED
 
 #include "diving_message.hpp"
-#include "swimfin.hpp"
-#include "snorkel.hpp"
 #include "../../syntax/ast.hpp"
 #include <string>
 #include <stack>
@@ -22,11 +20,11 @@ namespace shiranui{
                 DivingMessage dive(int);
                 DivingMessage dive(sp<syntax::ast::Expression>);
                 DivingMessage dive(syntax::ast::FunctionCall&);
-
                 DivingMessage dive(sp<syntax::ast::Expression>,int);
                 DivingMessage dive(syntax::ast::FunctionCall&,int);
                 DivingMessage see(syntax::ast::Block&,int);
                 DivingMessage surface(); // undo
+                DivingMessage scan_flymark(syntax::ast::SourceCode&);
             };
         }
     }
