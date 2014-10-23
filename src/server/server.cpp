@@ -71,6 +71,15 @@ namespace shiranui{
                << value;
             return send_command(COMMAND_IDLE_FLYLINE,ss.str(),loadcount);
         }
+        void PipeServer::send_flymark(const int start_point,const int end_point,
+                                      const int insert_point,const int remove_length,
+                                      const std::string& value,const int loadcount){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl
+               << insert_point << " " << remove_length << std::endl
+               << value;
+            return send_command(COMMAND_FLYMARK,ss.str(),loadcount);
+        }
         void PipeServer::send_lock_flyline(const int start_point,const int end_point,
                                            const int loadcount){
             return send_command_with_two_points(COMMAND_LOCK_FLYLINE,
@@ -169,13 +178,16 @@ namespace shiranui{
         void PipeServer::on_dive_command(const std::string& value,const int loadcount){
             std::stringstream ss(value);
             int point;ss >> point;
+            // FIXME:temporary
+            auto programs = program_per_flyline;
+            auto divers = diver_per_flyline;
             // TODO: check main_thread,flyline_threads condition.
-            for(int i=0;i<static_cast<int>(program_per_flyline.size());i++){
-                int start_point = program_per_flyline[i]->flylines[i]->point;
-                int end_point = start_point + program_per_flyline[i]->flylines[i]->length;
+            for(int i=0;i<static_cast<int>(programs.size());i++){
+                int start_point = programs[i]->flylines[i]->point;
+                int end_point = start_point + programs[i]->flylines[i]->length;
                 if(start_point <= point and point <= end_point){
                     // currently running
-                    if(diver_per_flyline[i] == nullptr){
+                    if(divers[i] == nullptr){
                         std::stringstream out;
                         out << "dive_start -> " << i << std::endl
                             << " but currently running.";
@@ -184,9 +196,9 @@ namespace shiranui{
                         std::stringstream out;
                         out << "dive_start -> " << i;
                         send_debug_print(out.str(),loadcount);
-                        dive_start(diver_per_flyline[i],
-                                   program_per_flyline[i]->flylines[i],
-                                   loadcount);
+                        dive_start(divers[i],
+                                   programs[i]->flylines[i],
+                                   programs[i],loadcount);
                         flyline_lock = i;
                     }
                     return;
@@ -204,6 +216,7 @@ namespace shiranui{
         // TODO: should treat point.(if left is list...)
         void PipeServer::dive_start(sp<runtime::diver::Diver> diver,
                                     sp<syntax::ast::FlyLine> sf,
+                                    sp<syntax::ast::SourceCode> source_ast,
                                     const int loadcount){
             using namespace shiranui::runtime::diver;
             using namespace shiranui::syntax::ast;
@@ -271,7 +284,6 @@ namespace shiranui{
                                  std::distance(first,x.last),loadcount);
                 return;
             }
-
             if(ok and iter == last){
                 Runner r(true);
                 try{
@@ -342,7 +354,8 @@ namespace shiranui{
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
             if(flyline_index == flyline_lock){
-                dive_start(diver_per_flyline[flyline_index],sf,loadcount);
+                dive_start(diver_per_flyline[flyline_index],sf,
+                           program,loadcount);
             }
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;
