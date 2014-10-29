@@ -71,6 +71,10 @@ namespace shiranui{
                 clear_it(node);
                 node.value->accept(*this);
             }
+            void Cleaner::visit(ExpressionStatement& node){
+                clear_it(node);
+                node.exp->accept(*this);
+            }
             void Cleaner::visit(ReturnStatement& node){
                 clear_it(node);
                 node.value->accept(*this);

@@ -66,6 +66,9 @@ namespace shiranui{
                 void visit(syntax::ast::Definement& node){
                     node.value->accept(*this);
                 }
+                void visit(syntax::ast::ExpressionStatement& node){
+                    node.exp->accept(*this);
+                }
                 void visit(syntax::ast::ReturnStatement& node){
                     node.value->accept(*this);
                 }

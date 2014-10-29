@@ -139,6 +139,9 @@ namespace shiranui{
                 }
             }
         }
+        void Compiler::visit(ExpressionStatement& node){
+            node.exp->accept(*this);
+        }
         void Compiler::visit(ReturnStatement& node){
             ss << "return ";
             node.value->accept(*this);

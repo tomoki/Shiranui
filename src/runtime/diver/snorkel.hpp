@@ -102,6 +102,13 @@ namespace shiranui{
                     }
                     node.value->accept(*this);
                 }
+                void visit(syntax::ast::ExpressionStatement& node){
+                    if(not is_used_statement(node)){
+                        message.add_strike(node);
+                        return;
+                    }
+                    node.exp->accept(*this);
+                }
                 void visit(syntax::ast::ReturnStatement& node){
                     if(not is_used_statement(node)){
                         message.add_strike(node);

@@ -168,6 +168,13 @@ namespace shiranui{
                     on_success(definement,set_location_info);
                 }
                 {
+                    expression_statement.name("expression_statement");
+                    expression_statement = (qi::eps >> expression)
+                                           [qi::_val = qi_make_shared<ast::ExpressionStatement>(qi::_1)]
+                                         ;
+                    on_success(expression_statement,set_location_info);
+                }
+                {
                     ifelse_stmt.name("if_else_statement");
                     ifelse_stmt= ("if" >> expression >> block >> "else" >> block)
                                   [qi::_val = qi_make_shared<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
@@ -238,6 +245,7 @@ namespace shiranui{
                                | (return_stmt > ";")
                                | (assert_stmt > ";")
                                | (probe_stmt > ";")
+                               | (expression_statement >> ";")
                                ;
                     on_success(statement,set_location_info);
                 }
@@ -438,6 +446,7 @@ namespace shiranui{
             rule_with_skip<sp<ast::Array>()> array;
             rule_with_skip<sp<ast::Function>()> function;
             rule_with_skip<sp<ast::Definement>()> definement;
+            rule_with_skip<sp<ast::ExpressionStatement>()> expression_statement;
             rule_with_skip<sp<ast::IfElseStatement>()>  ifelse_stmt;
             rule_with_skip<sp<ast::ForStatement>()> for_stmt;
             rule_with_skip<sp<ast::ReturnStatement>()> return_stmt;
@@ -449,7 +458,7 @@ namespace shiranui{
             rule_with_skip<sp<ast::Assignment>()> assignment;
             rule_with_skip<sp<ast::FlyLine>()> flyline;
             rule_with_skip<sp<ast::FlyMark>()> flymark;
-            
+
             rule_with_skip<sp<ast::Statement>()> statement;
         };
         template<typename IT>

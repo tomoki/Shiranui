@@ -77,6 +77,9 @@ namespace shiranui{
             Definement::Definement(Identifier i,sp<Expression> e,bool isc)
                 : id(i),value(e),is_const(isc) {}
 
+            ExpressionStatement::ExpressionStatement(sp<Expression> e)
+                : exp(e){
+            }
             // IfElseStatement
             IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock)
                 : pred(e),ifblock(iblock),elseblock(new Block({})){
@@ -177,6 +180,9 @@ namespace shiranui{
             void Definement      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
+            void ExpressionStatement::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
             void ReturnStatement ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
@@ -229,8 +235,11 @@ namespace shiranui{
             }
             void PrettyPrinterForAST::visit(syntax::ast::Enum& enu){
                 os << "[";
-                for(sp<Expression> exp : enu.expressions){
-                    exp->accept(*this);
+                for(size_t i=0;i<enu.expressions.size();i++){
+                    enu.expressions[i]->accept(*this);
+                    if(i != enu.expressions.size()){
+                        os << ",";
+                    }
                 }
                 os << "]";
             }
@@ -324,6 +333,11 @@ namespace shiranui{
                 def.id.accept(*this);
                 os << " = ";
                 def.value->accept(*this);
+                os << ";";
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::ExpressionStatement& es){
+                os << ind();
+                es.exp->accept(*this);
                 os << ";";
             }
             void PrettyPrinterForAST::visit(syntax::ast::ReturnStatement& ret){

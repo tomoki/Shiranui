@@ -91,6 +91,14 @@ namespace shiranui{
                     LengthFunction();
                     sp<Value> run(std::vector<sp<Value>>);
                 };
+                struct SetIndex : BuiltinFunction{
+                    SetIndex();
+                    sp<Value> run(std::vector<sp<Value>>);
+                };
+                struct GetIndex : BuiltinFunction{
+                    GetIndex();
+                    sp<Value> run(std::vector<sp<Value>>);
+                };
             }
             std::string to_reproductive(sp<runtime::value::Value>);
             // will be used in server.

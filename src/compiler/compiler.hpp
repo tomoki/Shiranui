@@ -23,6 +23,7 @@ namespace shiranui{
             void visit(syntax::ast::UnaryOperator&);
             void visit(syntax::ast::IfElseExpression&);
             void visit(syntax::ast::Definement&);
+            void visit(syntax::ast::ExpressionStatement&);
             void visit(syntax::ast::ReturnStatement&);
             void visit(syntax::ast::ProbeStatement&);
             void visit(syntax::ast::AssertStatement&);

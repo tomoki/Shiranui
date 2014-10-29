@@ -36,7 +36,7 @@ namespace shiranui{
                                        sp<ast::Block> b,
                                        sp<environment::Environment> e)
                 : body(b),env(e){
-                    parameters = ps;
+                parameters = ps;
             }
             void UserFunction::accept(VisitorForValue& v){
                 v.visit(*this);
@@ -102,6 +102,38 @@ namespace shiranui{
                     }
                     return nullptr;
                 }
+                SetIndex::SetIndex(){
+                    name = "set";
+                    parameters = {ast::Identifier{"array"},
+                                  ast::Identifier{"index"},
+                                  ast::Identifier{"value"}};
+                }
+                sp<Value> SetIndex::run(std::vector<sp<Value>> args){
+                    if(args.size() != 3) return nullptr;
+                    {
+                        sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
+                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        if(array == nullptr or index == nullptr){
+                            return nullptr;
+                        }
+                        array->value[index->value] = args[2];
+                        return array;
+                    }
+                }
+                GetIndex::GetIndex(){
+                    name = "get";
+                    parameters = {ast::Identifier{"array"},
+                                  ast::Identifier{"index"}};
+                }
+                sp<Value> GetIndex::run(std::vector<sp<Value>> args){
+                    if(args.size() != 2) return nullptr;
+                    sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
+                    sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                    if(array == nullptr or index == nullptr){
+                        return nullptr;
+                    }
+                    return array->value[index->value];
+                }
             }
         }
     }
@@ -112,7 +144,7 @@ namespace shiranui{
         namespace value{
             PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_)
                 : os(os_){
-                }
+            }
             void PrettyPrinterForValue::visit(Integer& i){
                 os << i.value;
             }
@@ -202,47 +234,47 @@ namespace shiranui{
     }
 }
 namespace shiranui {
-namespace runtime {
-namespace value {
-bool check_equality(sp<Value> left, sp<Value> right) {
-    if (typeid(*left) != typeid(*right)) {
-        return false;
-    }
-    {
-        auto l = std::dynamic_pointer_cast<Integer>(left);
-        auto r = std::dynamic_pointer_cast<Integer>(right);
-        if (l != nullptr and r != nullptr) {
-            return l->value == r->value;
-        }
-    }
-    {
-        auto l = std::dynamic_pointer_cast<Boolean>(left);
-        auto r = std::dynamic_pointer_cast<Boolean>(right);
-        if (l != nullptr and r != nullptr) {
-            return l->value == r->value;
-        }
-    }
-    {
-        auto l = std::dynamic_pointer_cast<String>(left);
-        auto r = std::dynamic_pointer_cast<String>(right);
-        if (l != nullptr and r != nullptr) {
-            return l->value == r->value;
-        }
-    }
-    {
-        auto l = std::dynamic_pointer_cast<Array>(left);
-        auto r = std::dynamic_pointer_cast<Array>(right);
-        if (l != nullptr and r != nullptr) {
-            if (l->value.size() != r->value.size()) {
+    namespace runtime {
+        namespace value {
+            bool check_equality(sp<Value> left, sp<Value> right) {
+                if (typeid(*left) != typeid(*right)) {
+                    return false;
+                }
+                {
+                    auto l = std::dynamic_pointer_cast<Integer>(left);
+                    auto r = std::dynamic_pointer_cast<Integer>(right);
+                    if (l != nullptr and r != nullptr) {
+                        return l->value == r->value;
+                    }
+                }
+                {
+                    auto l = std::dynamic_pointer_cast<Boolean>(left);
+                    auto r = std::dynamic_pointer_cast<Boolean>(right);
+                    if (l != nullptr and r != nullptr) {
+                        return l->value == r->value;
+                    }
+                }
+                {
+                    auto l = std::dynamic_pointer_cast<String>(left);
+                    auto r = std::dynamic_pointer_cast<String>(right);
+                    if (l != nullptr and r != nullptr) {
+                        return l->value == r->value;
+                    }
+                }
+                {
+                    auto l = std::dynamic_pointer_cast<Array>(left);
+                    auto r = std::dynamic_pointer_cast<Array>(right);
+                    if (l != nullptr and r != nullptr) {
+                        if (l->value.size() != r->value.size()) {
+                            return false;
+                        } else {
+                            return std::equal(l->value.begin(), l->value.end(),
+                                              r->value.begin(), check_equality);
+                        }
+                    }
+                }
                 return false;
-            } else {
-                return std::equal(l->value.begin(), l->value.end(),
-                                  r->value.begin(), check_equality);
             }
         }
     }
-    return false;
-}
-}
-}
 }

@@ -84,6 +84,10 @@ namespace shiranui{
                     if(not in_range(node)) return;
                     node.value->accept(*this);
                 }
+                void visit(syntax::ast::ExpressionStatement& node){
+                    if(not in_range(node)) return;
+                    node.exp->accept(*this);
+                }
                 void visit(syntax::ast::ReturnStatement& node){
                     if(not in_range(node)) return;
                     node.value->accept(*this);

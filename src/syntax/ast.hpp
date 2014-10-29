@@ -142,6 +142,11 @@ namespace shiranui{
                 Definement(Identifier,sp<Expression>,bool);
                 void accept(VisitorForAST&);
             };
+            struct ExpressionStatement : Statement{
+                sp<Expression> exp;
+                ExpressionStatement(sp<Expression>);
+                void accept(VisitorForAST&);
+            };
             struct IfElseStatement : Statement{
                 sp<Expression> pred;
                 sp<Block> ifblock;
@@ -228,6 +233,7 @@ namespace shiranui{
                 virtual void visit(UnaryOperator&)    = 0;
                 virtual void visit(IfElseExpression&) = 0;
                 virtual void visit(Definement&)       = 0;
+                virtual void visit(ExpressionStatement&) = 0;
                 virtual void visit(ReturnStatement&)  = 0;
                 virtual void visit(ProbeStatement&)   = 0;
                 virtual void visit(AssertStatement&)  = 0;
@@ -256,6 +262,7 @@ namespace shiranui{
                 void visit(UnaryOperator&);
                 void visit(IfElseExpression&);
                 void visit(Definement&);
+                void visit(ExpressionStatement&);
                 void visit(ReturnStatement&);
                 void visit(ProbeStatement&);
                 void visit(AssertStatement&);

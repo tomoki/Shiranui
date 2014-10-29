@@ -19,8 +19,7 @@ namespace shiranui {
         using shiranui::runtime::value::Return;
         using shiranui::runtime::value::SystemCall;
         using shiranui::runtime::value::BuiltinFunction;
-        using shiranui::runtime::value::builtin::PrintFunction;
-        using shiranui::runtime::value::builtin::LengthFunction;
+        using namespace shiranui::runtime::value::builtin;
         Runner::Runner(bool is_server_)
             : cur_v(std::make_shared<Integer>(0)),
             cur_e(std::make_shared<Environment>()),
@@ -267,12 +266,15 @@ namespace shiranui {
                     if (s == nullptr) {
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                     } else {
-                        if (s->value == "print") {
+                        if(s->value == "print"){
                             cur_v = std::make_shared<PrintFunction>();
-                        } else if (s->value == "length") {
+                        }else if(s->value == "length"){
                             cur_v = std::make_shared<LengthFunction>();
-                        } else if (s->value == "len") {
-                        } else {
+                        }else if(s->value == "get"){
+                            cur_v = std::make_shared<GetIndex>();
+                        }else if(s->value == "set"){
+                            cur_v = std::make_shared<SetIndex>();
+                        }else{
                             throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
                         }
                     }
@@ -424,6 +426,11 @@ namespace shiranui {
             def.value->accept(*this);
             cur_e->define(def.id, cur_v, def.is_const);
             AFTER_VISIT_MACRO(def);
+        }
+        void Runner::visit(syntax::ast::ExpressionStatement& es){
+            BEFORE_VISIT_MACRO(es);
+            es.exp->accept(*this);
+            AFTER_VISIT_MACRO(es);
         }
         void Runner::visit(syntax::ast::ReturnStatement &ret) {
             BEFORE_VISIT_MACRO(ret);
