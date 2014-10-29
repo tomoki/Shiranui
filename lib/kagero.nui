@@ -1,6 +1,6 @@
 let true = 1=1;
 let false = 1/=1;
 
-let print = \(s){
-    return system_call("print")(s);
-};
+let print = system_call("print");
+let get = system_call("get");
+let set = system_call("set");
