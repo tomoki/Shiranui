@@ -9,7 +9,6 @@
 #include "runtime/runner.hpp"
 #include "server/server.hpp"
 #include "tester/tester.hpp"
-#include "compiler/compiler.hpp"
 
 void repl(){
     using namespace shiranui;
@@ -124,34 +123,6 @@ void exec(const std::string content){
     return;
 }
 
-std::string compile_to_cpp(const std::string content){
-    using namespace shiranui;
-    using namespace shiranui::syntax;
-    using namespace shiranui::runtime;
-    using namespace shiranui::compiler;
-    std::string str = content;
-    pos_iterator_t first(str.begin()),last(str.end());
-    pos_iterator_t iter = first;
-    sp<ast::SourceCode> program;
-    bool ok = false;
-    try{
-        Parser<pos_iterator_t> resolver;
-        ok = parse(iter,last,resolver,program);
-    }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
-        std::cerr << "expected: ";
-        std::cerr << x.what_ << std::endl;
-        std::cerr << "got: \"" << std::string(x.first, x.last) << '"' << std::endl;
-        return "error";
-    }
-    if(ok and iter == last){
-        Compiler c;
-        program->accept(c);
-        std::string s = c.str();
-        return s;
-    }
-    return "error";
-}
-
 int main(int argc,char **argv){
     namespace po = boost::program_options;
     po::options_description opt("No arguments options");
@@ -160,7 +131,6 @@ int main(int argc,char **argv){
         ("server,s","run Shiranui in server mode")
         ("kagero,k",po::value<std::string>(),"Specify Kagero(Standard) library path")
         ("exec,e",po::value<std::string>(),"execute given file")
-        ("compile,c",po::value<std::string>(),"compile file to c++")
         ("arare,a",po::value<std::string>(),"Specify Arare(launchpad) path")
         ("out,o",po::value<std::string>(),"Specify output file")
         ("test,t","test(donot use.)")
@@ -194,35 +164,6 @@ int main(int argc,char **argv){
     }
     if(vm.count("test")){
         shiranui::tester::run_test();
-        return 0;
-    }
-    if(vm.count("compile")){
-        std::string filename = vm["compile"].as<std::string>();
-        std::fstream fs(filename);
-        std::string str((std::istreambuf_iterator<char>(fs)),
-                        std::istreambuf_iterator<char>());
-        if(vm.count("kagero")){
-            std::string kagerofile = vm["kagero"].as<std::string>();
-            std::fstream kagero_fs(kagerofile);
-            std::string kagero_str((std::istreambuf_iterator<char>(kagero_fs)),
-                                   (std::istreambuf_iterator<char>()));
-            str = kagero_str + str;
-        }
-        std::string compiled = compile_to_cpp(str);
-        if(vm.count("arare")){
-            std::string ararefile = vm["arare"].as<std::string>();
-            std::fstream arare_fs(ararefile);
-            std::string arare_str((std::istreambuf_iterator<char>(arare_fs)),
-                                   (std::istreambuf_iterator<char>()));
-            compiled = arare_str + compiled;
-        }
-        if(vm.count("out")){
-            std::ofstream os(vm["out"].as<std::string>());
-            os << compiled << std::endl;
-        }else{
-            std::cout << compiled << std::endl;
-        }
-
         return 0;
     }
     // otherwise
