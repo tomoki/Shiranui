@@ -149,7 +149,7 @@ namespace shiranui{
                 }
             };
             template<typename T>
-            sp<syntax::ast::LocationInfo> use_swimfin(T& sc,int point){
+            sp<syntax::ast::MainNode> use_swimfin(T& sc,int point){
                 SwimFin sf(point);
                 sf.visit(sc);
                 return sf.treasure; // can be null

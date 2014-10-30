@@ -1,0 +1,4 @@
+let ar = <|a=[1,2,a]|>;
+print(get(ar,0));
+print(get(ar,1));
+print(len(ar));

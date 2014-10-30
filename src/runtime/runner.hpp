@@ -10,13 +10,13 @@
 namespace shiranui{
     namespace runtime{
         struct RuntimeException : std::exception{
-            sp<syntax::ast::LocationInfo> where;
+            sp<syntax::ast::MainNode> where;
             std::string str(){
                 return "\"Something occured.\"";
             }
         };
         struct NoSuchVariableException : RuntimeException{
-            NoSuchVariableException(sp<syntax::ast::LocationInfo> e){
+            NoSuchVariableException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str(){
@@ -40,7 +40,7 @@ namespace shiranui{
             }
         };
         struct ConvertException : RuntimeException{
-            ConvertException(sp<syntax::ast::LocationInfo> e){
+            ConvertException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str(){
@@ -48,7 +48,7 @@ namespace shiranui{
             }
         };
         struct RangeException : RuntimeException{
-            RangeException(sp<syntax::ast::LocationInfo> e){
+            RangeException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str(){
@@ -56,7 +56,7 @@ namespace shiranui{
             }
         };
         struct InternalException : RuntimeException{
-            InternalException(sp<syntax::ast::LocationInfo> e){
+            InternalException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str(){
@@ -64,7 +64,7 @@ namespace shiranui{
             }
         };
         struct ZeroDivException : RuntimeException{
-            ZeroDivException(sp<syntax::ast::LocationInfo> e){
+            ZeroDivException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str() {
@@ -72,7 +72,7 @@ namespace shiranui{
             }
         };
         struct AssertException : RuntimeException{
-            AssertException(sp<syntax::ast::LocationInfo> e){
+            AssertException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str() {
@@ -80,7 +80,7 @@ namespace shiranui{
             }
         };
         struct MaxDepthExceededException : RuntimeException{
-            MaxDepthExceededException(sp<syntax::ast::LocationInfo> e){
+            MaxDepthExceededException(sp<syntax::ast::MainNode> e){
                 where = e;
             }
             std::string str(){

@@ -117,8 +117,6 @@ namespace shiranui{
                                boost::spirit::as_string[*(char_ - "\"")]
                                 [qi::_val = qi_make_shared<ast::String>(qi::_1)]
                            > lit("\"");
-//                    string = qi::lexeme[lit("\"") > *(char_ - "\"") > lit("\"")]
-//                               [qi::_val = qi_make_shared<ast::String>(qi::_1)];
 
                     on_success(string,set_location_info);
                 }
@@ -399,6 +397,7 @@ namespace shiranui{
                             ;
                     on_success(flyline,set_location_info);
                 }
+
                 {
                     flymark.name("flymark");
                     flymark = ("#*" >> expression >> "->" >> ";")
@@ -418,6 +417,28 @@ namespace shiranui{
                               )
                            ;
                     on_success(source,set_location_info);
+                }
+                // DSL section
+                {
+                    data_dsl = ("<|" > dsl_exp > "|")
+                               [qi::_val = qi_make_shared<ast::DSL::DataDSL>(qi::_1)];
+                    dsl_exp = dsl_immediate
+                            | dsl_define_var
+                            | dsl_var
+                            ;
+                    dsl_immediate = dsl_number
+                                  | dsl_string
+                                  | dsl_array
+                                  ;
+                    dsl_number = qi::int_ [qi::_val = qi_make_shared<ast::DSL::DSLInteger>(qi::_1)];
+                    dsl_var = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))]
+                             [qi::_val = qi_make_shared<ast::DSL::DSLVariable>(qi::_1)];
+                    dsl_define_var = (dsl_var >> "=" >> dsl_immediate)
+                                     [qi::_val = qi_make_shared<ast::DSL::DSLDefine>(qi::_1,qi::_2)];
+                    dsl_array = (qi::lexeme["["] >> "]")
+                                 [qi::_val = qi_make_shared<ast::DSL::DSLArray>()]
+                              | ("[" >> (dsl_exp % ",") >> "]")
+                                [qi::_val = qi_make_shared<ast::DSL::DSLArray>(qi::_1)];
                 }
             }
 
@@ -460,6 +481,16 @@ namespace shiranui{
             rule_with_skip<sp<ast::FlyMark>()> flymark;
 
             rule_with_skip<sp<ast::Statement>()> statement;
+
+            // DSL
+            rule_with_skip<sp<ast::DSL::DataDSL>()> data_dsl;
+            rule_with_skip<sp<ast::DSL::DSLInner>()> dsl_exp;
+            rule_with_skip<sp<ast::DSL::DSLImmediate>()> dsl_immediate;
+            rule_with_skip<sp<ast::DSL::DSLDefine>()> dsl_define_var;
+            rule_no_skip<sp<ast::DSL::DSLVariable>()> dsl_var;
+            rule_no_skip<sp<ast::DSL::DSLInteger>()> dsl_number;
+            rule_no_skip<sp<ast::DSL::DSLString>()> dsl_string;
+            rule_with_skip<sp<ast::DSL::DSLArray>()> dsl_array;
         };
         template<typename IT>
         bool parse(IT& iter,IT& last,Parser<IT>& resolver,sp<ast::SourceCode>& program){

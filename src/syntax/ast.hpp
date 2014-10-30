@@ -21,19 +21,21 @@ namespace shiranui{
     namespace syntax{
         namespace ast{
             struct LocationInfo{
-                runtime::infomation::RuntimeInfomation runtime_info;
                 unsigned int point,length;
+            };
+            struct MainNode : LocationInfo{
+                runtime::infomation::RuntimeInfomation runtime_info;
                 virtual void accept(VisitorForAST&) = 0;
             };
-            struct Expression : LocationInfo{
+            struct Expression : MainNode{
                 virtual ~Expression() {};
             };
-            struct Statement : LocationInfo{
+            struct Statement : MainNode{
                 virtual ~Statement() {};
             };
 
             // metaelement.
-            struct Identifier : LocationInfo{
+            struct Identifier : MainNode{
                 std::string name;
                 // whats this?
                 Identifier() : name("") {}
@@ -183,7 +185,7 @@ namespace shiranui{
                 AssertStatement(sp<Expression>);
                 void accept(VisitorForAST&);
             };
-            struct FlyLine : LocationInfo{
+            struct FlyLine : MainNode{
             };
             struct TestFlyLine : FlyLine{
                 sp<Expression> left,right,error;
@@ -195,14 +197,14 @@ namespace shiranui{
                 explicit IdleFlyLine(sp<Expression>,sp<Expression>);
                 void accept(VisitorForAST&);
             };
-            struct FlyMark : LocationInfo{
+            struct FlyMark : MainNode{
                 sp<Expression> left;
                 std::vector<sp<Expression>> right;
                 explicit FlyMark(sp<Expression>);
                 FlyMark(sp<Expression>,std::vector<sp<Expression>>);
                 void accept(VisitorForAST&);
             };
-            struct SourceCode : LocationInfo{
+            struct SourceCode : MainNode{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
                 explicit SourceCode(std::vector<sp<Statement>>);
@@ -212,6 +214,42 @@ namespace shiranui{
                 void add_flyline(sp<FlyLine>);
                 void accept(VisitorForAST&);
             };
+
+            namespace DSL{
+                struct DSLInner : LocationInfo{
+                };
+                struct DSLVariable : DSLInner{
+                    std::string name;
+                    explicit DSLVariable(std::string);
+                    explicit DSLVariable(std::vector<char>);
+                    bool operator<(const DSLVariable&) const;
+                };
+                struct DSLDefine : DSLInner{
+                    sp<DSLVariable> var;
+                    sp<DSLInner> value;
+                    DSLDefine(sp<DSLVariable>,sp<DSLInner>);
+                };
+                struct DSLImmediate : DSLInner{
+                };
+                struct DSLInteger : DSLImmediate{
+                    int value;
+                    explicit DSLInteger(int);
+                };
+                struct DSLString : DSLImmediate{
+                    std::string value;
+                    explicit DSLString(std::string);
+                };
+                struct DSLArray : DSLImmediate{
+                    std::vector<sp<DSLInner> > value;
+                    explicit DSLArray(std::vector<sp<DSLInner>>);
+                    explicit DSLArray();
+                };
+                struct DataDSL : MainNode{
+                    sp<DSLInner> inner;
+                    explicit DataDSL(sp<DSLInner>);
+                    void accept(VisitorForAST&);
+                };
+            }
         }
     }
 }
@@ -244,7 +282,8 @@ namespace shiranui{
                 virtual void visit(IdleFlyLine&)      = 0;
                 virtual void visit(FlyMark&)          = 0;
                 virtual void visit(SourceCode&)       = 0;
-            };
+                virtual void visit(DSL::DataDSL&)          = 0;
+           };
             struct PrettyPrinterForAST : VisitorForAST{
                 std::ostream& os;
                 int indent;

@@ -132,7 +132,19 @@ namespace shiranui{
             void SourceCode::add_flyline(sp<FlyLine> l){
                 flylines.push_back(l);
             }
-            // LocationInfo
+            namespace DSL{
+                DSLVariable::DSLVariable(std::string n) : name(n) {}
+                DSLVariable::DSLVariable(std::vector<char> n) : name(n.begin(),n.end()) {}
+                bool DSLVariable::operator<(const DSLVariable& id) const{
+                    return name < id.name;
+                }
+                DSLDefine::DSLDefine(sp<DSLVariable> f,sp<DSLInner> t) : var(f),value(t) {}
+                DSLInteger::DSLInteger(int v) : value(v) {}
+                DSLString::DSLString(std::string v) : value(v) {}
+                DSLArray::DSLArray() {};
+                DSLArray::DSLArray(std::vector<sp<DSLInner>> v) : value(v){}
+                DataDSL::DataDSL(sp<DSLInner> v) : inner(v) {}
+            }
         }
     }
 }
@@ -212,6 +224,11 @@ namespace shiranui{
             }
             void SourceCode      ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
+            }
+            namespace DSL{
+                void DataDSL :: accept(VisitorForAST& visitor){
+                    return visitor.visit(*this);
+                }
             }
         }
     }
