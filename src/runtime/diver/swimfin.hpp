@@ -135,6 +135,9 @@ namespace shiranui{
                         s->accept(*this);
                     }
                 }
+                void visit(syntax::ast::DSL::DataDSL& node){
+                    if(not in_range(node)) return;
+                }
                 template<typename T>
                 bool in_range(T& t){
                     int start_point = t.point;

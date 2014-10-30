@@ -244,7 +244,7 @@ namespace shiranui{
                     explicit DSLArray(std::vector<sp<DSLInner>>);
                     explicit DSLArray();
                 };
-                struct DataDSL : MainNode{
+                struct DataDSL : Expression{
                     sp<DSLInner> inner;
                     explicit DataDSL(sp<DSLInner>);
                     void accept(VisitorForAST&);
@@ -312,6 +312,7 @@ namespace shiranui{
                 void visit(IdleFlyLine&);
                 void visit(FlyMark&);
                 void visit(SourceCode&);
+                void visit(DSL::DataDSL&);
                 std::string ind();
             };
 

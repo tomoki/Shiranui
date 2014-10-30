@@ -412,9 +412,12 @@ namespace shiranui{
                     os << std::endl;
                 }
             }
+            void PrettyPrinterForAST::visit(syntax::ast::DSL::DataDSL& dsl){
+            }
             std::string PrettyPrinterForAST::ind(){
                 return std::string(indent*4,' ');
             }
+
         }
     }
 }

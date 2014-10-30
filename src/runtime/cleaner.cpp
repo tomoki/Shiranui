@@ -133,6 +133,8 @@ namespace shiranui{
                     s->accept(*this);
                 }
             }
+            void Cleaner::visit(DSL::DataDSL& dsl){
+            }
             template<typename T>
             void Cleaner::clear_it(T& t){
                 ValueCleaner c;

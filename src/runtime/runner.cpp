@@ -534,5 +534,9 @@ namespace shiranui {
             }
             AFTER_VISIT_MACRO(sc);
         }
+        void Runner::visit(syntax::ast::DSL::DataDSL& dsl){
+            BEFORE_VISIT_MACRO(dsl);
+            AFTER_VISIT_MACRO(dsl);
+        }
     }
 }

@@ -111,6 +111,8 @@ namespace shiranui{
                         s->accept(*this);
                     }
                 }
+                void visit(syntax::ast::DSL::DataDSL& node){
+                }
             };
             DivingMessage use_harpoon(syntax::ast::SourceCode& source){
                 Harpoon h;

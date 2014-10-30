@@ -169,6 +169,9 @@ namespace shiranui{
                         s->accept(*this);
                     }
                 }
+                void visit(syntax::ast::DSL::DataDSL& node){
+                }
+
             };
             template<typename T>
             DivingMessage use_snorkel(T& block,int call_under){

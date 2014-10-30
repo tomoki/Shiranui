@@ -124,6 +124,7 @@ namespace shiranui{
             void visit(syntax::ast::IdleFlyLine&);
             void visit(syntax::ast::FlyMark&);
             void visit(syntax::ast::SourceCode&);
+            void visit(syntax::ast::DSL::DataDSL&);
         };
     }
 }

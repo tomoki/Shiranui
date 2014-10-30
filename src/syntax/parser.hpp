@@ -42,21 +42,6 @@ namespace shiranui{
             return boost::phoenix::function<qi_make_shared_struct<T>>()(std::forward<Args>(args)...);
         }
 
-//        struct error_handler_f{
-//            typedef boost::spirit::qi::error_handler_result result_type;
-//            // does'nt work currently.(may need space skipping?)
-//            // get_line,get_column is defined in
-//            //   http://www.boost.org/doc/libs/1_47_0/boost/spirit/home/support/iterators/line_pos_iterator.hpp
-//
-//            template<typename T1,typename T2,typename T3,typename T4>
-//            result_type operator()(T1 b,T2 e,T3 where,const T4& what) const{
-//                std::cerr << "Error expecting " << what << " in line " << get_line(where) << ":" << std::endl
-//                          << std::string(b,e) << std::endl
-//                          << std::setw(std::distance(b,where)) << "^---- here" << std::endl;
-//                return boost::spirit::qi::fail;
-//            }
-//        };
-
         template<typename Iterator>
         struct annotation_f{
             typedef void result_type;
@@ -371,6 +356,7 @@ namespace shiranui{
                                | array
                                | variable
                                | function
+                               | data_dsl
                                ;
                     on_success(atom,set_location_info);
                 }
@@ -420,25 +406,52 @@ namespace shiranui{
                 }
                 // DSL section
                 {
-                    data_dsl = ("<|" > dsl_exp > "|")
+                    data_dsl.name("dsl for data");
+                    data_dsl = ("<|" > dsl_exp > "|>")
                                [qi::_val = qi_make_shared<ast::DSL::DataDSL>(qi::_1)];
+                    on_success(data_dsl,set_location_info);
+
+                    dsl_exp.name("dsl exp");
                     dsl_exp = dsl_immediate
                             | dsl_define_var
                             | dsl_var
                             ;
+                    on_success(dsl_exp,set_location_info);
+
+                    dsl_immediate.name("dsl immediate");
                     dsl_immediate = dsl_number
                                   | dsl_string
                                   | dsl_array
                                   ;
+                    on_success(dsl_immediate,set_location_info);
+
+                    dsl_number.name("dsl name");
                     dsl_number = qi::int_ [qi::_val = qi_make_shared<ast::DSL::DSLInteger>(qi::_1)];
+                    on_success(dsl_number,set_location_info);
+
+                    dsl_string.name("dsl name");
+                    dsl_string = lit("\"") >
+                               boost::spirit::as_string[*(char_ - "\"")]
+                                [qi::_val = qi_make_shared<ast::DSL::DSLString>(qi::_1)]
+                               > lit("\"");
+                    on_success(dsl_string,set_location_info);
+
+                    dsl_var.name("dsl var");
                     dsl_var = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))]
                              [qi::_val = qi_make_shared<ast::DSL::DSLVariable>(qi::_1)];
+                    on_success(dsl_var,set_location_info);
+
+                    dsl_define_var.name("dsl define var");
                     dsl_define_var = (dsl_var >> "=" >> dsl_immediate)
                                      [qi::_val = qi_make_shared<ast::DSL::DSLDefine>(qi::_1,qi::_2)];
+                    on_success(dsl_define_var,set_location_info);
+
+                    dsl_array.name("dsl array");
                     dsl_array = (qi::lexeme["["] >> "]")
                                  [qi::_val = qi_make_shared<ast::DSL::DSLArray>()]
                               | ("[" >> (dsl_exp % ",") >> "]")
                                 [qi::_val = qi_make_shared<ast::DSL::DSLArray>(qi::_1)];
+                    on_success(dsl_array,set_location_info);
                 }
             }
 
