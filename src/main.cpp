@@ -41,7 +41,7 @@ void repl(){
             continue;
         }
         if(ok and iter == last){
-            program->accept(printer);
+            //program->accept(printer);
             try{
                 program->accept(r);
                 r.cur_v->accept(printer_for_value);

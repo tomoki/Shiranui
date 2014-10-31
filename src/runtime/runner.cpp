@@ -1,4 +1,5 @@
 #include "runner.hpp"
+#include "dsl/dsl_runtime.hpp"
 #include <iostream>
 #include <typeinfo>
 #include <memory>
@@ -536,6 +537,7 @@ namespace shiranui {
         }
         void Runner::visit(syntax::ast::DSL::DataDSL& dsl){
             BEFORE_VISIT_MACRO(dsl);
+            cur_v = DSL::run_dsl(dsl.inner);
             AFTER_VISIT_MACRO(dsl);
         }
     }

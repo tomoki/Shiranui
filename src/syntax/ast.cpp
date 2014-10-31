@@ -133,6 +133,7 @@ namespace shiranui{
                 flylines.push_back(l);
             }
             namespace DSL{
+                DSLVariable::DSLVariable() : name("") {}
                 DSLVariable::DSLVariable(std::string n) : name(n) {}
                 DSLVariable::DSLVariable(std::vector<char> n) : name(n.begin(),n.end()) {}
                 bool DSLVariable::operator<(const DSLVariable& id) const{
@@ -229,6 +230,11 @@ namespace shiranui{
                 void DataDSL :: accept(VisitorForAST& visitor){
                     return visitor.visit(*this);
                 }
+                void DSLVariable::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLDefine  ::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLInteger ::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLString  ::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLArray   ::accept(VisitorForDSL& visitor){return visitor(*this);}
             }
         }
     }
@@ -413,6 +419,7 @@ namespace shiranui{
                 }
             }
             void PrettyPrinterForAST::visit(syntax::ast::DSL::DataDSL& dsl){
+                os << "?";
             }
             std::string PrettyPrinterForAST::ind(){
                 return std::string(indent*4,' ');

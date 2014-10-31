@@ -16,7 +16,15 @@ namespace shiranui{
         }
     }
 }
-
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            namespace DSL{
+                struct VisitorForDSL;
+            }
+        }
+    }
+}
 namespace shiranui{
     namespace syntax{
         namespace ast{
@@ -217,32 +225,39 @@ namespace shiranui{
 
             namespace DSL{
                 struct DSLInner : LocationInfo{
+                    virtual void accept(VisitorForDSL&) = 0;
                 };
                 struct DSLVariable : DSLInner{
                     std::string name;
+                    DSLVariable();
                     explicit DSLVariable(std::string);
                     explicit DSLVariable(std::vector<char>);
                     bool operator<(const DSLVariable&) const;
+                    void accept(VisitorForDSL&);
                 };
                 struct DSLDefine : DSLInner{
                     sp<DSLVariable> var;
                     sp<DSLInner> value;
                     DSLDefine(sp<DSLVariable>,sp<DSLInner>);
+                    void accept(VisitorForDSL&);
                 };
                 struct DSLImmediate : DSLInner{
                 };
                 struct DSLInteger : DSLImmediate{
                     int value;
                     explicit DSLInteger(int);
+                    void accept(VisitorForDSL&);
                 };
                 struct DSLString : DSLImmediate{
                     std::string value;
                     explicit DSLString(std::string);
+                    void accept(VisitorForDSL&);
                 };
                 struct DSLArray : DSLImmediate{
                     std::vector<sp<DSLInner> > value;
                     explicit DSLArray(std::vector<sp<DSLInner>>);
                     explicit DSLArray();
+                    void accept(VisitorForDSL&);
                 };
                 struct DataDSL : Expression{
                     sp<DSLInner> inner;
@@ -282,8 +297,8 @@ namespace shiranui{
                 virtual void visit(IdleFlyLine&)      = 0;
                 virtual void visit(FlyMark&)          = 0;
                 virtual void visit(SourceCode&)       = 0;
-                virtual void visit(DSL::DataDSL&)          = 0;
-           };
+                virtual void visit(DSL::DataDSL&)     = 0;
+            };
             struct PrettyPrinterForAST : VisitorForAST{
                 std::ostream& os;
                 int indent;
@@ -315,9 +330,22 @@ namespace shiranui{
                 void visit(DSL::DataDSL&);
                 std::string ind();
             };
-
         }
     }
 }
-
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            namespace DSL{
+                struct VisitorForDSL{
+                    virtual void operator()(DSLVariable&)   = 0;
+                    virtual void operator()(DSLDefine&)     = 0;
+                    virtual void operator()(DSLInteger&)    = 0;
+                    virtual void operator()(DSLString&)     = 0;
+                    virtual void operator()(DSLArray&)      = 0;
+                };
+            }
+        }
+    }
+}
 #endif

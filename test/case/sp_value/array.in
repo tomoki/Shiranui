@@ -2,3 +2,7 @@ let ar = <|a=[1,2,a]|>;
 print(get(ar,0));
 print(get(ar,1));
 print(len(ar));
+print(get(get(ar,2),1));
+set(get(ar,2),0,100);
+print(get(ar,0));
+print(get(get(ar,2),0));

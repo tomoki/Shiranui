@@ -4,3 +4,4 @@ let false = 1/=1;
 let print = system_call("print");
 let get = system_call("get");
 let set = system_call("set");
+let len = system_call("length");

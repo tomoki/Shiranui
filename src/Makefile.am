@@ -8,6 +8,7 @@ shiranui_SOURCES = main.cpp \
                    server/server.cpp \
                    runtime/diver/diver.cpp \
                    runtime/cleaner.cpp \
-                   tester/tester.cpp
+                   tester/tester.cpp \
+                   runtime/dsl/dsl_runtime.cpp
 shiranui_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_SYSTEM_LIB) $(BOOST_THREAD_LIB)
 shiranui_CXXFLAGS = -Wall -Wextra

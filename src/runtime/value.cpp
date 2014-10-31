@@ -129,6 +129,7 @@ namespace shiranui{
                     if(args.size() != 2) return nullptr;
                     sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
                     sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                    dump(array,std::cerr);
                     if(array == nullptr or index == nullptr){
                         return nullptr;
                     }
