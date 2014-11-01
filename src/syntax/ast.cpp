@@ -337,9 +337,9 @@ namespace shiranui{
             void PrettyPrinterForAST::visit(syntax::ast::IfElseStatement& ies){
                 os << ind() << "if ";
                 ies.pred->accept(*this);
-                os << " ";
+                os << std::endl;
                 ies.ifblock->accept(*this);
-                os << " else ";
+                os << " else " << std::endl;
                 ies.elseblock->accept(*this);
             }
             void PrettyPrinterForAST::visit(syntax::ast::ForStatement& fo){
@@ -424,7 +424,6 @@ namespace shiranui{
             std::string PrettyPrinterForAST::ind(){
                 return std::string(indent*4,' ');
             }
-
         }
     }
 }
