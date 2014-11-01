@@ -2,6 +2,7 @@
 #define SNORKEL_HPP_INCLUDED
 
 #include "diving_message.hpp"
+#include "../value_printer.hpp"
 #include "../../syntax/ast.hpp"
 #include "../runner.hpp"
 

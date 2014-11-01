@@ -7,6 +7,8 @@
 #include "misc.hpp"
 #include "syntax/parser.hpp"
 #include "runtime/runner.hpp"
+#include "runtime/value_printer.hpp"
+#include "runtime/dsl/dsl_exception.hpp"
 #include "server/server.hpp"
 #include "tester/tester.hpp"
 
@@ -14,9 +16,9 @@ void repl(){
     using namespace shiranui;
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
+    using namespace shiranui::runtime::DSL;
     shiranui::runtime::Runner r;
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
-    shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
     std::cerr << "This is " << PACKAGE_STRING << std::endl;
     while(true){
         std::cout << "> ";
@@ -44,7 +46,7 @@ void repl(){
             //program->accept(printer);
             try{
                 program->accept(r);
-                r.cur_v->accept(printer_for_value);
+                std::cerr << shiranui::runtime::value::to_reproductive(r.cur_v);
                 std::cerr << std::endl;
             }catch(NoSuchVariableException e){
                 std::cerr << "No such variable: ";
@@ -58,6 +60,10 @@ void repl(){
                 std::cerr << "Something RuntimeException: ";
                 e.where->accept(printer);
                 std::cerr << std::endl;
+            }catch(DSLUnknownVariable e){
+                std::cerr << "DSL Unknown varialble" << std::endl;
+            }catch(DSLAlreadyUsedVariable e){
+                std::cerr << "DSL already used varialble" << std::endl;
             }
         }else{
             std::cout << "-------------------------\n";
@@ -80,7 +86,6 @@ void exec(const std::string content){
     using namespace shiranui::runtime;
     shiranui::runtime::Runner r;
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
-    shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
     std::string str = content;
     pos_iterator_t first(str.begin()),last(str.end());
     pos_iterator_t iter = first;
@@ -96,11 +101,8 @@ void exec(const std::string content){
         return;
     }
     if(ok and iter == last){
-        //program->accept(printer);
         try{
             program->accept(r);
-            //r.cur.v->accept(printer_for_value);
-            //std::cerr << std::endl;
         }catch(NoSuchVariableException e){
             std::cerr << "No such variable: ";
             e.where->accept(printer);

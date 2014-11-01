@@ -1,4 +1,6 @@
 #include "server.hpp"
+#include "../runtime/value_printer.hpp"
+#include "../runtime/dsl/dsl_exception.hpp"
 #include <sstream>
 #include <chrono>
 
@@ -269,6 +271,7 @@ namespace shiranui{
             using namespace shiranui::syntax;
             using namespace shiranui::syntax::ast;
             using namespace shiranui::runtime;
+            using namespace shiranui::runtime::DSL;
             using namespace shiranui::runtime::diver;
             const auto start_time = std::chrono::system_clock::now();
 
@@ -299,6 +302,16 @@ namespace shiranui{
                     send_runtimeerror(start_point,end_point,loadcount);
                     return;
                 }catch(RuntimeException e){
+                    int start_point = e.where->point;
+                    int end_point = start_point + e.where->length;
+                    send_runtimeerror(start_point,end_point,loadcount);
+                    return;
+                }catch(DSLUnknownVariable e){
+                    int start_point = e.where->point;
+                    int end_point = start_point + e.where->length;
+                    send_runtimeerror(start_point,end_point,loadcount);
+                    return;
+                }catch(DSLAlreadyUsedVariable e){
                     int start_point = e.where->point;
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point,loadcount);
@@ -370,6 +383,7 @@ namespace shiranui{
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
+            using namespace shiranui::runtime::DSL;
 
             int start_point = sf->point;
             int end_point = start_point + sf->length;
@@ -385,17 +399,21 @@ namespace shiranui{
                 left = r.cur_v;
                 sf->right->accept(r);
                 right = r.cur_v;
-            } catch (NoSuchVariableException e) {
+            }catch (NoSuchVariableException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
-            } catch (ConvertException e) {
+            }catch (ConvertException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
-            } catch (AssertException e) {
+            }catch (AssertException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
-            } catch (ZeroDivException e) {
+            }catch (ZeroDivException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
-            } catch (MaxDepthExceededException e) {
+            }catch (MaxDepthExceededException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
-            } catch (RuntimeException e) {
+            }catch (RuntimeException e){
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            }catch(DSLUnknownVariable e){
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            }catch(DSLAlreadyUsedVariable e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
             }
 
@@ -413,6 +431,7 @@ namespace shiranui{
             using namespace syntax::ast;
             using namespace runtime::value;
             using namespace shiranui::runtime;
+            using namespace shiranui::runtime::DSL;
             // TODO:save infomation.
             auto run_idleflyline_sub = [this,sf,loadcount](std::string left_str){
                 int start_point = sf->point;
@@ -440,6 +459,10 @@ namespace shiranui{
             }catch(MaxDepthExceededException e){
                 return run_idleflyline_sub(e.str());
             }catch(RuntimeException e){
+                return run_idleflyline_sub(e.str());
+            }catch(DSLUnknownVariable e){
+                return run_idleflyline_sub(e.str());
+            }catch(DSLAlreadyUsedVariable e){
                 return run_idleflyline_sub(e.str());
             }
 

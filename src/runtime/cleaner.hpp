@@ -4,6 +4,8 @@
 #include "../syntax/ast.hpp"
 #include "runtime_info.hpp"
 
+#include <set>
+
 namespace shiranui{
     namespace runtime{
         namespace infomation{
@@ -38,6 +40,7 @@ namespace shiranui{
                 void clear_it(T& t);
             };
             struct ValueCleaner : runtime::value::VisitorForValue{
+                std::set<value::Value*> already;
                 void visit(runtime::value::Integer&);
                 void visit(runtime::value::String&);
                 void visit(runtime::value::Boolean&);

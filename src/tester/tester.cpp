@@ -1,5 +1,6 @@
 #include "tester.hpp"
 #include "../server/server.hpp"
+#include "../runtime/value_printer.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -22,7 +23,6 @@ namespace shiranui{
 
             shiranui::runtime::Runner r;
             shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
-            shiranui::runtime::value::PrettyPrinterForValue printer_for_value(std::cerr);
 
             pos_iterator_t first(str.begin()),last(str.end());
             pos_iterator_t iter = first;
@@ -40,8 +40,7 @@ namespace shiranui{
                 program->accept(printer);
                 try{
                     program->accept(r);
-                    r.cur_v->accept(printer_for_value);
-                    std::cerr << std::endl;
+                    std::cerr << runtime::value::to_reproductive(r.cur_v) << std::endl;
                 }catch(NoSuchVariableException e){
                     std::cerr << "No such variable: ";
                     e.where->accept(printer);
@@ -443,7 +442,28 @@ string long_code =
             std::string str = "let a = 1+1+1+1;";
             run_program(str);
         }
+        void run_rec_test(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            std::string str = "let get = system_call(\"get\");"
+                              "let set = system_call(\"set\");"
+                              "let rec = [1,2,3];"
+                              "set(rec,2,rec);";
+            run_program(str);
+            ps.on_change_command(make_change(1,0,str),1);
+            wait(100);
+        }
+        void run_rec_test2(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            std::string str = "#+ <|[1,a]|> -> <|a=[1,2,a]|>;";
+            run_program(str);
+            ps.on_change_command(make_change(1,0,str),1);
+            wait(100);
+        }
         void run_test(){
+            run_rec_test();
+            run_rec_test2();
             // run_memory_test();
             //parser_time_test();
             //run_dive_test();
@@ -453,7 +473,7 @@ string long_code =
             //run_plus();
             // run_good_dive_test();
             //run_bad_dive_test();
-            run_flymark();
+            // run_flymark();
 
             // string tosend = "#- fact(2) -> 2;"
             //     "let fact = \\(n){"

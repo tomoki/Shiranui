@@ -154,15 +154,21 @@ namespace shiranui{
             void ValueCleaner::visit(Boolean&){
             }
             void ValueCleaner::visit(Array& v){
+                if(already.find(&v) != already.end()) return;
+                already.insert(&v);
                 for(sp<Value> p : v.value){
                     p->accept(*this);
                 }
                 v.value.clear();
             }
             void ValueCleaner::visit(UserFunction& v){
+                if(already.find(&v) != already.end()) return;
+                already.insert(&v);
                 v.env->clear();
             }
             void ValueCleaner::visit(Return& v){
+                if(already.find(&v) != already.end()) return;
+                already.insert(&v);
                 v.value->accept(*this);
             }
             void ValueCleaner::visit(SystemCall&){

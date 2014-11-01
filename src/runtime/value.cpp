@@ -139,64 +139,8 @@ namespace shiranui{
     }
 }
 
-namespace shiranui{
-    namespace runtime{
-        namespace value{
-            PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_)
-                : os(os_){
-            }
-            void PrettyPrinterForValue::visit(Integer& i){
-                os << i.value;
-            }
-            void PrettyPrinterForValue::visit(String& s){
-                os << '"' << s.value << '"';
-            }
-            void PrettyPrinterForValue::visit(Boolean& b){
-                os << (b.value?"true":"false");
-            }
-            void PrettyPrinterForValue::visit(Array& a){
-                os << "[";
-                for(int i=0;i<static_cast<int>(a.value.size());i++){
-                    a.value[i]->accept(*this);
-                    if(i != static_cast<int>(a.value.size())-1){
-                        os << ",";
-                    }
-                }
-                os << "]";
-            }
-            void PrettyPrinterForValue::visit(UserFunction& f){
-                os << "\(){}";
-            }
-            void PrettyPrinterForValue::visit(Return& r){
-                os << "(return ";
-                r.value->accept(*this);
-                os << ")";
-            }
-            // builtin
-            void PrettyPrinterForValue::visit(SystemCall&){
-                os << "system_call";
-            }
 
-            void PrettyPrinterForValue::visit(BuiltinFunction& f){
-                os << f.name;
-            }
-        }
-    }
-}
 
-namespace shiranui{
-    namespace runtime{
-        namespace value{
-            // helper functions.
-            std::string to_reproductive(sp<Value> vi){
-                std::stringstream ss;
-                PrettyPrinterForValue p(ss);
-                vi->accept(p);
-                return ss.str();
-            }
-        }
-    }
-}
 namespace shiranui {
     namespace runtime {
         namespace value {

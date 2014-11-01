@@ -2,6 +2,7 @@
 #define VALUE_HPP_INCLUDED
 
 #include <string>
+#include <map>
 #include "../syntax/ast.hpp"
 
 namespace shiranui{
@@ -100,8 +101,6 @@ namespace shiranui{
                     sp<Value> run(std::vector<sp<Value>>);
                 };
             }
-            std::string to_reproductive(sp<runtime::value::Value>);
-            // will be used in server.
             bool check_equality(sp<Value> left,sp<Value> right);
         }
     }
@@ -119,20 +118,7 @@ namespace shiranui{
                 virtual void visit(UserFunction&)                 = 0;
                 virtual void visit(Return&)                       = 0;
                 virtual void visit(SystemCall&)                   = 0;
-                // builtin
                 virtual void visit(BuiltinFunction&)              = 0;
-            };
-            struct PrettyPrinterForValue : VisitorForValue{
-                std::ostream& os;
-                PrettyPrinterForValue(std::ostream& os);
-                void visit(Integer&);
-                void visit(String&);
-                void visit(Boolean&);
-                void visit(Array&);
-                void visit(UserFunction&);
-                void visit(Return&);
-                void visit(SystemCall&);
-                void visit(BuiltinFunction&);
             };
         }
     }
