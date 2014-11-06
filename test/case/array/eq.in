@@ -1,0 +1,13 @@
+let a = [1,2,3];
+let b = [1,2,3];
+if a = b {
+    print("[1,2,3] ok");
+}
+
+let c = [1,2,4];
+if a /= c {
+    print("[1,2,4] ok");
+}
+if not a = c {
+    print("not [1,2,4] ok");
+}

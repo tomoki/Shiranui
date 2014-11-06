@@ -1,6 +1,7 @@
 #include "value.hpp"
 #include "runner.hpp"
 #include <sstream>
+#include <set>
 
 namespace shiranui{
     namespace runtime{
@@ -144,44 +145,59 @@ namespace shiranui{
 namespace shiranui {
     namespace runtime {
         namespace value {
-            bool check_equality(sp<Value> left, sp<Value> right) {
-                if (typeid(*left) != typeid(*right)) {
+            bool check_equality(sp<Value> left,sp<Value> right,std::set<std::set<sp<Value> > >& checked){
+                if(typeid(*left) != typeid(*right)){
                     return false;
                 }
+                dump(left,std::cerr);
+                dump(right,std::cerr);
+                // TODO: show correctness
+                if(checked.find({left,right}) != checked.end()){
+                    return true;
+                }
+                checked.insert({left,right});
                 {
                     auto l = std::dynamic_pointer_cast<Integer>(left);
                     auto r = std::dynamic_pointer_cast<Integer>(right);
-                    if (l != nullptr and r != nullptr) {
+                    if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
                     auto l = std::dynamic_pointer_cast<Boolean>(left);
                     auto r = std::dynamic_pointer_cast<Boolean>(right);
-                    if (l != nullptr and r != nullptr) {
+                    if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
                     auto l = std::dynamic_pointer_cast<String>(left);
                     auto r = std::dynamic_pointer_cast<String>(right);
-                    if (l != nullptr and r != nullptr) {
+                    if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
                     auto l = std::dynamic_pointer_cast<Array>(left);
                     auto r = std::dynamic_pointer_cast<Array>(right);
-                    if (l != nullptr and r != nullptr) {
-                        if (l->value.size() != r->value.size()) {
+                    if(l != nullptr and r != nullptr){
+                        if(l->value.size() != r->value.size()){
                             return false;
-                        } else {
-                            return std::equal(l->value.begin(), l->value.end(),
-                                              r->value.begin(), check_equality);
+                        }else{
+                            bool ok = true;
+                            for(size_t i=0;i<l->value.size();i++){
+                                ok = ok and check_equality(l->value[i],r->value[i],checked);
+                            }
+                            return ok;
                         }
                     }
                 }
                 return false;
+            }
+            bool check_equality(sp<Value> left, sp<Value> right){
+                dump("check_equality",std::cerr);
+                std::set<std::set<sp<Value> > > checked;
+                return check_equality(left,right,checked);
             }
         }
     }
