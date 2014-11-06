@@ -12,8 +12,11 @@ namespace shiranui{
                 // replace to ...
                 std::map<sp<value::Value>,DSLVariable> var_occurrences;
                 std::map<DSLVariable,sp<value::Value> > var_defines;
-                DSLRunner(sp<DSLInner> t)
-                    : top(t) {}
+                std::map<syntax::ast::Identifier,sp<syntax::ast::Function> > marker_to_lambda;
+                sp<environment::Environment> env;
+                DSLRunner(sp<DSLInner> t,const decltype(marker_to_lambda) &m2l,
+                          sp<environment::Environment> e)
+                    : top(t),marker_to_lambda(m2l),env(e) {}
                 void operator()(DSLVariable& node){
                     sp<value::Integer> place_holder = std::make_shared<value::Integer>(-1);
                     var_occurrences[place_holder] = node;
@@ -41,7 +44,20 @@ namespace shiranui{
                     cur_v = std::make_shared<value::Array>(ret);
                 }
                 void operator()(DSLFunction& node){
-                    //
+                    sp<syntax::ast::Function> fast = marker_to_lambda[node.lambda_id];
+                    if(fast == nullptr){
+                        throw DSLUnknownVariable(top);
+                    }
+                    // parent is where dsl was evaled.
+                    // TODO: is it correct?
+                    sp<environment::Environment> fenv = std::make_shared<environment::Environment>(env);
+                    for(auto p : node.environment){
+                        syntax::ast::Identifier i(p.first->name);
+                        auto pv = run_dsl(p.second,marker_to_lambda,env);
+                        // define as mutable
+                        fenv->define(i,pv,false);
+                    }
+                    cur_v = std::make_shared<value::UserFunction>(fast->parameters,fast->body,fenv);
                 }
             };
             // replace all variable occurences in DSL
@@ -72,8 +88,10 @@ namespace shiranui{
                 void visit(value::SystemCall&){}
                 void visit(value::BuiltinFunction&){}
             };
-            sp<value::Value> run_dsl(sp<DSLInner> dsl){
-                DSLRunner runner(dsl);
+            sp<value::Value> run_dsl(sp<DSLInner> dsl,
+                                     const std::map<syntax::ast::Identifier,sp<syntax::ast::Function> >&marker_to_lambda,
+                                     sp<environment::Environment> env){
+                DSLRunner runner(dsl,marker_to_lambda,env);
                 dsl->accept(runner);
                 sp<value::Value> ret = runner.cur_v;
                 DSLVariableReplacer replacer(dsl,runner.var_occurrences,runner.var_defines);

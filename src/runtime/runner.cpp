@@ -9,6 +9,16 @@
 #define AFTER_VISIT_MACRO(NODE) return after_visit(NODE, cur_t_)
 namespace shiranui {
     namespace runtime {
+        template<typename T,typename S>
+        std::map<T,S> merge_map(const std::map<T,S>& a,const std::map<T,S>& b){
+            std::map<T,S> ret;
+            for(const auto& c : {a,b}){
+                for(const auto& p : c){
+                    ret[p.first] = p.second;
+                }
+            }
+            return ret;
+        }
         using shiranui::runtime::environment::Environment;
         using shiranui::runtime::value::Value;
         using shiranui::runtime::value::Integer;
@@ -530,6 +540,8 @@ namespace shiranui {
 
         void Runner::visit(syntax::ast::SourceCode &sc) {
             BEFORE_VISIT_MACRO(sc);
+            merge_lambda_marker_map(sc.marker_to_lambda);
+            merge_where_is_function_from(sc.where_is_function_from);
             for (auto s : sc.statements) {
                 s->accept(*this);
             }
@@ -537,8 +549,16 @@ namespace shiranui {
         }
         void Runner::visit(syntax::ast::DSL::DataDSL& dsl){
             BEFORE_VISIT_MACRO(dsl);
-            cur_v = DSL::run_dsl(dsl.inner);
+            cur_v = DSL::run_dsl(dsl.inner,marker_to_lambda,cur_e);
             AFTER_VISIT_MACRO(dsl);
+        }
+        void Runner::merge_lambda_marker_map(const std::map<syntax::ast::Identifier,
+                                             sp<syntax::ast::Function> >& m){
+            marker_to_lambda = merge_map(marker_to_lambda,m);
+        }
+        void Runner::merge_where_is_function_from(const std::map<sp<syntax::ast::Block>,
+                                                  sp<syntax::ast::Function> >& m){
+            where_is_function_from = merge_map(where_is_function_from,m);
         }
     }
 }

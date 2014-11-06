@@ -94,6 +94,8 @@ namespace shiranui{
             int call_depth;
             std::stack<int> call_stack;
             bool is_server;
+            std::map<sp<syntax::ast::Block>,sp<syntax::ast::Function> > where_is_function_from;
+            std::map<syntax::ast::Identifier,sp<syntax::ast::Function> > marker_to_lambda;
             Runner(bool=false);
             template<typename T>
             int before_visit(T&);
@@ -125,6 +127,11 @@ namespace shiranui{
             void visit(syntax::ast::FlyMark&);
             void visit(syntax::ast::SourceCode&);
             void visit(syntax::ast::DSL::DataDSL&);
+
+            void merge_lambda_marker_map(const std::map<syntax::ast::Identifier
+                                                    ,sp<syntax::ast::Function> >&);
+            void merge_where_is_function_from(const std::map<sp<syntax::ast::Block>,
+                                                     sp<syntax::ast::Function> >&);
         };
     }
 }

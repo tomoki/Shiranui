@@ -1,0 +1,8 @@
+let g = \(a){
+    return \test(){
+        return a;
+    };
+};
+
+let f = <|$(a=3)test|>;
+print(f());
