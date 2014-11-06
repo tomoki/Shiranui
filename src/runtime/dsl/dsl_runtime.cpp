@@ -40,6 +40,9 @@ namespace shiranui{
                     }
                     cur_v = std::make_shared<value::Array>(ret);
                 }
+                void operator()(DSLFunction& node){
+                    //
+                }
             };
             // replace all variable occurences in DSL
             struct DSLVariableReplacer : value::VisitorForValue{

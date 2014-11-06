@@ -2,3 +2,5 @@ let f = \hoge(){
     return 1;
 };
 print("ok");
+let g = <|$()hoge|>;
+print(g());

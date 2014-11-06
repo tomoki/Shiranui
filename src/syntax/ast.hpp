@@ -263,6 +263,14 @@ namespace shiranui{
                     explicit DSLArray();
                     void accept(VisitorForDSL&);
                 };
+                struct DSLFunction : DSLImmediate{
+                    typedef std::vector<std::pair<sp<ast::DSL::DSLVariable>,
+                                                  sp<ast::DSL::DSLInner> > > myenv;
+                    myenv environment;
+                    Identifier lambda_id;
+                    DSLFunction(myenv,sp<DSLVariable>);
+                    void accept(VisitorForDSL&);
+                };
                 struct DataDSL : Expression{
                     sp<DSLInner> inner;
                     explicit DataDSL(sp<DSLInner>);
@@ -347,6 +355,7 @@ namespace shiranui{
                     virtual void operator()(DSLInteger&)    = 0;
                     virtual void operator()(DSLString&)     = 0;
                     virtual void operator()(DSLArray&)      = 0;
+                    virtual void operator()(DSLFunction&)   = 0;
                 };
             }
         }

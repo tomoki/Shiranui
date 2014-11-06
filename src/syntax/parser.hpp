@@ -12,6 +12,7 @@
 #include <boost/spirit/repository/include/qi_iter_pos.hpp>
 
 #include <boost/fusion/include/io.hpp>
+#include <boost/fusion/include/std_pair.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -445,6 +446,7 @@ namespace shiranui{
                     dsl_immediate = dsl_number
                                   | dsl_string
                                   | dsl_array
+                                  | dsl_function
                                   ;
                     on_success(dsl_immediate,set_location_info);
 
@@ -475,6 +477,17 @@ namespace shiranui{
                               | ("[" >> (dsl_exp % ",") >> "]")
                                 [qi::_val = qi_make_shared<ast::DSL::DSLArray>(qi::_1)];
                     on_success(dsl_array,set_location_info);
+
+                    dsl_env_bind.name("dsl env bind");
+                    dsl_env_bind = (dsl_var >> "=" >> dsl_exp);
+                                     // [qi::_val = std::make_pair(qi::_1,qi::_2)];
+                    dsl_function = (qi::lexeme["$"] >> "(" >> ")" >> dsl_var)
+                                     [qi::_val = qi_make_shared<ast::DSL::DSLFunction>(
+                                                                  std::vector<std::pair<sp<ast::DSL::DSLVariable>,
+                                                                                        sp<ast::DSL::DSLInner> > >(),qi::_1)]
+                                 | (qi::lexeme["$"] >> "(" >> (dsl_env_bind % ",") >> ")" >> dsl_var)
+                                     [qi::_val = qi_make_shared<ast::DSL::DSLFunction>(qi::_1,qi::_2)]
+                                 ;
                 }
             }
 
@@ -528,6 +541,9 @@ namespace shiranui{
             rule_no_skip<sp<ast::DSL::DSLInteger>()> dsl_number;
             rule_no_skip<sp<ast::DSL::DSLString>()> dsl_string;
             rule_with_skip<sp<ast::DSL::DSLArray>()> dsl_array;
+            rule_with_skip<std::pair<sp<ast::DSL::DSLVariable>,
+                                     sp<ast::DSL::DSLInner> >() > dsl_env_bind;
+            rule_with_skip<sp<ast::DSL::DSLFunction>() > dsl_function;
         };
         template<typename IT>
         bool parse(IT& iter,IT& last,Parser<IT>& resolver,sp<ast::SourceCode>& program){
