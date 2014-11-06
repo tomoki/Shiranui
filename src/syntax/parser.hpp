@@ -131,11 +131,14 @@ namespace shiranui{
                 }
                 {
                     function.name("function");
-                    function   = (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
+                    function  = (lit("\\") >> identifier >> "(" >> (identifier % ",") >> ")" >> block)
+                                  [qi::_val = qi_make_shared<ast::Function>(qi::_2,qi::_3)]
+                               | (lit("\\") >> identifier >> "(" >> ")" >> block)
+                                  [qi::_val = qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_2)]
+                               | (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
                                   [qi::_val = qi_make_shared<ast::Function>(qi::_1,qi::_2)]
                                | (lit("\\") > "(" > ")" > block)
-                                  [qi::_val = qi_make_shared<ast::Function>(
-                                              std::vector<ast::Identifier>(),qi::_1)]
+                                  [qi::_val = qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_1)]
                                ;
                     on_success(function,set_location_info);
 

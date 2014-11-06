@@ -149,8 +149,6 @@ namespace shiranui {
                 if(typeid(*left) != typeid(*right)){
                     return false;
                 }
-                dump(left,std::cerr);
-                dump(right,std::cerr);
                 // TODO: show correctness
                 if(checked.find({left,right}) != checked.end()){
                     return true;
@@ -195,7 +193,6 @@ namespace shiranui {
                 return false;
             }
             bool check_equality(sp<Value> left, sp<Value> right){
-                dump("check_equality",std::cerr);
                 std::set<std::set<sp<Value> > > checked;
                 return check_equality(left,right,checked);
             }

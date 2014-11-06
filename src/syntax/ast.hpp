@@ -108,10 +108,11 @@ namespace shiranui{
 
 
             struct Function : Expression{
+                Identifier lambda_id;
                 std::vector<Identifier> parameters;
                 sp<Block>               body;
+                Function(Identifier,std::vector<Identifier>,sp<Block>);
                 Function(std::vector<Identifier>,sp<Block>);
-                Function(Identifier,sp<Block>);
                 void accept(VisitorForAST&);
             };
 

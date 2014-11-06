@@ -50,8 +50,8 @@ namespace shiranui{
             Function::Function(std::vector<Identifier> params,sp<Block> ss)
                 : parameters(params),body(ss){
             }
-            Function::Function(Identifier param,sp<Block> ss)
-                : parameters{param},body(ss){
+            Function::Function(Identifier id,std::vector<Identifier> params,sp<Block> ss)
+                : lambda_id(id),parameters(params),body(ss){
             }
 
             // FunctionCall
