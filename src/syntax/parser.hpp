@@ -18,6 +18,7 @@
 #include <string>
 
 #include "ast.hpp"
+#include "lambda_man.hpp"
 #include "../misc.hpp"
 #include "../point_iterator.hpp"
 #include "skipper.hpp"
@@ -64,6 +65,23 @@ namespace shiranui{
                 std::cerr << "(not having LocationInfo)" << std::endl;
             }
         };
+        template<typename Iterator>
+        struct scan_for_lambda_exp{
+            scan_for_lambda_exp(){}
+            template<typename Val,typename First,typename Last>
+            void operator()(Val& v,First f,Last l) const{
+                do_annotate(v,f,l);
+            }
+        private:
+            void static do_annotate(sp<ast::SourceCode> sc,Iterator f,Iterator l){
+                return do_annotate(*sc,f,l);
+            }
+            void static do_annotate(ast::SourceCode& sc,Iterator,Iterator){
+                auto pair_of_from_block_and_from_marker = use_LambdaMan(sc);
+                sc.where_is_function_from = pair_of_from_block_and_from_marker.first;
+                sc.marker_to_lambda = pair_of_from_block_and_from_marker.second;
+            }
+        };
         template<typename Iterator=pos_iterator_t,typename Skipper=CommentSkipper<Iterator>>
         struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>()
                       ,Skipper>{
@@ -84,6 +102,7 @@ namespace shiranui{
                 using namespace qi::standard_wide;
                 using qi::lit;
                 auto set_location_info = annotate(qi::_val,qi::_1,qi::_3);
+                auto scan_lambda_info = scan_lambda(qi::_val,qi::_1,qi::_3);
                 {
                     identifier.name("identifier");
                     identifier = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))];
@@ -132,9 +151,9 @@ namespace shiranui{
                 {
                     function.name("function");
                     function  = (lit("\\") >> identifier >> "(" >> (identifier % ",") >> ")" >> block)
-                                  [qi::_val = qi_make_shared<ast::Function>(qi::_2,qi::_3)]
+                                  [qi::_val = qi_make_shared<ast::Function>(qi::_1,qi::_2,qi::_3)]
                                | (lit("\\") >> identifier >> "(" >> ")" >> block)
-                                  [qi::_val = qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_2)]
+                                  [qi::_val = qi_make_shared<ast::Function>(qi::_1,std::vector<ast::Identifier>(),qi::_2)]
                                | (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
                                   [qi::_val = qi_make_shared<ast::Function>(qi::_1,qi::_2)]
                                | (lit("\\") > "(" > ")" > block)
@@ -406,6 +425,7 @@ namespace shiranui{
                               )
                            ;
                     on_success(source,set_location_info);
+                    on_success(source,scan_lambda_info);
                 }
                 // DSL section
                 {
@@ -460,6 +480,7 @@ namespace shiranui{
 
             //boost::phoenix::function<error_handler_f> handler;
             boost::phoenix::function<annotation_f<Iterator>> annotate;
+            boost::phoenix::function<scan_for_lambda_exp<Iterator>> scan_lambda;
 
             rule_no_skip<ast::Identifier()> identifier;
             rule_with_skip<sp<ast::Expression>()> expression;

@@ -216,6 +216,9 @@ namespace shiranui{
             struct SourceCode : MainNode{
                 std::vector<sp<Statement>> statements;
                 std::vector<sp<FlyLine>> flylines;
+                std::map<sp<Block>,sp<Function> > where_is_function_from;
+                // FIXME: sp<fucntion> is NOT exact.It's copy.
+                std::map<Identifier,sp<Function> > marker_to_lambda;
                 explicit SourceCode(std::vector<sp<Statement>>);
                 SourceCode();
                 ~SourceCode();

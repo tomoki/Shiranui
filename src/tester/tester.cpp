@@ -456,14 +456,32 @@ string long_code =
         void run_rec_test2(){
             stringstream in,out;
             PipeServer ps(in,cerr);
-            std::string str = "#+ <|[1,a]|> -> <|a=[1,2,a]|>;";
+            std::string str = "#+ <|a=[1,a]|> -> <|a=[1,2,a]|>;";
             run_program(str);
             ps.on_change_command(make_change(1,0,str),1);
             wait(100);
         }
+        void run_lambda_man_test(){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+
+            std::string str = "let f = \\hogepoyo(){return 1;};";
+            shiranui::runtime::Runner r;
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            bool ok = false;
+            Parser<pos_iterator_t> resolver;
+            ok = parse(iter,last,resolver,program);
+            program->accept(r);
+            dump(program->where_is_function_from.size(),std::cerr);
+            dump(program->marker_to_lambda.size(),std::cerr);
+        }
         void run_test(){
-            run_rec_test();
-            run_rec_test2();
+            // run_rec_test();
+            // run_rec_test2();
+            run_lambda_man_test();
             // run_memory_test();
             //parser_time_test();
             //run_dive_test();
