@@ -52,27 +52,27 @@ Remember,Shiranui doesn't support UTF-8 currently,so DO NOT type unicode.
 
 Opening doc/demo.nui is helpful.
 
-## compile it.
-Shiranui has shiranui to C++ compiler.
-But,some functions in shiranui are not supported
-For example,
+<!-- ## compile it. -->
+<!-- Shiranui has shiranui to C++ compiler. -->
+<!-- But,some functions in shiranui are not supported -->
+<!-- For example, -->
 
-- closure (function + environment)
+<!-- - closure (function + environment) -->
 
-Remember,compiled file may lack "main".
-If you want to define main in Shiranui,use following.
+<!-- Remember,compiled file may lack "main". -->
+<!-- If you want to define main in Shiranui,use following. -->
 
-```
-let main = \(){
-    let unit = print("helloworld");
-};
-```
+<!-- ``` -->
+<!-- let main = \(){ -->
+<!--     let unit = print("helloworld"); -->
+<!-- }; -->
+<!-- ``` -->
 
-```
-$ src/shiranui -c doc/compiler_test.shi -a lib/arare.cpp -o test.cpp
-$ clang++ test.cpp -std=c++1y -o a.out
-$ ./a.out
-```
+<!-- ``` -->
+<!-- $ src/shiranui -c doc/compiler_test.shi -a lib/arare.cpp -o test.cpp -->
+<!-- $ clang++ test.cpp -std=c++1y -o a.out -->
+<!-- $ ./a.out -->
+<!-- ``` -->
 
 ## Run REPL(read-eval-print-loop)
 
