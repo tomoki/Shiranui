@@ -2,16 +2,16 @@
 
 namespace shiranui{
     namespace syntax{
-        void LambdaMan::visit(ast::Identifier&){}
-        void LambdaMan::visit(ast::Variable&){}
-        void LambdaMan::visit(ast::Number&){}
-        void LambdaMan::visit(ast::String&){}
-        void LambdaMan::visit(ast::Enum& node){
+        void LambdaMarkerScanner::visit(ast::Identifier&){}
+        void LambdaMarkerScanner::visit(ast::Variable&){}
+        void LambdaMarkerScanner::visit(ast::Number&){}
+        void LambdaMarkerScanner::visit(ast::String&){}
+        void LambdaMarkerScanner::visit(ast::Enum& node){
             for(auto e : node.expressions){
                 e->accept(*this);
             }
         }
-        void LambdaMan::visit(ast::Interval& node){
+        void LambdaMarkerScanner::visit(ast::Interval& node){
             if(node.start != nullptr){
                 node.start->accept(*this);
             }
@@ -22,7 +22,7 @@ namespace shiranui{
                 node.next->accept(*this);
             }
         }
-        void LambdaMan::visit(ast::Block& node){
+        void LambdaMarkerScanner::visit(ast::Block& node){
             for(auto s : node.statements){
                 s->accept(*this);
             }
@@ -30,7 +30,7 @@ namespace shiranui{
                 s->accept(*this);
             }
         }
-        void LambdaMan::visit(ast::Function& node){
+        void LambdaMarkerScanner::visit(ast::Function& node){
             // FIXME: copy is safe,BUT should not.(runtime_infomation is not shared)
             auto copy = std::make_shared<ast::Function>(node);
             where_are_you_from[node.body] = copy;
@@ -39,68 +39,68 @@ namespace shiranui{
             }
             node.body->accept(*this);
         }
-        void LambdaMan::visit(ast::FunctionCall& node){
+        void LambdaMarkerScanner::visit(ast::FunctionCall& node){
             node.function->accept(*this);
             for(auto a : node.arguments){
                 a->accept(*this);
             }
         }
-        void LambdaMan::visit(ast::BinaryOperator& node){
+        void LambdaMarkerScanner::visit(ast::BinaryOperator& node){
             node.left->accept(*this);
             node.right->accept(*this);
         }
-        void LambdaMan::visit(ast::UnaryOperator& node){
+        void LambdaMarkerScanner::visit(ast::UnaryOperator& node){
             node.exp->accept(*this);
         }
-        void LambdaMan::visit(ast::IfElseExpression& node){
+        void LambdaMarkerScanner::visit(ast::IfElseExpression& node){
             node.pred->accept(*this);
             node.ife->accept(*this);
             node.elsee->accept(*this);
         }
 
-        void LambdaMan::visit(ast::Definement& node){
+        void LambdaMarkerScanner::visit(ast::Definement& node){
             node.value->accept(*this);
         }
-        void LambdaMan::visit(ast::ExpressionStatement& node){
+        void LambdaMarkerScanner::visit(ast::ExpressionStatement& node){
             node.exp->accept(*this);
         }
-        void LambdaMan::visit(ast::ReturnStatement& node){
+        void LambdaMarkerScanner::visit(ast::ReturnStatement& node){
             node.value->accept(*this);
         }
-        void LambdaMan::visit(ast::ProbeStatement& node){
+        void LambdaMarkerScanner::visit(ast::ProbeStatement& node){
             node.value->accept(*this);
         }
-        void LambdaMan::visit(ast::AssertStatement& node){
+        void LambdaMarkerScanner::visit(ast::AssertStatement& node){
             node.value->accept(*this);
         }
-        void LambdaMan::visit(ast::IfElseStatement& node){
+        void LambdaMarkerScanner::visit(ast::IfElseStatement& node){
             node.pred->accept(*this);
             node.ifblock->accept(*this);
             node.elseblock->accept(*this);
         }
         // should return forstatement?
-        void LambdaMan::visit(ast::ForStatement& node){
+        void LambdaMarkerScanner::visit(ast::ForStatement& node){
             node.loop_exp->accept(*this);
             node.block->accept(*this);
         }
-        void LambdaMan::visit(ast::Assignment& node){
+        void LambdaMarkerScanner::visit(ast::Assignment& node){
             node.value->accept(*this);
         }
-        void LambdaMan::visit(ast::TestFlyLine&){}
-        void LambdaMan::visit(ast::IdleFlyLine&){}
-        void LambdaMan::visit(ast::FlyMark&){}
-        void LambdaMan::visit(ast::SourceCode& node){
+        void LambdaMarkerScanner::visit(ast::TestFlyLine&){}
+        void LambdaMarkerScanner::visit(ast::IdleFlyLine&){}
+        void LambdaMarkerScanner::visit(ast::FlyMark&){}
+        void LambdaMarkerScanner::visit(ast::SourceCode& node){
             for(auto s : node.statements){
                 s->accept(*this);
             }
         }
-        void LambdaMan::visit(ast::DSL::DataDSL&){}
+        void LambdaMarkerScanner::visit(ast::DSL::DataDSL&){}
         std::pair<
             std::map<sp<ast::Block>,sp<ast::Function> >,
             std::map<ast::Identifier,sp<ast::Function> >
             >
-        use_LambdaMan(ast::SourceCode& source){
-            LambdaMan h;
+        scan_lambda_marker(ast::SourceCode& source){
+            LambdaMarkerScanner h;
             h.visit(source);
             return std::make_pair(h.where_are_you_from,
                                   h.marker_to_lambda);

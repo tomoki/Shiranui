@@ -6,7 +6,7 @@
 
 namespace shiranui{
     namespace syntax{
-        struct LambdaMan : ast::VisitorForAST{
+        struct LambdaMarkerScanner : ast::VisitorForAST{
             std::map<sp<ast::Block>,sp<ast::Function> > where_are_you_from;
             std::map<ast::Identifier,sp<ast::Function> > marker_to_lambda;
             void visit(ast::Identifier&);
@@ -39,7 +39,7 @@ namespace shiranui{
             std::map<sp<ast::Block>,sp<ast::Function> >,
             std::map<ast::Identifier,sp<ast::Function> >
             >
-            use_LambdaMan(ast::SourceCode&);
+            scan_lambda_marker(ast::SourceCode&);
     }
 }
 #endif

@@ -78,7 +78,7 @@ namespace shiranui{
                 return do_annotate(*sc,f,l);
             }
             void static do_annotate(ast::SourceCode& sc,Iterator,Iterator){
-                auto pair_of_from_block_and_from_marker = use_LambdaMan(sc);
+                auto pair_of_from_block_and_from_marker = scan_lambda_marker(sc);
                 sc.where_is_function_from = pair_of_from_block_and_from_marker.first;
                 sc.marker_to_lambda = pair_of_from_block_and_from_marker.second;
             }
