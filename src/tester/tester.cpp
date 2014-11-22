@@ -56,6 +56,8 @@ namespace shiranui{
                 }catch(exception e){
                     std::cerr << "what?" << std::endl;
                 }
+            }else{
+                std::cerr << "parse failed" << std::endl;
             }
 
         }
@@ -478,10 +480,30 @@ string long_code =
             dump(program->where_is_function_from.size(),std::cerr);
             dump(program->marker_to_lambda.size(),std::cerr);
         }
+
+        void stringify_closure(){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            std::string str = "let add = \\(a){return \\hoge(b){return a+b;};};\n"
+                              "add(3);";
+            shiranui::runtime::Runner r;
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            bool ok = false;
+            Parser<pos_iterator_t> resolver;
+            ok = parse(iter,last,resolver,program);
+            program->accept(r);
+            auto p = r.cur_v;
+            dump(p,std::cerr);
+            dump(to_reproductive(p,program),std::cerr);
+        }
         void run_test(){
             // run_rec_test();
             // run_rec_test2();
-            run_lambda_man_test();
+            // run_lambda_man_test();
+            stringify_closure();
             // run_memory_test();
             //parser_time_test();
             //run_dive_test();

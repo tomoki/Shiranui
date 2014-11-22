@@ -363,7 +363,7 @@ namespace shiranui{
             }
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
-                if(l != nullptr) run_idleflyline(r,l,loadcount);
+                if(l != nullptr) run_idleflyline(r,l,program,loadcount);
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
             if(flyline_index == flyline_lock){
@@ -427,6 +427,7 @@ namespace shiranui{
 
         void PipeServer::run_idleflyline(runtime::Runner& r,
                                          sp<syntax::ast::IdleFlyLine> sf,
+                                         sp<syntax::ast::SourceCode> program,
                                          const int loadcount){
             using namespace syntax::ast;
             using namespace runtime::value;
@@ -467,7 +468,7 @@ namespace shiranui{
             }
 
             sp<Value> left = r.cur_v;
-            std::string left_str = to_reproductive(left);
+            std::string left_str = to_reproductive(left,program);
             run_idleflyline_sub(left_str);
         }
 

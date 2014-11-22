@@ -7,6 +7,7 @@ namespace shiranui{
     namespace runtime{
         namespace value{
             std::string to_reproductive(sp<runtime::value::Value>);
+            std::string to_reproductive(sp<runtime::value::Value>,sp<syntax::ast::SourceCode>);
         }
     }
 }
@@ -20,7 +21,9 @@ namespace shiranui{
                 std::map<Value*,int> cnt;
                 std::map<Value*,std::string> name;
                 bool found_recursive;
-                PrettyPrinterForValue(std::ostream& os,std::map<Value*,int>);
+                std::map<sp<ast::Block>,sp<ast::Function>> where_is_function_from;
+                PrettyPrinterForValue(std::ostream& os,std::map<Value*,int>,
+                                      sp<ast::SourceCode>);
                 bool already_appeared(Value*);
                 void use_prev_name(Value*);
                 void register_name(Value*);

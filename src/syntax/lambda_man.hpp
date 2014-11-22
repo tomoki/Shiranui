@@ -39,7 +39,7 @@ namespace shiranui{
             std::map<sp<ast::Block>,sp<ast::Function> >,
             std::map<ast::Identifier,sp<ast::Function> >
             >
-            scan_lambda_marker(ast::SourceCode&);
+        scan_lambda_marker(ast::SourceCode&);
     }
 }
 #endif
