@@ -10,6 +10,10 @@ namespace shiranui{
             bool Identifier::operator<(const Identifier& id) const{
                 return name < id.name;
             }
+            bool Identifier::operator==(const Identifier& id) const{
+                return name == id.name;
+            }
+
 
             // Variable
             Variable::Variable(Identifier v) : value(v) {}

@@ -47,9 +47,10 @@ namespace shiranui{
                 std::string name;
                 // whats this?
                 Identifier() : name("") {}
-                explicit Identifier(std::string n);
-                explicit Identifier(std::vector<char> n);
-                bool operator<(const Identifier& id) const;
+                explicit Identifier(std::string);
+                explicit Identifier(std::vector<char>);
+                bool operator<(const Identifier&) const;
+                bool operator==(const Identifier&) const;
                 void accept(VisitorForAST&);
             };
 

@@ -1,4 +1,5 @@
 #include "environment.hpp"
+#include "value_printer.hpp"
 
 using shiranui::runtime::value::Value;
 using shiranui::syntax::ast::Identifier;
@@ -69,6 +70,43 @@ namespace shiranui{
                 vars.clear();
                 consts.clear();
                 parent = nullptr;
+            }
+            std::ostream& operator<<(std::ostream& os,const Environment& e){
+                using namespace runtime::value;
+                if(e.parent != nullptr){
+                    os << *(e.parent) << std::endl;
+                }
+                os << "===== layer  =====" << std::endl;
+                os << "---- consts ----" << std::endl;
+                for(const auto p : e.consts){
+                    os << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
+                }
+                os << "---- var    ----" << std::endl;
+                for(const auto p : e.vars){
+                    os << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
+                }
+                os << "==================" << std::endl;
+                return os;
+            }
+
+            std::map<syntax::ast::Identifier,
+                     sp<value::Value> >
+            filter_environment(const Environment& e,std::set<syntax::ast::Identifier> filter){
+                std::map<syntax::ast::Identifier,sp<value::Value> > ret;
+                // first,filter parent
+                if(e.parent != nullptr){
+                    ret = filter_environment(*(e.parent),filter);
+                }
+
+                // overwrite parent environment
+                for(auto m : {e.vars,e.consts}){
+                    for(auto p : m){
+                        if(filter.find(p.first) != filter.end()){
+                            ret[p.first] = p.second;
+                        }
+                    }
+                }
+                return ret;
             }
         }
     }

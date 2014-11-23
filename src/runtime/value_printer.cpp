@@ -1,4 +1,6 @@
 #include "value_printer.hpp"
+#include "environment.hpp"
+#include "../syntax/lambda_man.hpp"
 #include <sstream>
 
 namespace shiranui{
@@ -37,8 +39,8 @@ namespace shiranui{
 
             PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_,
                                                          std::map<Value*,int> c,
-                                                         sp<ast::SourceCode> code)
-                : os(os_),cur_name("a"),cnt(c),found_recursive(false){
+                                                         sp<ast::SourceCode> cod)
+                : os(os_),cur_name("a"),cnt(c),found_recursive(false),code(cod){
                 if(code != nullptr){
                     where_is_function_from = code->where_is_function_from;
                 }
@@ -96,8 +98,20 @@ namespace shiranui{
                     if(f->lambda_id.name.size() == 0){
                         os << "\\(){}";
                     }else{
+                        auto syntactic_frees = syntax::scan_free_variable(f);
+                        auto free_vars = filter_environment(node.env,syntactic_frees);
                         std::stringstream ss;
-                        ss << "<|$" << "()" << f->lambda_id.name << "|>";
+                        ss << "<|$";
+                        ss << "(";
+                        for(auto it = free_vars.begin();it != free_vars.end();++it){
+                            ss << it->first.name << "=" << to_reproductive(it->second,code);
+                            if(std::next(it) != free_vars.end()){
+                                ss << ",";
+                            }
+                        }
+                        ss << ")";
+                        ss << f->lambda_id.name;
+                        ss << "|>";
                         os << ss.str();
                     }
                 }else{

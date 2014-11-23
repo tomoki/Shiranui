@@ -4,6 +4,7 @@
 #include "value.hpp"
 #include "../syntax/ast.hpp"
 #include <map>
+#include <set>
 
 namespace shiranui{
     namespace runtime{
@@ -21,9 +22,12 @@ namespace shiranui{
                 sp<value::Value> get(syntax::ast::Identifier);
                 void set(syntax::ast::Identifier,sp<value::Value>);
                 void define(syntax::ast::Identifier,sp<value::Value>,bool);
-
                 void clear();
             };
+            std::ostream& operator<<(std::ostream&,const Environment&);
+            std::map<syntax::ast::Identifier,
+                     sp<value::Value> >
+            filter_environment(const Environment&,std::set<syntax::ast::Identifier>);
         }
     }
 }

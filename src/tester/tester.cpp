@@ -485,7 +485,7 @@ string long_code =
             using namespace shiranui;
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
-            std::string str = "let add = \\(a){return \\hoge(b){return a+b;};};\n"
+            std::string str = "let add = \\piyo(a){return \\inner(b){return a+b;};};\n"
                               "add(3);";
             shiranui::runtime::Runner r;
             pos_iterator_t first(str.begin()),last(str.end());
@@ -499,11 +499,64 @@ string long_code =
             dump(p,std::cerr);
             dump(to_reproductive(p,program),std::cerr);
         }
+        void stringify_bad_closure(){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            std::string str = "let add = \\piyo(a){return \\inner(b){return add;};};\n"
+                              "add(3);";
+            shiranui::runtime::Runner r;
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            bool ok = false;
+            Parser<pos_iterator_t> resolver;
+            ok = parse(iter,last,resolver,program);
+            program->accept(r);
+            auto p = r.cur_v;
+            dump(p,std::cerr);
+            dump(to_reproductive(p,program),std::cerr);
+        }
+
+        void free_var(){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            std::string str = "let add = \\(a){return \\inner(b){return a+b;};};\n"
+                              "add(3);";
+            shiranui::runtime::Runner r;
+            pos_iterator_t first(str.begin()),last(str.end());
+            pos_iterator_t iter = first;
+            sp<ast::SourceCode> program;
+            Parser<pos_iterator_t> resolver;
+            parse(iter,last,resolver,program);
+            program->accept(r);
+            auto p = r.cur_v;
+            auto f = std::dynamic_pointer_cast<value::UserFunction>(r.cur_v);
+            auto af = program->where_is_function_from[f->body];
+            dump(f,std::cerr);
+            dump(af,std::cerr);
+            auto frees = scan_free_variable(af);
+            std::cerr << "free variables -----" << std::endl;
+            for(ast::Identifier i : frees){
+                dump(i.name,std::cerr);
+            }
+            std::cerr << "--------------------" << std::endl;
+            dump(*(f->env),std::cerr);
+            auto filtered = filter_environment(*(f->env),frees);
+            std::cerr << "filtered" << std::endl;
+            for(auto p : filtered){
+                std::cerr << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
+            }
+
+        }
         void run_test(){
             // run_rec_test();
             // run_rec_test2();
             // run_lambda_man_test();
             stringify_closure();
+            // stringify_bad_closure();
+            // free_var();
             // run_memory_test();
             //parser_time_test();
             //run_dive_test();
@@ -514,16 +567,6 @@ string long_code =
             // run_good_dive_test();
             //run_bad_dive_test();
             // run_flymark();
-
-            // string tosend = "#- fact(2) -> 2;"
-            //     "let fact = \\(n){"
-            //     "    if n = 0 {\n"
-            //     "        return 1;\n"
-            //     "    } else {\n"
-            //     "        return n * fact(n-1);\n"
-            //     "    }\n"
-            //     "};\n";
-            // cout << compile(tosend) << endl;
         }
     }
 }

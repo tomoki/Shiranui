@@ -12,6 +12,7 @@ namespace shiranui{
     }
 }
 
+
 namespace shiranui{
     namespace runtime{
         namespace value{
@@ -21,6 +22,7 @@ namespace shiranui{
                 std::map<Value*,int> cnt;
                 std::map<Value*,std::string> name;
                 bool found_recursive;
+                sp<ast::SourceCode> code;
                 std::map<sp<ast::Block>,sp<ast::Function>> where_is_function_from;
                 PrettyPrinterForValue(std::ostream& os,std::map<Value*,int>,
                                       sp<ast::SourceCode>);
