@@ -21,12 +21,12 @@ namespace shiranui{
                 }
             }
             struct Snorkel : syntax::ast::VisitorForAST{
-
-                int call_under;
                 DivingMessage message;
+                sp<syntax::ast::SourceCode> source;
+                int call_under;
                 // Snorkel
-                Snorkel(int c) :
-                    call_under(c){
+                Snorkel(sp<syntax::ast::SourceCode> s,int c) :
+                    source(s),call_under(c){
                 }
                 bool is_used_statement(syntax::ast::Statement& s){
                     return return_value(s,call_under).second != nullptr;
@@ -37,7 +37,7 @@ namespace shiranui{
                 void visit(syntax::ast::Variable& node){
                     auto p = return_value(node,call_under);
                     if(p.second != nullptr){
-                        message.add_explore(node,to_reproductive(p.second));
+                        message.add_explore(node,to_reproductive(p.second,source));
                     }
                 }
                 void visit(syntax::ast::Number& node){
@@ -80,7 +80,7 @@ namespace shiranui{
                     }
                     auto p = return_value(node,call_under);
                     if(p.second != nullptr){
-                        message.add_explore(node,to_reproductive(p.second));
+                        message.add_explore(node,to_reproductive(p.second,source));
                     }
                 }
                 void visit(syntax::ast::BinaryOperator& node){
@@ -175,8 +175,8 @@ namespace shiranui{
 
             };
             template<typename T>
-            DivingMessage use_snorkel(T& block,int call_under){
-                Snorkel s(call_under);
+            DivingMessage use_snorkel(sp<syntax::ast::SourceCode> sc,T& block,int call_under){
+                Snorkel s(sc,call_under);
                 s.visit(block);
                 return s.message;
             }

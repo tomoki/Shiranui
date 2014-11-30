@@ -76,7 +76,7 @@ namespace shiranui{
                 return use_harpoon(source);
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
-                return use_snorkel(block,call_under);
+                return use_snorkel(source,block,call_under);
             }
             DivingMessage Diver::surface(){
                 if(undo_stack.empty()){
