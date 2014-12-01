@@ -6,8 +6,9 @@
 namespace shiranui{
     namespace runtime{
         namespace value{
-            std::string to_reproductive(sp<runtime::value::Value>);
-            std::string to_reproductive(sp<runtime::value::Value>,sp<syntax::ast::SourceCode>);
+            std::string to_reproductive(sp<runtime::value::Value>,
+                                        sp<syntax::ast::SourceCode> w=nullptr,
+                                        bool is_top=true);
         }
     }
 }

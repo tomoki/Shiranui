@@ -96,26 +96,27 @@ namespace shiranui{
                 if(where_is_function_from.find(node.body) != where_is_function_from.end()){
                     sp<ast::Function> f = where_is_function_from[node.body];
                     if(f->lambda_id.name.size() == 0){
-                        os << "\\(){}";
+                        os << "\\no_name(){}";
                     }else{
                         auto syntactic_frees = syntax::scan_free_variable(f);
                         auto free_vars = filter_environment(node.env,syntactic_frees);
+                        // please make me DSL!
+                        found_recursive = true;
                         std::stringstream ss;
-                        ss << "<|$";
+                        ss << "$";
                         ss << "(";
                         for(auto it = free_vars.begin();it != free_vars.end();++it){
-                            ss << it->first.name << "=" << to_reproductive(it->second,code);
+                            ss << it->first.name << "=" << to_reproductive(it->second,code,false);
                             if(std::next(it) != free_vars.end()){
                                 ss << ",";
                             }
                         }
                         ss << ")";
                         ss << f->lambda_id.name;
-                        ss << "|>";
                         os << ss.str();
                     }
                 }else{
-                    os << "\\(){}";
+                    os << "\\unknown(){}";
                 }
             }
             void PrettyPrinterForValue::visit(Return& node){
@@ -142,21 +143,21 @@ namespace shiranui{
     namespace runtime{
         namespace value{
             // helper functions.
-            std::string to_reproductive(sp<Value> vi,sp<syntax::ast::SourceCode> w){
+            std::string to_reproductive(sp<Value> vi,sp<syntax::ast::SourceCode> w,bool is_top){
                 std::stringstream ss;
                 ValueScanner s;
                 vi->accept(s);
                 PrettyPrinterForValue p(ss,s.cnt,w);
                 vi->accept(p);
-                if(p.found_recursive){
+                if(p.found_recursive && is_top){
                     return "<|" + ss.str() + "|>";
                 }else{
                     return ss.str();
                 }
             }
-            std::string to_reproductive(sp<Value> vi){
-                return to_reproductive(vi,nullptr);
-            }
+            // std::string to_reproductive(sp<Value> vi){
+            //     return to_reproductive(vi,nullptr);
+            // }
         }
     }
 }

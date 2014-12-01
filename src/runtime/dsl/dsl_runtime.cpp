@@ -74,6 +74,7 @@ namespace shiranui{
                 void visit(value::Boolean&){}
                 void visit(value::Array& node){
                     for(auto& p : node.value){
+                        p->accept(*this);
                         if(var_occurrences.find(p) != var_occurrences.end()){
                             DSLVariable v = var_occurrences[p];
                             if(var_defines.find(v) == var_defines.end()){

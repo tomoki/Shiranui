@@ -548,13 +548,47 @@ string long_code =
             for(auto p : filtered){
                 std::cerr << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
             }
+        }
+        void to_repr_test(){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+            std::map<string,string> tests = {
+                {"let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;","<|$(g=$()b)k|>"},
+                {"1;","1"},
+                {"\\id(){};","<|$()id|>"},
+                {"<|a=[a,1,1]|>;","<|a=[a,1,1]|>"},
+                {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"}
+            };
+            for(auto pair_of_source_and_ret : tests){
+                std::string str = pair_of_source_and_ret.first;
+                shiranui::runtime::Runner r;
+                pos_iterator_t first(str.begin()),last(str.end());
+                pos_iterator_t iter = first;
+                sp<ast::SourceCode> program;
+                Parser<pos_iterator_t> resolver;
+                parse(iter,last,resolver,program);
+                program->accept(r);
+                auto p = r.cur_v;
+                auto acc = to_reproductive(p,program);
+                auto want = pair_of_source_and_ret.second;
+                if(acc != want){
+                    std::cerr << "----------ERROR----------" << std::endl;
+                    dump(acc,std::cerr);
+                    dump(want,std::cerr);
+                    std::cerr << "-------------------------" << std::endl;
+                }else{
+                    dump(acc,std::cerr);
+                }
 
+            }
         }
         void run_test(){
             // run_rec_test();
             // run_rec_test2();
             // run_lambda_man_test();
-            stringify_closure();
+            to_repr_test();
+            // stringify_closure();
             // stringify_bad_closure();
             // free_var();
             // run_memory_test();
