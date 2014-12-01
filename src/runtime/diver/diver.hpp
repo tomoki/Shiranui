@@ -24,7 +24,7 @@ namespace shiranui{
                 DivingMessage dive(syntax::ast::FunctionCall&,int);
                 DivingMessage see(syntax::ast::Block&,int);
                 DivingMessage surface(); // undo
-                DivingMessage scan_flymark(syntax::ast::SourceCode&);
+                DivingMessage scan_flymark(sp<syntax::ast::SourceCode>);
             };
         }
     }

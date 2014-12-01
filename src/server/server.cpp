@@ -227,7 +227,7 @@ namespace shiranui{
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->scan_flymark(*source_ast);
+                    DivingMessage ms = diver->scan_flymark(source_ast);
                     ms = ms + diver->dive(l->left);
                     send_diving_message(ms,loadcount);
                 }
@@ -235,7 +235,7 @@ namespace shiranui{
             {
                 sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
                 if(l != nullptr){
-                    DivingMessage ms = diver->scan_flymark(*source_ast);
+                    DivingMessage ms = diver->scan_flymark(source_ast);
                     ms = ms + diver->dive(l->left);
                     send_diving_message(ms,loadcount);
                 }

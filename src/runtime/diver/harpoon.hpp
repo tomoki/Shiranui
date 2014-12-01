@@ -9,6 +9,8 @@ namespace shiranui{
         namespace diver{
             struct Harpoon : syntax::ast::VisitorForAST{
                 DivingMessage message;
+                sp<syntax::ast::SourceCode> source;
+                Harpoon(sp<syntax::ast::SourceCode> s) : source(s) {}
                 void visit(syntax::ast::Identifier& node){
                 }
                 void visit(syntax::ast::Variable& node){
@@ -99,7 +101,7 @@ namespace shiranui{
                     std::string returned_value;
                     for(size_t j=0;j<node.runtime_info.visit_time.size();j++){
                         int i = node.runtime_info.visit_time[j];
-                        returned_value += to_reproductive(node.runtime_info.return_value[i]);
+                        returned_value += to_reproductive(node.runtime_info.return_value[i],source);
                         if(j+1 != node.runtime_info.visit_time.size()){
                             returned_value += ",";
                         }
@@ -114,9 +116,9 @@ namespace shiranui{
                 void visit(syntax::ast::DSL::DataDSL& node){
                 }
             };
-            DivingMessage use_harpoon(syntax::ast::SourceCode& source){
-                Harpoon h;
-                h.visit(source);
+            DivingMessage use_harpoon(sp<syntax::ast::SourceCode> source){
+                Harpoon h(source);
+                h.visit(*source);
                 return h.message;
             }
         }

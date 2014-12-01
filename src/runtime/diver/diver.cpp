@@ -72,7 +72,7 @@ namespace shiranui{
                 return message;
             }
 
-            DivingMessage Diver::scan_flymark(syntax::ast::SourceCode& source){
+            DivingMessage Diver::scan_flymark(sp<syntax::ast::SourceCode> source){
                 return use_harpoon(source);
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
