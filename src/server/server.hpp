@@ -14,6 +14,7 @@ namespace shiranui{
         const std::string COMMAND_CHANGE = "change";
         const std::string COMMAND_DIVE = "dive";
         const std::string COMMAND_SURFACE = "surface";
+        const std::string COMMAND_LIFT = "lift";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
         const std::string COMMAND_RUNTIMEERROR = "runtimeerror";
@@ -25,6 +26,7 @@ namespace shiranui{
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
         const std::string COMMAND_LOCK_FLYLINE = "lock_flyline";
         const std::string COMMAND_FLYMARK = "flymark_result";
+        const std::string COMMAND_LIFT_RESULT = "lift_result";
         const int FLYLINE_LOCK_FREE = -1;
         int how_many_lines(const std::string&);
 
@@ -72,12 +74,14 @@ namespace shiranui{
             void send_dive_flymark_result(const int,const int,const int,
                                           const int,const std::string&,const int);
             void send_dive_clear(const int);
+            void send_dive_lift_result(const std::string,const int);
 
             void receive(); // run as thread.
             void receive_command(const std::string&,const std::string&,const int);
             void on_change_command(const std::string&,const int);
             void on_dive_command(const std::string&,const int);
             void on_surface_command(const std::string&,const int);
+            void on_lift_command(const std::string&,const int);
             void exec(std::string,const int);
             void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
                             sp<syntax::ast::SourceCode>,const int);

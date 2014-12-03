@@ -112,6 +112,10 @@ namespace shiranui{
             return send_command(COMMAND_DIVE_CLEAR,"",loadcount);
         }
 
+        void PipeServer::send_dive_lift_result(const std::string what,const int loadcount){
+            return send_command(COMMAND_LIFT_RESULT,what,loadcount);
+        }
+
         // receive
         void PipeServer::receive(){
             while(true){
@@ -144,6 +148,10 @@ namespace shiranui{
                 return on_dive_command(value,loadcount);
             }else if(command == COMMAND_SURFACE){
                 return on_surface_command(value,loadcount);
+            }else if(command == COMMAND_LIFT){
+                return on_lift_command(value,loadcount);
+            }else{
+                send_debug_print("Unknown command:" + command,loadcount);
             }
         }
 
@@ -264,6 +272,18 @@ namespace shiranui{
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->surface();
             send_diving_message(ms,loadcount);
+        }
+
+        void PipeServer::on_lift_command(const std::string& value,const int loadcount){
+            std::stringstream ss(value);
+            int from,to;
+            ss >> from >> to;
+            if(current_diver != nullptr){
+                auto ms = current_diver->lift(from,to);
+                send_diving_message(ms,loadcount);
+            }else{
+                send_debug_print("not diving",loadcount);
+            }
         }
 
         void PipeServer::exec(std::string source,const int loadcount){
@@ -516,6 +536,13 @@ namespace shiranui{
                     //TODO: Add loadcount here.
                     send_dive_flymark_result(start_point,end_point,insert_point,
                                              remove_length,what,loadcount);
+                }else if(command == LIFT_RESULT){
+                    std::string what;
+                    ss.ignore();
+                    std::getline(ss,what);
+                    send_dive_lift_result(what,loadcount);
+                }else{
+                    send_debug_print(command + " ????",loadcount);
                 }
             }
         }

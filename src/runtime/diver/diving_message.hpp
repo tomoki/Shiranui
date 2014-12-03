@@ -12,6 +12,7 @@ namespace shiranui{
             const std::string EXPLORE = "explore";
             const std::string ERROR = "error";
             const std::string FLYMARK_RESULT = "flymark_result";
+            const std::string LIFT_RESULT = "lift_result";
             struct DivingMessage{
                 std::string cache;
                 // std::string str();
@@ -63,11 +64,21 @@ namespace shiranui{
                     cache = ss.str();
                     return *this;
                 }
+
+                DivingMessage add_lift_result(std::string what){
+                    std::stringstream ss;
+                    ss << cache << LIFT_RESULT << std::endl
+                       << what << std::endl;
+                    cache = ss.str();
+                    return *this;
+                }
+
                 DivingMessage operator+(DivingMessage message){
                     DivingMessage ret;
                     ret.cache = cache + message.cache;
                     return ret;
                 }
+
             };
         }
     }

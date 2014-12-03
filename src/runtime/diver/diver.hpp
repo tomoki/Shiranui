@@ -12,6 +12,7 @@ namespace shiranui{
         namespace diver{
             struct Diver{
                 sp<syntax::ast::SourceCode> source;
+                std::vector<sp<syntax::ast::FunctionCall>> lift_candidate;
                 int current_id;
                 std::stack<std::pair<int,sp<syntax::ast::Expression>>> undo_stack;
                 Diver(sp<syntax::ast::SourceCode>);
@@ -25,6 +26,7 @@ namespace shiranui{
                 DivingMessage see(syntax::ast::Block&,int);
                 DivingMessage surface(); // undo
                 DivingMessage scan_flymark(sp<syntax::ast::SourceCode>);
+                DivingMessage lift(int,int);
             };
         }
     }

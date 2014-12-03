@@ -6,6 +6,7 @@
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
+    (define-key map "\C-xe" 'kasumi-select-explore-sub)
     map)
   "Keymap for Kasumi Major mode")
 
@@ -33,6 +34,8 @@
   "dive")
 (defconst kasumi-command-surface
   "surface")
+(defconst kasumi-command-lift
+  "lift")
 (defconst kasumi-command-syntaxerror
   "syntaxerror")
 (defconst kasumi-command-runtimeerror
@@ -55,6 +58,9 @@
   "lock_flyline")
 (defconst kasumi-command-flymark-result
   "flymark_result")
+(defconst kasumi-command-lift-result
+  "lift_result")
+
 ;; getline needs newline("\n")
 (defun buffer-string-no-properties ()
   (buffer-substring-no-properties (point-min) (point-max)))
@@ -184,6 +190,8 @@
       (kasumi-receive-lock-flyline value))
      ((string= command kasumi-command-flymark-result)
       (kasumi-receive-flymark-result value))
+     ((string= command kasumi-command-lift-result)
+      (kasumi-receive-lift-result value))
      (t (message "unknown command:%s " command))
      )))
 
@@ -289,8 +297,13 @@
          (value (string-join (cdr lines) "\n"))
          )
     ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
-    (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
-                                start end value))))
+    (progn 
+      (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
+                                  start end value))
+      (kasumi-put-explore start end)
+      (setq explore-data (cons (list start end value) explore-data))
+      )
+    ))
 
 ;; beg end <- target
 ;; beg remove_length
@@ -344,6 +357,14 @@
         (add-change (kasumi-fix-point where) remove_length value)
         (kasumi-add-diff (kasumi-fix-point where)
                          (- (length value) remove_length))))))
+
+(defun kasumi-receive-lift-result (value)
+  (let* ((lines (split-string value "\n"))
+         (what (nth 0 lines)))
+    (progn
+      (message what)
+      (kill-new (format "#+ %s -> ;" what))
+      )))
 
 (defun kasumi-send-change-sub  (change)
   (let ((point         (number-to-string (nth 0 change)))
@@ -402,6 +423,14 @@
     )
   "strike for dive")
 
+(defface kasumi-explore-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Red1"))
+    (t
+     :underline t :inherit error))
+  "where you can explore"
+  )
+
 (defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
@@ -438,6 +467,10 @@
 
 (defun kasumi-put-lock-flyline (beg end)
   (kasumi-put-dive-face 'kasumi-lock-flyline-face beg end))
+
+(defun kasumi-put-explore (beg end)
+  (kasumi-put-dive-face 'kasumi-explore-face beg end))
+
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))
 
@@ -458,6 +491,7 @@
     (kasumi-send-change)
     (setq changes '())
     (setq point-diff '())
+    (setq explore-data '())
     (kasumi-remove-all-overlay)))
 
 (defun kasumi-count-lines ()
@@ -472,10 +506,64 @@
 (defun kasumi-dive ()
   (interactive)
   (progn
+    (setq explore-data '())
     (kasumi-send-command kasumi-command-dive
                          (number-to-string (kasumi-orig-point (point))))
-    ;; (kasumi-refresh (point-min) (point-min) 0)
   ))
+
+
+
+(defun kasumi-select-explore-sub ()
+  (interactive)
+  (if mark-active
+      (kasumi-select-explore (region-beginning) (region-end))
+    (message "please select region")
+    ))
+
+(defun kasumi-select-explore (from to)
+  (let* ((included (filter (lambda (start-end-value)
+                             (let ((start (nth 0 start-end-value))
+                                   (end   (nth 1 start-end-value)))
+                               (<= from start end to)))
+                           explore-data))
+         (sorted (sort included (lambda (left right)
+                                  (let ((left-width (- (nth 1 left) (nth 0 left)))
+                                        (right-width (- (nth 1 right) (nth 0 right))))
+                                    (> left-width right-width)))))
+         )
+    (if (= (length sorted) 0)
+        (progn
+          (message "there is no candidate")
+          nil)
+      (progn
+        (kasumi-debug-print
+         (mapconcat (lambda (start-end-value)
+                      (let* ((start (nth 0 start-end-value))
+                             (end   (nth 1 start-end-value))
+                             (value (nth 2 start-end-value))
+                             (where (buffer-substring-no-properties start end))
+                             )
+                        (format "%s at [%d,%d] = %s" where start end value)))
+                    sorted "\n"))
+        (let ((ret-start (nth 0 (nth 0 sorted)))
+              (ret-end   (nth 1 (nth 0 sorted)))
+              (ret-value (nth 2 (nth 0 sorted))))
+
+          (message (format "%s = %s" (buffer-substring-no-properties ret-start ret-end) ret-value))
+          ;; for test
+          (kasumi-lift-sub ret-start ret-end)
+          (list ret-start ret-end)
+        )
+      )
+    )
+  ))
+
+(defun kasumi-lift-sub (from to)
+  (kasumi-send-command kasumi-command-lift
+                       (format "%d %d"
+                               (kasumi-orig-point from)
+                               (kasumi-orig-point to))))
+
 
 (defun kasumi-surface ()
   (interactive)
@@ -594,7 +682,8 @@
   (set (make-local-variable 'shiranui-process)
        (if (null kasumi-where-is-shiranui)
            (kasumi-start-shiranui (read-file-name "Shiranui Path:"))
-           (kasumi-start-shiranui kasumi-where-is-shiranui)))
+         (kasumi-start-shiranui kasumi-where-is-shiranui)))
+  (set (make-local-variable 'explore-data) '())
   (set-process-filter shiranui-process 'kasumi-process-filter)
   (set-process-sentinel shiranui-process 'kasumi-process-sentinel)
   (set-process-query-on-exit-flag shiranui-process nil)

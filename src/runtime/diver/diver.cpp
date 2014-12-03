@@ -76,6 +76,7 @@ namespace shiranui{
                 return use_harpoon(source);
             }
             DivingMessage Diver::see(syntax::ast::Block& block,int call_under){
+                lift_candidate = get_lift_candidate(source,block,call_under);
                 return use_snorkel(source,block,call_under);
             }
             DivingMessage Diver::surface(){
@@ -87,6 +88,30 @@ namespace shiranui{
                     std::pair<int,sp<syntax::ast::Expression>> p = undo_stack.top();
                     return dive(p.second,p.first);
                 }
+            }
+
+            DivingMessage Diver::lift(int from,int to){
+                DivingMessage m;
+                for(auto p : lift_candidate){
+                    if(p->point == from and p->length == (to-from)){
+                        auto f = to_reproductive(return_value(*p->function,current_id).second,source);
+                        std::vector<std::string> args;
+                        for(auto a : p->arguments){
+                            args.push_back(to_reproductive(return_value(*a,current_id).second,source));
+                        }
+                        std::string ret = f;
+                        ret += "(";
+                        for(size_t i=0;i<args.size();i++){
+                            ret += args[i];
+                            if(i+1 != args.size()){
+                                ret += ",";
+                            }
+                        }
+                        ret += ")";
+                        m.add_lift_result(ret);
+                    }
+                }
+                return m;
             }
         }
     }

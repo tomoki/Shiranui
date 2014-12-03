@@ -22,6 +22,7 @@ namespace shiranui{
             }
             struct Snorkel : syntax::ast::VisitorForAST{
                 DivingMessage message;
+                std::vector<sp<syntax::ast::FunctionCall>> lift_candidate;
                 sp<syntax::ast::SourceCode> source;
                 int call_under;
                 // Snorkel
@@ -81,6 +82,8 @@ namespace shiranui{
                     auto p = return_value(node,call_under);
                     if(p.second != nullptr){
                         message.add_explore(node,to_reproductive(p.second,source));
+                        // TODO: should not copy
+                        lift_candidate.push_back(std::make_shared<syntax::ast::FunctionCall>(node));
                     }
                 }
                 void visit(syntax::ast::BinaryOperator& node){
@@ -179,6 +182,13 @@ namespace shiranui{
                 Snorkel s(sc,call_under);
                 s.visit(block);
                 return s.message;
+            }
+            template<typename T>
+            std::vector<sp<syntax::ast::FunctionCall> >  get_lift_candidate(
+                                          sp<syntax::ast::SourceCode> sc,T& block,int call_under){
+                Snorkel s(sc,call_under);
+                s.visit(block);
+                return s.lift_candidate;
             }
         }
     }
