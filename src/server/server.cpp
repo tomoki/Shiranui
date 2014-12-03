@@ -232,6 +232,7 @@ namespace shiranui{
             using namespace shiranui::syntax::ast;
             current_diver = diver;
             diver->clear();
+            send_dive_clear(loadcount);
             {
                 sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
                 if(l != nullptr){
@@ -496,7 +497,11 @@ namespace shiranui{
                                              int loadcount){
             using namespace runtime::diver;
             std::stringstream ss(message.str());
-            send_dive_clear(-1);
+            // send_dive_clear(-1);
+            if(message.need_refresh){
+                send_dive_clear(-1);
+            }
+
             std::string command;
             while(ss >> command){
                 if(command == STRIKE){

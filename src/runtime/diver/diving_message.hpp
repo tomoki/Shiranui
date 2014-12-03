@@ -15,6 +15,7 @@ namespace shiranui{
             const std::string LIFT_RESULT = "lift_result";
             struct DivingMessage{
                 std::string cache;
+                bool need_refresh=false;
                 // std::string str();
                 std::string str(){
                     return cache;
@@ -22,6 +23,7 @@ namespace shiranui{
 
                 template<typename T>
                 DivingMessage add_strike(const T& t){
+                    need_refresh = true;
                     std::stringstream ss;
                     ss << cache << STRIKE << std::endl
                        << t.point << " " << t.length << std::endl;
@@ -30,6 +32,7 @@ namespace shiranui{
                 }
                 template<typename T>
                 DivingMessage add_explore(const T& t,const std::string& what){
+                    need_refresh = true;
                     std::stringstream ss;
                     ss << cache << EXPLORE << std::endl
                        << t.point << " " << t.length << std::endl
@@ -47,6 +50,7 @@ namespace shiranui{
                     return *this;
                 }
                 DivingMessage add_flymark_result(syntax::ast::FlyMark& t,const std::string& what){
+                    need_refresh = true;
                     std::stringstream ss;
                     int start_point = t.point;
                     int end_point = t.point + t.length;
