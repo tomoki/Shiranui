@@ -481,43 +481,6 @@ string long_code =
             dump(program->marker_to_lambda.size(),std::cerr);
         }
 
-        void stringify_closure(){
-            using namespace shiranui;
-            using namespace shiranui::syntax;
-            using namespace shiranui::runtime;
-            std::string str = "let add = \\piyo(a){return \\inner(b){return a+b;};};\n"
-                              "add(3);";
-            shiranui::runtime::Runner r;
-            pos_iterator_t first(str.begin()),last(str.end());
-            pos_iterator_t iter = first;
-            sp<ast::SourceCode> program;
-            bool ok = false;
-            Parser<pos_iterator_t> resolver;
-            ok = parse(iter,last,resolver,program);
-            program->accept(r);
-            auto p = r.cur_v;
-            dump(p,std::cerr);
-            dump(to_reproductive(p,program),std::cerr);
-        }
-        void stringify_bad_closure(){
-            using namespace shiranui;
-            using namespace shiranui::syntax;
-            using namespace shiranui::runtime;
-            std::string str = "let add = \\piyo(a){return \\inner(b){return add;};};\n"
-                              "add(3);";
-            shiranui::runtime::Runner r;
-            pos_iterator_t first(str.begin()),last(str.end());
-            pos_iterator_t iter = first;
-            sp<ast::SourceCode> program;
-            bool ok = false;
-            Parser<pos_iterator_t> resolver;
-            ok = parse(iter,last,resolver,program);
-            program->accept(r);
-            auto p = r.cur_v;
-            dump(p,std::cerr);
-            dump(to_reproductive(p,program),std::cerr);
-        }
-
         void free_var(){
             using namespace shiranui;
             using namespace shiranui::syntax;
@@ -553,12 +516,15 @@ string long_code =
             using namespace shiranui;
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
-            std::map<string,string> tests = {
+            std::vector<pair<string,string> > tests = {
                 {"let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;","<|$(g=$()b)k|>"},
                 {"1;","1"},
                 {"\\id(){};","<|$()id|>"},
                 {"<|a=[a,1,1]|>;","<|a=[a,1,1]|>"},
-                {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"}
+                {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"},
+                {"let f = \\fa(n){return n*f(n-1);};f;","<|a=$(f=a)fa|>"},
+                {"let add = \\t(a){return \\i(b){return add;};};add(3);","???"},
+                {"let f = \\ff(){g();};let g = \\gg(){f();};f;","????"}
             };
             for(auto pair_of_source_and_ret : tests){
                 std::string str = pair_of_source_and_ret.first;
@@ -588,8 +554,6 @@ string long_code =
             // run_rec_test2();
             // run_lambda_man_test();
             to_repr_test();
-            // stringify_closure();
-            // stringify_bad_closure();
             // free_var();
             // run_memory_test();
             //parser_time_test();
