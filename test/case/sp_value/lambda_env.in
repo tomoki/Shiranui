@@ -4,5 +4,5 @@ let g = \(a){
     };
 };
 
-let f = <|$(a=3)test|>;
+let f = <|$(a->3)test|>;
 print(f());

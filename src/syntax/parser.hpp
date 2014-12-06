@@ -479,7 +479,7 @@ namespace shiranui{
                     on_success(dsl_array,set_location_info);
 
                     dsl_env_bind.name("dsl env bind");
-                    dsl_env_bind = (dsl_var >> "=" >> dsl_exp);
+                    dsl_env_bind = (dsl_var >> "->" >> dsl_exp);
                                      // [qi::_val = std::make_pair(qi::_1,qi::_2)];
                     dsl_function = (qi::lexeme["$"] >> "(" >> ")" >> dsl_var)
                                      [qi::_val = qi_make_shared<ast::DSL::DSLFunction>(

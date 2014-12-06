@@ -93,20 +93,22 @@ namespace shiranui{
             }
             void PrettyPrinterForValue::visit(UserFunction& node){
                 if(check_already_occured(&node)) return;
+                // please make me DSL!
+                found_recursive = true;
                 if(where_is_function_from.find(node.body) != where_is_function_from.end()){
                     sp<ast::Function> f = where_is_function_from[node.body];
                     if(f->lambda_id.name.size() == 0){
-                        os << "\\no_name(){}";
+                        os << "$()no_name";
                     }else{
                         auto syntactic_frees = syntax::scan_free_variable(f);
                         auto free_vars = filter_environment(node.env,syntactic_frees);
-                        // please make me DSL!
-                        found_recursive = true;
+
+
                         std::stringstream ss;
                         ss << "$";
                         ss << "(";
                         for(auto it = free_vars.begin();it != free_vars.end();++it){
-                            ss << it->first.name << "=" << to_reproductive(it->second,code,false);
+                            ss << it->first.name << "->" << to_reproductive(it->second,code,false);
                             if(std::next(it) != free_vars.end()){
                                 ss << ",";
                             }
@@ -116,7 +118,7 @@ namespace shiranui{
                         os << ss.str();
                     }
                 }else{
-                    os << "\\unknown(){}";
+                    os << "$()unknown";
                 }
             }
             void PrettyPrinterForValue::visit(Return& node){

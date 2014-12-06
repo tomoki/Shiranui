@@ -1,5 +1,4 @@
 // this is comment.
-
 // let make constant value.
 let n = 1;
 // #+ line is like REPL.
@@ -46,6 +45,5 @@ let sum = \(n){
 
 #- sum(4) -> 10;
 // green underline means,it pass test.
-#- sum(4) -> 11 || "???";
+#- sum(4) -> 11 || 10;
 // red underline means,it didn't pass test.
-

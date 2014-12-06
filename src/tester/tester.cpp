@@ -517,14 +517,15 @@ string long_code =
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
             std::vector<pair<string,string> > tests = {
-                {"let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;","<|$(g=$()b)k|>"},
                 {"1;","1"},
+                {"\"hoge\";","\"hoge\""},
                 {"\\id(){};","<|$()id|>"},
                 {"<|a=[a,1,1]|>;","<|a=[a,1,1]|>"},
                 {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"},
+                {"let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;","<|$(g->$()b)k|>"},
                 {"let f = \\fa(n){return n*f(n-1);};f;","<|a=$(f=a)fa|>"},
                 {"let add = \\t(a){return \\i(b){return add;};};add(3);","???"},
-                {"let f = \\ff(){g();};let g = \\gg(){f();};f;","????"}
+                {"let f = \\ff(){g();};let g = \\gg(){f();};f;","????"},
             };
             for(auto pair_of_source_and_ret : tests){
                 std::string str = pair_of_source_and_ret.first;
