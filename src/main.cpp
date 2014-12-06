@@ -84,6 +84,7 @@ void exec(const std::string content){
     using namespace shiranui;
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
+    using namespace shiranui::runtime::DSL;
     shiranui::runtime::Runner r;
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
     std::string str = content;
@@ -109,6 +110,28 @@ void exec(const std::string content){
             std::cerr << std::endl;
         }catch(ConvertException e){
             std::cerr << "Convert Error: ";
+            e.where->accept(printer);
+            std::cerr << std::endl;
+        }catch(DSLUnknownVariable e){
+            std::cerr << "DSL Unknown Variable: ";
+            std::cerr << std::endl;
+        }catch(DSLAlreadyUsedVariable e){
+            std::cerr << "DSL Already Used Variable: ";
+            std::cerr << std::endl;
+        }catch(RangeException e){
+            std::cerr << "Range Exception: ";
+            e.where->accept(printer);
+            std::cerr << std::endl;
+        }catch(ZeroDivException e){
+            std::cerr << "ZeroDiv Exception: ";
+            e.where->accept(printer);
+            std::cerr << std::endl;
+        }catch(AssertException e){
+            std::cerr << "AssertException: ";
+            e.where->accept(printer);
+            std::cerr << std::endl;
+        }catch(MaxDepthExceededException e){
+            std::cerr << "MaxDepthExceededException: ";
             e.where->accept(printer);
             std::cerr << std::endl;
         }catch(RuntimeException e){

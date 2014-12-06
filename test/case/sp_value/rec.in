@@ -1,0 +1,10 @@
+{
+    let f = \fa(n){
+        if n = 0 {return 1;}
+        return n*f(n-1);
+    };
+}
+
+let g = <|a=$(f->a)fa|>;
+print(g(10));
+

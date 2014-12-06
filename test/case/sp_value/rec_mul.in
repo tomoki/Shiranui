@@ -1,0 +1,21 @@
+let is_odd = \o(n){
+    if n = 0 {
+        return "no";
+    }else{
+        return is_even(n-1);
+    }
+};
+let is_even = \e(n){
+    if n = 0 {
+        return "yes";
+    }else{
+        return is_odd(n-1);
+    }
+};
+
+let o = <|a=$(is_even->$(is_odd->a)e)o|>;
+let i = <|a=$(is_odd->$(is_even->a)o)e|>;
+print(o(20));
+print(i(20));
+print(o(3));
+print(i(3));

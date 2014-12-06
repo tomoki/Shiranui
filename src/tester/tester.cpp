@@ -523,9 +523,11 @@ string long_code =
                 {"<|a=[a,1,1]|>;","<|a=[a,1,1]|>"},
                 {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"},
                 {"let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;","<|$(g->$()b)k|>"},
-                {"let f = \\fa(n){return n*f(n-1);};f;","<|a=$(f=a)fa|>"},
-                {"let add = \\t(a){return \\i(b){return add;};};add(3);","???"},
-                {"let f = \\ff(){g();};let g = \\gg(){f();};f;","????"},
+                {"let f = \\fa(n){return n*f(n-1);};f;","<|a=$(f->a)fa|>"},
+                {"let add = \\t(a){return \\i(b){return add;};};add(3);","<|$(add->a=$(add->a)t)i|>"},
+                {"let f = \\ff(){g();};let g = \\gg(){f();};f;","<|a=$(g->$(f->a)gg)ff|>"},
+                {"let set = system_call(\"set\");let c = [1,2];let d = [3,4];set(c,0,d);set(d,1,c);let f = \\fid(){let cc = c;let dd = d;};",
+                 "<|$(c->a=[b=[3,a],2],d->b)fid|>"},
             };
             for(auto pair_of_source_and_ret : tests){
                 std::string str = pair_of_source_and_ret.first;

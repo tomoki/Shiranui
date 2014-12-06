@@ -1,0 +1,26 @@
+let c = [1,2];
+let d = [3,4];
+set(c,0,d);
+set(d,1,c);
+
+let f = \fid(){
+    let cc = c;
+    let dd = d;
+
+    set(cc,1,1000);
+    return dd;
+};
+
+// #+ f -> <|$(c->[1,2],d->[3,4])fid|>;
+// #+ f() -> "No such variable: set";
+// #+ <|$(c->a=[b=[3,a],2],d->b)fid|>() -> "No such variable: set";
+
+let ret = <|$(c->a=[b=[3,a],2],d->b)fid|>();
+
+// == 3
+print(get(ret,0));
+// == 1000
+print(get(get(ret,1),1));
+
+// should not changed
+print(get(c,1));

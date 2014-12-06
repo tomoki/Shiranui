@@ -19,7 +19,11 @@ namespace shiranui{
 
             // find value appearing twice
             struct ValueScanner : VisitorForValue{
+                sp<ast::SourceCode> code;
                 std::map<Value*,int> cnt;
+                ValueScanner(sp<ast::SourceCode> code_)
+                    : code(code_) {};
+
                 void visit(Integer& node){cnt[&node]++;}
                 void visit(String& node){cnt[&node]++;}
                 void visit(Boolean& node){cnt[&node]++;}
@@ -30,7 +34,21 @@ namespace shiranui{
                         p->accept(*this);
                     }
                 }
-                void visit(UserFunction& node){cnt[&node]++;}
+                void visit(UserFunction& node){
+                    cnt[&node]++;
+                    if(cnt[&node] >= 2) return;
+                    if(code != nullptr){
+                        if(code->where_is_function_from.find(node.body)
+                           != code->where_is_function_from.end()){
+                            sp<ast::Function> f = code->where_is_function_from[node.body];
+                            auto syntactic_frees = syntax::scan_free_variable(f);
+                            auto free_vars = filter_environment(node.env,syntactic_frees);
+                            for(auto p : free_vars){
+                                p.second->accept(*this);
+                            }
+                        }
+                    }
+                }
                 void visit(Return& node){cnt[&node]++;}
                 void visit(SystemCall& node){cnt[&node]++;}
                 void visit(BuiltinFunction& node){cnt[&node]++;}
@@ -102,20 +120,17 @@ namespace shiranui{
                     }else{
                         auto syntactic_frees = syntax::scan_free_variable(f);
                         auto free_vars = filter_environment(node.env,syntactic_frees);
-
-
-                        std::stringstream ss;
-                        ss << "$";
-                        ss << "(";
+                        os << "$";
+                        os << "(";
                         for(auto it = free_vars.begin();it != free_vars.end();++it){
-                            ss << it->first.name << "->" << to_reproductive(it->second,code,false);
+                            os << it->first.name << "->";
+                            it->second->accept(*this);
                             if(std::next(it) != free_vars.end()){
-                                ss << ",";
+                                os << ",";
                             }
                         }
-                        ss << ")";
-                        ss << f->lambda_id.name;
-                        os << ss.str();
+                        os << ")";
+                        os << f->lambda_id.name;
                     }
                 }else{
                     os << "$()unknown";
@@ -147,7 +162,7 @@ namespace shiranui{
             // helper functions.
             std::string to_reproductive(sp<Value> vi,sp<syntax::ast::SourceCode> w,bool is_top){
                 std::stringstream ss;
-                ValueScanner s;
+                ValueScanner s(w);
                 vi->accept(s);
                 PrettyPrinterForValue p(ss,s.cnt,w);
                 vi->accept(p);

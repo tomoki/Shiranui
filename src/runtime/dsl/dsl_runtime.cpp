@@ -53,9 +53,9 @@ namespace shiranui{
                     sp<environment::Environment> fenv = std::make_shared<environment::Environment>(env);
                     for(auto p : node.environment){
                         syntax::ast::Identifier i(p.first->name);
-                        auto pv = run_dsl(p.second,marker_to_lambda,env);
+                        p.second->accept(*this);
                         // define as mutable
-                        fenv->define(i,pv,false);
+                        fenv->define(i,cur_v,false);
                     }
                     cur_v = std::make_shared<value::UserFunction>(fast->parameters,fast->body,fenv);
                 }
@@ -84,7 +84,21 @@ namespace shiranui{
                         }
                     }
                 }
-                void visit(value::UserFunction&){}
+                void visit(value::UserFunction& node){
+                    // env defined by DSL always in top of env
+                    for(auto &vs : {node.env->vars,node.env->consts}){
+                        for(auto& p : vs){
+                            p.second->accept(*this);
+                            if(var_occurrences.find(p.second) != var_occurrences.end()){
+                                DSLVariable v = var_occurrences[p.second];
+                                if(var_defines.find(v) == var_defines.end()){
+                                    throw DSLUnknownVariable(top);
+                                }
+                                node.env->set(p.first,var_defines[v]);
+                            }
+                        }
+                    }
+                }
                 void visit(value::Return&){}
                 void visit(value::SystemCall&){}
                 void visit(value::BuiltinFunction&){}
