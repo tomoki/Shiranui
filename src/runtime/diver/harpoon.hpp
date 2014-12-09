@@ -19,6 +19,8 @@ namespace shiranui{
                 }
                 void visit(syntax::ast::String& node){
                 }
+                void visit(syntax::ast::Boolean& node){
+                }
                 void visit(syntax::ast::Enum& node){
                     for(auto e : node.expressions){
                         e->accept(*this);

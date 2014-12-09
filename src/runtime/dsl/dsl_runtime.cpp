@@ -29,6 +29,9 @@ namespace shiranui{
                     }
                     var_defines[*node.var] = cur_v;
                 }
+                void operator()(DSLBoolean& node){
+                    cur_v = std::make_shared<value::Boolean>(node.value);
+                }
                 void operator()(DSLInteger& node){
                     cur_v = std::make_shared<value::Integer>(node.value);
                 }

@@ -14,6 +14,7 @@ namespace shiranui{
                 void visit(syntax::ast::Identifier&);
                 void visit(syntax::ast::Variable&);
                 void visit(syntax::ast::Number&);
+                void visit(syntax::ast::Boolean&);
                 void visit(syntax::ast::String&);
                 void visit(syntax::ast::Enum&);
                 void visit(syntax::ast::Interval&);

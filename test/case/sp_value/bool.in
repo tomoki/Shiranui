@@ -1,0 +1,14 @@
+{
+    mut n = true;
+    \p(){
+        if n {
+            print("yes");
+        } else {
+            print("no");
+        }
+        return n;
+    };
+}
+
+<|$(n->true)p|>();
+<|$(n->false)p|>();

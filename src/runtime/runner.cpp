@@ -90,6 +90,11 @@ namespace shiranui {
             cur_v = std::make_shared<String>(s.value);
             AFTER_VISIT_MACRO(s);
         }
+        void Runner::visit(syntax::ast::Boolean& node){
+            BEFORE_VISIT_MACRO(node);
+            cur_v = std::make_shared<Boolean>(node.value);
+            AFTER_VISIT_MACRO(node);
+        }
         void Runner::visit(syntax::ast::Enum &e) {
             BEFORE_VISIT_MACRO(e);
             std::vector<sp<Value>> vs;

@@ -15,6 +15,7 @@ namespace shiranui{
             void visit(ast::Variable&);
             void visit(ast::Number&);
             void visit(ast::String&);
+            void visit(ast::Boolean&);
             void visit(ast::Enum&);
             void visit(ast::Interval&);
             void visit(ast::Block&);
@@ -53,6 +54,7 @@ namespace shiranui{
             void visit(ast::Variable&);
             void visit(ast::Number&);
             void visit(ast::String&);
+            void visit(ast::Boolean&);
             void visit(ast::Enum&);
             void visit(ast::Interval&);
             void visit(ast::Block&);

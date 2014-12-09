@@ -25,6 +25,8 @@ namespace shiranui{
             String::String(std::string v):value(v) {}
             String::String(std::vector<char> v):value(v.begin(),v.end()) {}
 
+            Boolean::Boolean(bool v):value(v) {}
+
             Enum::Enum(std::vector<sp<Expression>> es) : expressions(es) {};
             Enum::Enum() {};
 
@@ -145,6 +147,7 @@ namespace shiranui{
                 }
                 DSLDefine::DSLDefine(sp<DSLVariable> f,sp<DSLInner> t) : var(f),value(t) {}
                 DSLInteger::DSLInteger(int v) : value(v) {}
+                DSLBoolean::DSLBoolean(bool v) : value(v) {}
                 DSLString::DSLString(std::string v) : value(v) {}
                 DSLArray::DSLArray() {};
                 DSLArray::DSLArray(std::vector<sp<DSLInner>> v) : value(v){}
@@ -165,6 +168,9 @@ namespace shiranui{
                 return visitor.visit(*this);
             }
             void Number          ::accept(VisitorForAST& visitor){
+                return visitor.visit(*this);
+            }
+            void Boolean         ::accept(VisitorForAST& visitor){
                 return visitor.visit(*this);
             }
             void String          ::accept(VisitorForAST& visitor){
@@ -238,6 +244,7 @@ namespace shiranui{
                 void DSLVariable::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLDefine  ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLInteger ::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLBoolean ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLString  ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLArray   ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLFunction::accept(VisitorForDSL& visitor){return visitor(*this);}
@@ -261,6 +268,9 @@ namespace shiranui{
             }
             void PrettyPrinterForAST::visit(syntax::ast::String& str){
                 os << str.value;
+            }
+            void PrettyPrinterForAST::visit(syntax::ast::Boolean& b){
+                os << (b.value ? "true":"false");
             }
             void PrettyPrinterForAST::visit(syntax::ast::Enum& enu){
                 os << "[";

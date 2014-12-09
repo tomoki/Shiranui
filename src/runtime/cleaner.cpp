@@ -17,6 +17,9 @@ namespace shiranui{
             void Cleaner::visit(String& node){
                 clear_it(node);
             }
+            void Cleaner::visit(Boolean& node){
+                clear_it(node);
+            }
             void Cleaner::visit(Enum& node){
                 clear_it(node);
                 for(sp<Expression> e : node.expressions){

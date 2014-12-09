@@ -125,6 +125,15 @@ namespace shiranui{
 
                     on_success(string,set_location_info);
                 }
+                {
+                    boolean.name("boolean");
+                    boolean = lit("true")
+                             [qi::_val = qi_make_shared<ast::Boolean>(true)]
+                            | lit("false")
+                             [qi::_val = qi_make_shared<ast::Boolean>(false)]
+                            ;
+                    on_success(boolean,set_location_info);
+                }
 
                 {
                     array.name("array");
@@ -376,6 +385,7 @@ namespace shiranui{
                     atom       = ("(" > expression > ")")
                                | integer
                                | string
+                               | boolean
                                | array
                                | variable
                                | function
@@ -445,6 +455,7 @@ namespace shiranui{
                     dsl_immediate.name("dsl immediate");
                     dsl_immediate = dsl_number
                                   | dsl_string
+                                  | dsl_boolean
                                   | dsl_array
                                   | dsl_function
                                   ;
@@ -460,6 +471,14 @@ namespace shiranui{
                                 [qi::_val = qi_make_shared<ast::DSL::DSLString>(qi::_1)]
                                > lit("\"");
                     on_success(dsl_string,set_location_info);
+
+                    dsl_boolean.name("dsl boolean");
+                    dsl_boolean = lit("true")
+                                   [qi::_val = qi_make_shared<ast::DSL::DSLBoolean>(true)]
+                                | lit("false")
+                                   [qi::_val = qi_make_shared<ast::DSL::DSLBoolean>(false)]
+                            ;
+                    on_success(dsl_boolean,set_location_info);
 
                     dsl_var.name("dsl var");
                     dsl_var = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))]
@@ -512,6 +531,7 @@ namespace shiranui{
 
             rule_no_skip<sp<ast::Number>()> integer;
             rule_no_skip<sp<ast::String>()> string;
+            rule_no_skip<sp<ast::Boolean>()> boolean;
             rule_no_skip<sp<ast::Variable>()> variable;
 
             rule_with_skip<sp<ast::Array>()> array;
@@ -540,6 +560,7 @@ namespace shiranui{
             rule_no_skip<sp<ast::DSL::DSLVariable>()> dsl_var;
             rule_no_skip<sp<ast::DSL::DSLInteger>()> dsl_number;
             rule_no_skip<sp<ast::DSL::DSLString>()> dsl_string;
+            rule_no_skip<sp<ast::DSL::DSLBoolean>()> dsl_boolean;
             rule_with_skip<sp<ast::DSL::DSLArray>()> dsl_array;
             rule_with_skip<std::pair<sp<ast::DSL::DSLVariable>,
                                      sp<ast::DSL::DSLInner> >() > dsl_env_bind;

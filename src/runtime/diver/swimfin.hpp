@@ -26,6 +26,9 @@ namespace shiranui{
                 void visit(syntax::ast::String& node){
                     if(not in_range(node)) return;
                 }
+                void visit(syntax::ast::Boolean& node){
+                    if(not in_range(node)) return;
+                }
                 void visit(syntax::ast::Enum& node){
                     if(not in_range(node)) return;
                     for(auto e : node.expressions){

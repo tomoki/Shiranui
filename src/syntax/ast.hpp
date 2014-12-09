@@ -71,7 +71,11 @@ namespace shiranui{
                 explicit String(std::vector<char> v);
                 void accept(VisitorForAST&);
             };
-
+            struct Boolean: Expression{
+                bool value;
+                explicit Boolean(bool);
+                void accept(VisitorForAST&);
+            };
             struct Array : Expression{
                 virtual ~Array() {};
             };
@@ -253,6 +257,11 @@ namespace shiranui{
                     explicit DSLInteger(int);
                     void accept(VisitorForDSL&);
                 };
+                struct DSLBoolean : DSLImmediate{
+                    bool value;
+                    explicit DSLBoolean(bool);
+                    void accept(VisitorForDSL&);
+                };
                 struct DSLString : DSLImmediate{
                     std::string value;
                     explicit DSLString(std::string);
@@ -290,6 +299,7 @@ namespace shiranui{
                 virtual void visit(Variable&)         = 0;
                 virtual void visit(Number&)           = 0;
                 virtual void visit(String&)           = 0;
+                virtual void visit(Boolean&)          = 0;
                 virtual void visit(Enum&)             = 0;
                 virtual void visit(Interval&)         = 0;
                 virtual void visit(Block&)            = 0;
@@ -320,6 +330,7 @@ namespace shiranui{
                 void visit(Variable&);
                 void visit(Number&);
                 void visit(String&);
+                void visit(Boolean&);
                 void visit(Enum&);
                 void visit(Interval&);
                 void visit(Block&);
@@ -354,6 +365,7 @@ namespace shiranui{
                     virtual void operator()(DSLVariable&)   = 0;
                     virtual void operator()(DSLDefine&)     = 0;
                     virtual void operator()(DSLInteger&)    = 0;
+                    virtual void operator()(DSLBoolean&)    = 0;
                     virtual void operator()(DSLString&)     = 0;
                     virtual void operator()(DSLArray&)      = 0;
                     virtual void operator()(DSLFunction&)   = 0;

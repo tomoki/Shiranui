@@ -6,6 +6,7 @@ namespace shiranui{
         void LambdaMarkerScanner::visit(ast::Variable&){}
         void LambdaMarkerScanner::visit(ast::Number&){}
         void LambdaMarkerScanner::visit(ast::String&){}
+        void LambdaMarkerScanner::visit(ast::Boolean&){}
         void LambdaMarkerScanner::visit(ast::Enum& node){
             for(auto e : node.expressions){
                 e->accept(*this);
@@ -117,6 +118,7 @@ namespace shiranui{
         }
         void LambdaFreeVariableScanner::visit(ast::Number&){}
         void LambdaFreeVariableScanner::visit(ast::String&){}
+        void LambdaFreeVariableScanner::visit(ast::Boolean&){}
         void LambdaFreeVariableScanner::visit(ast::Enum& node){
             for(auto e : node.expressions){
                 e->accept(*this);
