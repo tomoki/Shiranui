@@ -119,13 +119,28 @@ namespace shiranui{
                         os << "$()no_name";
                     }else{
                         auto syntactic_frees = syntax::scan_free_variable(f);
-                        auto free_vars = filter_environment(node.env,syntactic_frees);
+
+                        // if global has var,they should not be included
+                        std::map<syntax::ast::Identifier,sp<value::Value> > free_not_global_vars;
+                        {
+                            auto free_vars = filter_environment(node.env,syntactic_frees);
+                            auto global_env = node.env;
+                            while(global_env->parent != nullptr){
+                                global_env = global_env->parent;
+                            }
+                            for(auto p : free_vars){
+                                if(global_env->has(p.first)) continue;
+                                free_not_global_vars[p.first] = p.second;
+                            }
+                        }
+
                         os << "$";
                         os << "(";
-                        for(auto it = free_vars.begin();it != free_vars.end();++it){
+                        for(auto it = free_not_global_vars.begin();
+                            it != free_not_global_vars.end();++it){
                             os << it->first.name << "->";
                             it->second->accept(*this);
-                            if(std::next(it) != free_vars.end()){
+                            if(std::next(it) != free_not_global_vars.end()){
                                 os << ",";
                             }
                         }
