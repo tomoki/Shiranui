@@ -71,6 +71,9 @@ namespace shiranui{
                     for(auto s : node.statements){
                         s->accept(*this);
                     }
+                    for(auto s : node.flymarks){
+                        s->accept(*this);
+                    }
                 }
                 void visit(syntax::ast::Function& node){
                     // node.body->accept(*this);
@@ -168,7 +171,9 @@ namespace shiranui{
                     throw InternalException(std::make_shared<syntax::ast::IdleFlyLine>(node));
                 }
                 void visit(syntax::ast::FlyMark& node){
-                    throw InternalException(std::make_shared<syntax::ast::FlyMark>(node));
+                    int when = node.runtime_info.index_of_called(call_under);
+                    if(when < 0) return;
+                    message.add_flymark_index(node,when);
                 }
                 void visit(syntax::ast::SourceCode& node){
                     for(auto s : node.statements){

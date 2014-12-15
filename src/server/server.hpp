@@ -26,6 +26,7 @@ namespace shiranui{
         const std::string COMMAND_DIVE_CLEAR = "dive_clear";
         const std::string COMMAND_LOCK_FLYLINE = "lock_flyline";
         const std::string COMMAND_FLYMARK = "flymark_result";
+        const std::string COMMAND_FLYMARK_INDEX = "flymark_index";
         const std::string COMMAND_LIFT_RESULT = "lift_result";
         const int FLYLINE_LOCK_FREE = -1;
         int how_many_lines(const std::string&);
@@ -73,6 +74,7 @@ namespace shiranui{
             void send_dive_explore(const int,const int,const std::string&,const int);
             void send_dive_flymark_result(const int,const int,const int,
                                           const int,const std::string&,const int);
+            void send_dive_flymark_index(const int,const int,const int,const int);
             void send_dive_clear(const int);
             void send_dive_lift_result(const std::string,const int);
 

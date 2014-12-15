@@ -13,6 +13,7 @@ namespace shiranui{
             const std::string ERROR = "error";
             const std::string FLYMARK_RESULT = "flymark_result";
             const std::string LIFT_RESULT = "lift_result";
+            const std::string FLYMARK_INDEX = "flymark_index";
             struct DivingMessage{
                 std::string cache;
                 bool need_refresh=false;
@@ -69,6 +70,17 @@ namespace shiranui{
                     return *this;
                 }
 
+                DivingMessage add_flymark_index(syntax::ast::FlyMark& t,const int index){
+                    need_refresh = true;
+                    std::stringstream ss;
+                    int start_point = t.point;
+                    int end_point = t.point + t.length;
+                    ss << cache << FLYMARK_INDEX << std::endl
+                       << start_point << " " << t.length << std::endl
+                       << index << std::endl;
+                    cache = ss.str();
+                    return *this;
+                }
                 DivingMessage add_lift_result(std::string what){
                     std::stringstream ss;
                     ss << cache << LIFT_RESULT << std::endl
@@ -76,6 +88,7 @@ namespace shiranui{
                     cache = ss.str();
                     return *this;
                 }
+
 
                 DivingMessage operator+(DivingMessage message){
                     DivingMessage ret;

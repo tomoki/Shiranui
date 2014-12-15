@@ -108,6 +108,13 @@ namespace shiranui{
                << value;
             return send_command(COMMAND_FLYMARK,ss.str(),loadcount);
         }
+        void PipeServer::send_dive_flymark_index(const int start_point,const int end_point,
+                                                 const int index,const int loadcount){
+            std::stringstream ss;
+            ss << start_point << " " << end_point << std::endl
+               << index;
+            return send_command(COMMAND_FLYMARK_INDEX,ss.str(),loadcount);
+        }
         void PipeServer::send_dive_clear(const int loadcount){
             return send_command(COMMAND_DIVE_CLEAR,"",loadcount);
         }
@@ -182,6 +189,7 @@ namespace shiranui{
                 source.erase(point,remove_length);
                 source.insert(point,insert_value);
             }
+
             main_thread = boost::thread(boost::bind(&PipeServer::exec,this,source,loadcount));
         }
 
@@ -294,8 +302,9 @@ namespace shiranui{
             using namespace shiranui::runtime;
             using namespace shiranui::runtime::DSL;
             using namespace shiranui::runtime::diver;
-            const auto start_time = std::chrono::system_clock::now();
 
+            const auto start_time = std::chrono::system_clock::now();
+            send_debug_print(source,loadcount);
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
@@ -353,6 +362,7 @@ namespace shiranui{
             const auto end_time = std::chrono::system_clock::now();
             const auto time_span = end_time - start_time;
             std::stringstream ts;
+
             ts << "First:" << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
             send_debug_print(ts.str(),loadcount);
         }
@@ -546,6 +556,11 @@ namespace shiranui{
                     ss.ignore();
                     std::getline(ss,what);
                     send_dive_lift_result(what,loadcount);
+                }else if(command == FLYMARK_INDEX){
+                    int start_point,end_point,length,index;
+                    ss >> start_point >> length >> index;
+                    end_point = start_point + length;
+                    send_dive_flymark_index(start_point,end_point,index,loadcount);
                 }else{
                     send_debug_print(command + " ????",loadcount);
                 }

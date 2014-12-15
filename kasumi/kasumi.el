@@ -58,6 +58,8 @@
   "lock_flyline")
 (defconst kasumi-command-flymark-result
   "flymark_result")
+(defconst kasumi-command-flymark-index
+  "flymark_index")
 (defconst kasumi-command-lift-result
   "lift_result")
 
@@ -103,6 +105,30 @@
   (replace-regexp-in-string "[ \r\n\t]*\\'" "" s))
 (defun string-strip (s)
   (string-lstrip (string-rstrip s)))
+
+(defun kasumi-split-splited-expressions (s)
+  (reverse (kasumi-split-splited-expressions-sub s "" (make-hash-table) '()))
+  )
+
+(defun kasumi-split-splited-expressions-sub (rest cache paren-table ret)
+  (if (= (length rest) 0)
+      (cons cache ret)
+    (let ((bracket (gethash 'bra paren-table 0))
+          (dquote  (gethash 'dq paren-table 0))
+          (head    (substring rest 0 1))
+          (tail    (substring rest 1)))
+      (if (and (= dquote 0) (= bracket 0) (string= head ","))
+          (kasumi-split-splited-expressions-sub tail "" paren-table (cons cache ret))
+        (progn
+          (cond
+           ((string= head "[")
+            (puthash 'bra (+ bracket 1) paren-table))
+           ((string= head "]")
+            (puthash 'bra (- bracket 1) paren-table))
+           ((string= head "\"")
+            (puthash 'dq (if (= dquote 1) 0 1) paren-table)))
+          (kasumi-split-splited-expressions-sub tail (concat cache head) paren-table ret))))))
+
 
 
 ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Asynchronous-Processes.html#Asynchronous-Processes
@@ -190,6 +216,8 @@
       (kasumi-receive-lock-flyline value))
      ((string= command kasumi-command-flymark-result)
       (kasumi-receive-flymark-result value))
+     ((string= command kasumi-command-flymark-index)
+      (kasumi-receive-flymark-index value))
      ((string= command kasumi-command-lift-result)
       (kasumi-receive-lift-result value))
      (t (message "unknown command:%s " command))
@@ -297,7 +325,7 @@
          (value (string-join (cdr lines) "\n"))
          )
     ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
-    (progn 
+    (progn
       (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
                                   start end value))
       (kasumi-put-explore start end)
@@ -348,15 +376,39 @@
          (inhibit-modification-hooks t))
     (save-excursion
       (progn
-        (goto-char (kasumi-fix-point where))
-        (delete-region (kasumi-fix-point where)
-                       (+ (kasumi-fix-point where) remove_length))
+        (goto-char (- (kasumi-fix-point where) 3))
+        (let* ((s (+ (search-forward "->") 1))
+               (e (- (search-forward ";") 1)))
+          (delete-region s e)
+          (backward-char)
+          (insert value)
+          (add-change (kasumi-fix-point where) (- e s) value)
+          (kasumi-add-diff (kasumi-fix-point where)
+                           (- (length value) (- e s))))))))
 
-        (insert value)
 
-        (add-change (kasumi-fix-point where) remove_length value)
-        (kasumi-add-diff (kasumi-fix-point where)
-                         (- (length value) remove_length))))))
+(defun kasumi-foldr (lis op id-el)
+  (if (null lis)
+      id-el
+    (funcall op (car lis) (kasumi-foldr (cdr lis) op id-el))))
+
+(defun kasumi-receive-flymark-index (value)
+  (let* ((lines      (split-string value "\n"))
+         (target     (split-string (nth 0 lines) " "))
+         (start      (string-to-number (nth 0 target)))
+         (end        (string-to-number (nth 1 target)))
+         (index      (string-to-number (nth 1 lines))))
+    (save-excursion
+      (progn
+        (goto-char (kasumi-fix-point start))
+        (let* ((s (+ (search-forward "->") 1))
+               (e (- (search-forward ";") 1))
+               (splited (kasumi-split-splited-expressions (buffer-substring-no-properties s e)))
+               ;; + index for commna
+               (hs (+ s (+ index (kasumi-foldr (mapcar 'length (car (take-nth splited index))) '+ 0))))
+               (he (+ hs (length (nth index splited)))))
+          (kasumi-put-explore hs he))
+        ))))
 
 (defun kasumi-receive-lift-result (value)
   (let* ((lines (split-string value "\n"))

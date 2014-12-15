@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 #include "value.hpp"
 
 namespace shiranui{
@@ -29,6 +30,14 @@ namespace shiranui{
                     return_value.clear();
                     call_under.clear();
                     memo.clear();
+                }
+                int index_of_called(int under){
+                    if(call_under.find(under) == call_under.end()) return -1;
+                    int id = call_under[under];
+                    int index = lower_bound(visit_time.begin(),
+                                            visit_time.end(),
+                                            id) - visit_time.begin();
+                    return index;
                 }
             };
         }
