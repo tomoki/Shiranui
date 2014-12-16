@@ -413,20 +413,40 @@
           (kasumi-put-flymark-index hs he))
         ))))
 
+(defun move-and-do (where f default)
+  (save-excursion
+    (progn
+      (goto-char where)
+      (let ((r (funcall f)))
+        (if r r default)))))
+
+(defun kasumi-search-backward-and-recovery (where what)
+  (move-and-do where
+               (lambda () (search-backward what nil
+                                           (lambda () nil))) -1))
+
+(defun kasumi-search-forward-and-recovery (where what)
+  (move-and-do where
+               (lambda () (search-forward what nil
+                                          (lambda () nil))) (point-max)))
+
 ;; TODO: check its source code ok
 (defun kasumi-send-flymark-jump ()
   (interactive)
-  (save-excursion
-    (let* ((h  (point))
-           (s  (+ (search-backward "->") 2))
-           (e  (- (search-forward ";") 1))
-           (i  (- (length (kasumi-split-splited-expressions (buffer-substring-no-properties s h))) 1)))
-      (progn
-        (message (number-to-string i))
-        (kasumi-send-command kasumi-command-flymark-jump
-                             (format "%d %d" (kasumi-orig-point h)  i))
-      )
-    )))
+  (if (< (kasumi-search-backward-and-recovery (point) ";")
+         (kasumi-search-backward-and-recovery (point) "#*")
+         (kasumi-search-backward-and-recovery (point) "->")
+         (kasumi-search-forward-and-recovery  (point) ";"))
+      (save-excursion
+        (let* ((h  (point))
+               (s  (+ (search-backward "->") 2))
+               (e  (- (search-forward ";") 1))
+               (i  (- (length (kasumi-split-splited-expressions
+                               (buffer-substring-no-properties s h))) 1)))
+          (kasumi-send-command kasumi-command-flymark-jump
+                               (format "%d %d" (kasumi-orig-point h)  i))
+          ))
+    (message "this is not flymark")))
 
 (defun kasumi-receive-lift-result (value)
   (let* ((lines (split-string value "\n"))
