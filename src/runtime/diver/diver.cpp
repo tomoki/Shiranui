@@ -94,6 +94,7 @@ namespace shiranui{
                 auto p = use_jumper(source,point,index);
                 auto block = p.second;
                 int call_under = p.first;
+                current_id = call_under;
                 return see(*block,call_under);
             }
             DivingMessage Diver::lift(int from,int to){

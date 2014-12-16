@@ -416,7 +416,6 @@
 ;; TODO: check its source code ok
 (defun kasumi-send-flymark-jump ()
   (interactive)
-  ;; maybe,correct position
   (save-excursion
     (let* ((h  (point))
            (s  (+ (search-backward "->") 2))
