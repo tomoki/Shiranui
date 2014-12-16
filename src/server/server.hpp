@@ -13,6 +13,7 @@ namespace shiranui{
     namespace server{
         const std::string COMMAND_CHANGE = "change";
         const std::string COMMAND_DIVE = "dive";
+        const std::string COMMAND_FLYMARK_JUMP = "flymark_jump";
         const std::string COMMAND_SURFACE = "surface";
         const std::string COMMAND_LIFT = "lift";
         const std::string COMMAND_DEBUG_PRINT = "debug";
@@ -84,6 +85,7 @@ namespace shiranui{
             void on_dive_command(const std::string&,const int);
             void on_surface_command(const std::string&,const int);
             void on_lift_command(const std::string&,const int);
+            void on_jump_command(const std::string&,const int);
             void exec(std::string,const int);
             void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
                             sp<syntax::ast::SourceCode>,const int);

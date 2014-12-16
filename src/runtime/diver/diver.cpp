@@ -2,6 +2,7 @@
 #include "swimfin.hpp"
 #include "snorkel.hpp"
 #include "harpoon.hpp"
+#include "jumper.hpp"
 #include "../runner.hpp"
 #include <sstream>
 
@@ -89,7 +90,12 @@ namespace shiranui{
                     return dive(p.second,p.first);
                 }
             }
-
+            DivingMessage Diver::jump(int point,int index){
+                auto p = use_jumper(source,point,index);
+                auto block = p.second;
+                int call_under = p.first;
+                return see(*block,call_under);
+            }
             DivingMessage Diver::lift(int from,int to){
                 DivingMessage m;
                 for(auto p : lift_candidate){

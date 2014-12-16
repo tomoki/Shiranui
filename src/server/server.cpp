@@ -157,6 +157,8 @@ namespace shiranui{
                 return on_surface_command(value,loadcount);
             }else if(command == COMMAND_LIFT){
                 return on_lift_command(value,loadcount);
+            }else if(command == COMMAND_FLYMARK_JUMP){
+                return on_jump_command(value,loadcount);
             }else{
                 send_debug_print("Unknown command:" + command,loadcount);
             }
@@ -231,6 +233,18 @@ namespace shiranui{
                 send_debug_print(out.str(),loadcount);
             }
         }
+
+        void PipeServer::on_jump_command(const std::string& value,const int loadcount){
+            std::stringstream ss(value);
+            int point,index;
+            ss >> point >> index;
+            if(current_diver != nullptr){
+                auto message = current_diver->jump(point,index);
+                send_diving_message(message,loadcount);
+            }else{
+                send_debug_print("Not diving now",loadcount);
+            }
+        }
         // TODO: should treat point.(if left is list...)
         void PipeServer::dive_start(sp<runtime::diver::Diver> diver,
                                     sp<syntax::ast::FlyLine> sf,
@@ -269,6 +283,7 @@ namespace shiranui{
             DivingMessage ms = diver->dive(point);
             send_diving_message(ms,loadcount);
         }
+        
         void PipeServer::on_surface_command(const std::string&,const int loadcount){
             // value has nothing.
             if(current_diver != nullptr){

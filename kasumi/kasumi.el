@@ -7,6 +7,7 @@
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
     (define-key map "\C-xe" 'kasumi-select-explore-sub)
+    (define-key map "\C-xj" 'kasumi-send-flymark-jump)
     map)
   "Keymap for Kasumi Major mode")
 
@@ -62,6 +63,8 @@
   "flymark_index")
 (defconst kasumi-command-lift-result
   "lift_result")
+(defconst kasumi-command-flymark-jump
+  "flymark_jump")
 
 ;; getline needs newline("\n")
 (defun buffer-string-no-properties ()
@@ -407,8 +410,24 @@
                ;; + index for commna
                (hs (+ s (+ index (kasumi-foldr (mapcar 'length (car (take-nth splited index))) '+ 0))))
                (he (+ hs (length (nth index splited)))))
-          (kasumi-put-explore hs he))
+          (kasumi-put-flymark-index hs he))
         ))))
+
+;; TODO: check its source code ok
+(defun kasumi-send-flymark-jump ()
+  (interactive)
+  ;; maybe,correct position
+  (save-excursion
+    (let* ((h  (point))
+           (s  (+ (search-backward "->") 2))
+           (e  (- (search-forward ";") 1))
+           (i  (- (length (kasumi-split-splited-expressions (buffer-substring-no-properties s h))) 1)))
+      (progn
+        (message (number-to-string i))
+        (kasumi-send-command kasumi-command-flymark-jump
+                             (format "%d %d" (kasumi-orig-point h)  i))
+      )
+    )))
 
 (defun kasumi-receive-lift-result (value)
   (let* ((lines (split-string value "\n"))
@@ -482,7 +501,13 @@
      :underline t :inherit error))
   "where you can explore"
   )
-
+(defface kasumi-flymark-index-face
+  '((((supports :underline (:style wave)))
+     :underline (:color "Green"))
+    (t
+     :underline t :inherit error))
+  "current index of flymark"
+  )
 (defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
@@ -522,6 +547,9 @@
 
 (defun kasumi-put-explore (beg end)
   (kasumi-put-dive-face 'kasumi-explore-face beg end))
+
+(defun kasumi-put-flymark-index (beg end)
+  (kasumi-put-dive-face 'kasumi-flymark-index-face beg end))
 
 (defun kasumi-remove-all-overlay ()
   (remove-overlays (point-min) (point-max) 'category 'kasumi-face))

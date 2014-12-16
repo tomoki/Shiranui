@@ -24,6 +24,8 @@ namespace shiranui{
                 DivingMessage dive(sp<syntax::ast::Expression>,int);
                 DivingMessage dive(syntax::ast::FunctionCall&,int);
                 DivingMessage see(syntax::ast::Block&,int);
+                // point,flymark_index
+                DivingMessage jump(int,int);
                 DivingMessage surface(); // undo
                 DivingMessage scan_flymark(sp<syntax::ast::SourceCode>);
                 DivingMessage lift(int,int);
