@@ -28,7 +28,7 @@ namespace shiranui{
             }
 
             DivingMessage Diver::clear(){
-                undo_stack = std::stack<std::pair<int,sp<syntax::ast::Expression>>>();
+                undo_stack = decltype(undo_stack)();
                 current_id = infomation::TOPLEVEL;
                 return DivingMessage();
             }
@@ -39,37 +39,31 @@ namespace shiranui{
 
             DivingMessage Diver::dive(sp<syntax::ast::Expression> exp,int lower_id){
                 using namespace shiranui::syntax::ast;
+                using namespace shiranui::runtime::value;
+                auto next_id = return_value(*exp,lower_id).first;
                 {
                     auto p = std::dynamic_pointer_cast<FunctionCall>(exp);
                     if(p != nullptr){
-                        return dive(*p,lower_id);
+                        auto pp = return_value(*p->function,lower_id);
+                        auto uf = std::dynamic_pointer_cast<UserFunction>(pp.second);
+                        if(uf == nullptr){
+                            DivingMessage d;
+                            d.add_error(*p,"Not called");
+                            return d;
+                        }
+                        return dive(uf->body,next_id);
                     }
                 }
                 DivingMessage d;
                 d.add_error(*exp,"It is not functioncall");
                 return d;
             }
-            DivingMessage Diver::dive(syntax::ast::FunctionCall& fc){
-                return dive(fc,current_id);
-            }
-            DivingMessage Diver::dive(syntax::ast::FunctionCall& fc,int call_under){
+            DivingMessage Diver::dive(sp<syntax::ast::Block> block,int call_under){
                 using namespace shiranui::syntax::ast;
                 using namespace shiranui::runtime::value;
-                auto ret = return_value(fc,call_under);
-                auto p = return_value(*fc.function,call_under);
-                auto function = std::dynamic_pointer_cast<UserFunction>(p.second);
-                if(p.second == nullptr){
-                    // send error
-                    DivingMessage m;
-                    m.add_error(fc,"Not called function");
-                    return m;
-                }
-                // ret.first is new call_under
-                auto message = see(*function->body,ret.first);
-
-                current_id = ret.first;
-                undo_stack.push(std::make_pair(call_under,
-                                               std::make_shared<FunctionCall>(fc)));
+                auto message = see(*block,call_under);
+                current_id = call_under;
+                undo_stack.push(std::make_pair(call_under,block));
                 return message;
             }
 
@@ -91,7 +85,7 @@ namespace shiranui{
                     if(undo_stack.empty()){
                         return dive(current_t.second,current_t.first);
                     }
-                    std::pair<int,sp<syntax::ast::Expression>> p = undo_stack.top();
+                    auto p = undo_stack.top();
                     auto d = dive(p.second,p.first);
                     // dive push new state.It should be removed.
                     //  for multiple back
@@ -102,9 +96,10 @@ namespace shiranui{
             DivingMessage Diver::jump(int point,int index){
                 auto p = use_jumper(source,point,index);
                 auto block = p.second;
+                if(block == nullptr) return DivingMessage();
                 int call_under = p.first;
                 current_id = call_under;
-                return see(*block,call_under);
+                return dive(block,call_under);
             }
             DivingMessage Diver::lift(int from,int to){
                 DivingMessage m;

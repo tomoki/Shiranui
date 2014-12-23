@@ -399,11 +399,21 @@ string long_code =
             w();
             ps.on_dive_command("3",1);
             w();
-            ps.on_surface_command("",1);
-            // ps.on_jump_command("69 4",1);
-            // w();
-            // ps.on_surface_command("",1);
-            // w();
+            ps.on_dive_command("24",1);
+            w();
+            ps.on_dive_command("3",1);
+            w();
+            ps.on_dive_command("24",1);
+            w();
+            ps.on_dive_command("3",1);
+            w();
+            for(int i=0;i<7;i++){
+                std::stringstream ss;
+                ss << 69 << " " << i;
+                ps.on_jump_command(ss.str(),1);
+                w();
+            }
+            w();
         }
         void run_bad_dive_test(){
             stringstream in,out;

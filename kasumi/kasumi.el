@@ -35,6 +35,7 @@
   "dive")
 (defconst kasumi-command-surface
   "surface")
+
 (defconst kasumi-command-lift
   "lift")
 (defconst kasumi-command-syntaxerror
@@ -243,17 +244,33 @@
   (kasumi-fix-point-sub p (reverse point-diff)))
 
 (defun kasumi-orig-point-sub (p lis)
-  (cond
-   ((null lis) p)
-   ((> p (+ (car (car lis)) (cdr (car lis))))
-    (kasumi-orig-point-sub (- p (cdr (car lis))) (cdr lis)))
-   (t (kasumi-orig-point-sub p (cdr lis)))))
-
+  (if (null lis) p
+    (let ((where (car (car lis)))
+          (diff  (cdr (car lis))))
+      (cond
+       ((and (> diff 0) (> p (+ where diff)))
+        (kasumi-orig-point-sub (- p diff) (cdr lis)))
+       ((and (< diff 0) (> p (- where diff)))
+        (kasumi-orig-point-sub (- p diff) (cdr lis)))
+       (t (kasumi-orig-point-sub p (cdr lis)))))))
+  
 (defun kasumi-orig-point (p)
   (kasumi-orig-point-sub p point-diff))
 
 (defun kasumi-add-diff (where size)
-  (setq point-diff (cons (cons where size) point-diff)))
+  (if (not (= size 0))
+      (setq point-diff (cons (cons where size) point-diff))))
+
+(defun print-point-diff ()
+  (interactive)
+  (print-point-diff-sub point-diff))
+
+(defun print-point-diff-sub (diffs)
+  (if (null diffs)
+      nil
+    (progn
+      (message "%d %d" (car (car diffs)) (cdr (car diffs)))
+      (print-point-diff-sub (cdr diffs)))))
 
 (defun kasumi-string-to-fix-point (str)
   (kasumi-fix-point (string-to-number str)))
@@ -317,15 +334,15 @@
 (defun kasumi-receive-dive-strike (value)
   (let ((beg-end-list (split-string value " ")))
     (kasumi-put-dive-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
-                               (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
 (defun kasumi-receive-dive-explore (value)
-  (let* ((lines (split-string value "\n"))
+  (let* ((lines        (split-string value "\n"))
          (beg-end-list (split-string (car lines) " "))
-         (start (kasumi-string-to-fix-point (nth 0 beg-end-list)))
-         (end (kasumi-string-to-fix-point (nth 1 beg-end-list)))
-         (value (string-join (cdr lines) "\n"))
+         (start        (kasumi-string-to-fix-point (nth 0 beg-end-list)))
+         (end          (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+         (value        (string-join (cdr lines) "\n"))
          )
     ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
     (progn
@@ -381,13 +398,22 @@
       (progn
         (goto-char (- (kasumi-fix-point where) 3))
         (let* ((s (+ (search-forward "->") 1))
-               (e (- (search-forward ";") 1)))
+               (e (- (search-forward ";") 1))
+               (will-delete (- e s)))
           (delete-region s e)
           (backward-char)
           (insert value)
-          (add-change (kasumi-fix-point where) (- e s) value)
-          (kasumi-add-diff (kasumi-fix-point where)
-                           (- (length value) (- e s))))))))
+          ;; (add-change (kasumi-fix-point where) will-delete value)
+          ;; (kasumi-add-diff (+ (kasumi-fix-point s) (length value))
+          ;;                  (- (length value) will-delete))
+          (add-change (kasumi-fix-point where) will-delete value)
+          ;; (kasumi-add-diff (kasumi-fix-point (+ where (length value))) (- (length value) will-delete))
+          (kasumi-add-diff (kasumi-fix-point where) (- (length value) will-delete))
+
+          ;; (kasumi-add-diff (+ (kasumi-fix-point s) (length value))
+          ;;                  (- (+ (length value) (- will-delete))))
+
+          )))))
 
 
 (defun kasumi-foldr (lis op id-el)
@@ -443,8 +469,9 @@
                (e  (- (search-forward ";") 1))
                (i  (- (length (kasumi-split-splited-expressions
                                (buffer-substring-no-properties s h))) 1)))
+          (message "%d %d" (kasumi-orig-point s) i)
           (kasumi-send-command kasumi-command-flymark-jump
-                               (format "%d %d" (kasumi-orig-point h)  i))
+                               (format "%d %d" (kasumi-orig-point s) i))
           ))
     (message "this is not flymark")))
 
@@ -606,6 +633,7 @@
   (interactive)
   (progn
     (setq explore-data '())
+    (message (format "dive at %d" (kasumi-orig-point (point))))
     (kasumi-send-command kasumi-command-dive
                          (number-to-string (kasumi-orig-point (point))))
   ))
