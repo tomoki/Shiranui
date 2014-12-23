@@ -87,7 +87,11 @@ namespace shiranui{
                     // remove current state
                     undo_stack.pop();
                     std::pair<int,sp<syntax::ast::Expression>> p = undo_stack.top();
-                    return dive(p.second,p.first);
+                    auto d = dive(p.second,p.first);
+                    // dive push new state.It should be removed.
+                    //  for multiple back
+                    undo_stack.pop();
+                    return d;
                 }
             }
             DivingMessage Diver::jump(int point,int index){

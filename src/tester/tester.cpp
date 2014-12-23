@@ -342,7 +342,7 @@ string long_code =
         void run_dive_test(){
             stringstream in,out;
             PipeServer ps(in,cerr);
-            string tosend = "#- fact(2) -> 2;"
+            string tosend = "#- fact(3) -> 6;"
                             "let fact = \\(n){"
                             "    if n = 0 {\n"
                             "        return 1;\n"
@@ -351,10 +351,28 @@ string long_code =
                             "    }\n"
                             "};\n";
 
+            int k = 0;
+            auto w = [&k](){
+                wait(100);
+                std::cerr << "-----" << k++ << "-----" << std::endl;
+            };
+            // for(int i=0;i<tosend.length();i++){
+            //     std::cerr << i << ":" << tosend[i] << std::endl;
+            // }
+            w();
             ps.on_change_command(make_change(1,0,tosend),1);
-            wait(100);
+            w();
             ps.on_dive_command("3",1);
-            wait(100);
+            w();
+            ps.on_dive_command("99",1);
+            w();
+            ps.on_dive_command("99",1);
+            w();
+            ps.on_surface_command("",1);
+            w();
+            ps.on_surface_command("",1);
+            w();
+
         }
         void run_bad_dive_test(){
             stringstream in,out;
@@ -556,11 +574,11 @@ string long_code =
             // run_rec_test();
             // run_rec_test2();
             // run_lambda_man_test();
-            to_repr_test();
+            // to_repr_test();
             // free_var();
             // run_memory_test();
             //parser_time_test();
-            //run_dive_test();
+            run_dive_test();
             //run_bad_program();
             //run_zero_div();
             // run_dive_tri();
