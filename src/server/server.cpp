@@ -159,6 +159,8 @@ namespace shiranui{
                 return on_lift_command(value,loadcount);
             }else if(command == COMMAND_FLYMARK_JUMP){
                 return on_jump_command(value,loadcount);
+            }else if(command == COMMAND_MOVE_TO_CALLER){
+                return on_move_to_caller_command(value,loadcount);
             }else{
                 send_debug_print("Unknown command:" + command,loadcount);
             }
@@ -283,11 +285,16 @@ namespace shiranui{
             DivingMessage ms = diver->dive(point);
             send_diving_message(ms,loadcount);
         }
-        
+
         void PipeServer::on_surface_command(const std::string&,const int loadcount){
-            // value has nothing.
             if(current_diver != nullptr){
                 surface(current_diver,loadcount);
+            }else{
+            }
+        }
+        void PipeServer::on_move_to_caller_command(const std::string&,const int loadcount){
+            if(current_diver != nullptr){
+                move_to_caller(current_diver,loadcount);
             }else{
             }
         }
@@ -295,6 +302,11 @@ namespace shiranui{
         void PipeServer::surface(sp<runtime::diver::Diver> diver,int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->surface();
+            send_diving_message(ms,loadcount);
+        }
+        void PipeServer::move_to_caller(sp<runtime::diver::Diver> diver,int loadcount){
+            using namespace shiranui::runtime::diver;
+            DivingMessage ms = diver->move_to_caller();
             send_diving_message(ms,loadcount);
         }
 

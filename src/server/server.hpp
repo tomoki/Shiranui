@@ -15,6 +15,7 @@ namespace shiranui{
         const std::string COMMAND_DIVE = "dive";
         const std::string COMMAND_FLYMARK_JUMP = "flymark_jump";
         const std::string COMMAND_SURFACE = "surface";
+        const std::string COMMAND_MOVE_TO_CALLER = "move_to_caller";
         const std::string COMMAND_LIFT = "lift";
         const std::string COMMAND_DEBUG_PRINT = "debug";
         const std::string COMMAND_SYNTAXEROR = "syntaxerror";
@@ -84,6 +85,7 @@ namespace shiranui{
             void on_change_command(const std::string&,const int);
             void on_dive_command(const std::string&,const int);
             void on_surface_command(const std::string&,const int);
+            void on_move_to_caller_command(const std::string&,const int);
             void on_lift_command(const std::string&,const int);
             void on_jump_command(const std::string&,const int);
             void exec(std::string,const int);
@@ -91,6 +93,7 @@ namespace shiranui{
                             sp<syntax::ast::SourceCode>,const int);
             void dive(sp<runtime::diver::Diver>,int,const int);
             void surface(sp<runtime::diver::Diver>,int);
+            void move_to_caller(sp<runtime::diver::Diver>,int);
             void send_diving_message(runtime::diver::DivingMessage,int);
             void run_flyline(std::string,int,const int);
             void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);

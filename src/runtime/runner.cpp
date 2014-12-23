@@ -33,36 +33,47 @@ namespace shiranui {
         using namespace shiranui::runtime::value::builtin;
         Runner::Runner(bool is_server_)
             : cur_v(std::make_shared<Integer>(0)),
-            cur_e(std::make_shared<Environment>()),
-            cur_t(infomation::COUNT_FROM - 1), // cur_t++ called before use
-            call_depth(0),
-            is_server(is_server_) {
-                call_stack.push(infomation::TOPLEVEL); // -1 is toplevel
-            }
+              cur_e(std::make_shared<Environment>()),
+              cur_t(infomation::COUNT_FROM - 1), // cur_t++ called before use
+              call_depth(0),
+              is_server(is_server_) {
+            call_stack.push(infomation::TOPLEVEL); // -1 is toplevel
+            call_stack_block.push(nullptr);
+        }
         template <typename T>
-            int Runner::before_visit(T &node) {
-                boost::this_thread::interruption_point();
-                cur_t++;
-                call_depth++;
-                if(call_depth > 10000){
-                    throw MaxDepthExceededException(std::make_shared<T>(node));
-                }
-                if (is_server) {
-                    node.runtime_info.visit_time.push_back(cur_t);
-                    node.runtime_info.call_under[call_stack.top()] = cur_t;
-                }
-                return cur_t;
+        int Runner::before_visit(T &node) {
+            boost::this_thread::interruption_point();
+            cur_t++;
+            call_depth++;
+            if(call_depth > 10000){
+                throw MaxDepthExceededException(std::make_shared<T>(node));
             }
+            if (is_server) {
+                node.runtime_info.visit_time.push_back(cur_t);
+                node.runtime_info.call_under[call_stack.top()] = cur_t;
+            }
+            return cur_t;
+        }
 
         template <typename T>
-            void Runner::after_visit(T &node, int cur_t_) {
-                if (is_server) {
-                    node.runtime_info.return_value[cur_t_] = cur_v;
-                }
-                call_depth--;
-                boost::this_thread::interruption_point();
+        void Runner::after_visit(T &node, int cur_t_) {
+            if (is_server) {
+                node.runtime_info.return_value[cur_t_] = cur_v;
             }
-
+            call_depth--;
+            boost::this_thread::interruption_point();
+        }
+        void Runner::push_callstack(int id,sp<syntax::ast::Block> b){
+            if(call_stack.top() != infomation::TOPLEVEL){
+                b->runtime_info.up[id] = std::make_pair(call_stack.top(),call_stack_block.top());
+            }
+            call_stack.push(id);
+            call_stack_block.push(b);
+        }
+        void Runner::pop_callstack(){
+            call_stack.pop();
+            call_stack_block.pop();
+        }
         void Runner::visit(syntax::ast::Identifier &) {
             throw RuntimeException(); // never occur.
             return;
@@ -257,11 +268,11 @@ namespace shiranui {
                         fc.arguments[i]->accept(*this);
                         call_env->define(f->parameters[i], cur_v, true);
                     }
-                    call_stack.push(cur_t_);
+                    push_callstack(cur_t_,f->body);
                     this->cur_e = call_env;
                     f->body->accept(*this);
                     this->cur_e = before;
-                    call_stack.pop();
+                    pop_callstack();
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if (ret == nullptr) {
                         throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));

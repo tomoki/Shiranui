@@ -2,7 +2,8 @@
 (defvar kasumi-mode-map
   (let ((map (make-keymap)))
     (define-key map "\C-q" 'kasumi-dive)
-    (define-key map "\M-q" 'kasumi-surface)
+    (define-key map "\M-u" 'kasumi-surface)
+    (define-key map "\M-q" 'kasumi-to-caller)
     (define-key map "\C-xd" 'kasumi-decline)
     (define-key map "\C-xa" 'kasumi-accept)
     (define-key map "\C-xi" 'kasumi-idle)
@@ -35,7 +36,8 @@
   "dive")
 (defconst kasumi-command-surface
   "surface")
-
+(defconst kasumi-command-move-to-caller
+  "move_to_caller")
 (defconst kasumi-command-lift
   "lift")
 (defconst kasumi-command-syntaxerror
@@ -695,6 +697,10 @@
 (defun kasumi-surface ()
   (interactive)
   (kasumi-send-command kasumi-command-surface ""))
+
+(defun kasumi-to-caller ()
+  (interactive)
+  (kasumi-send-command kasumi-command-move-to-caller ""))
 
 (defun kasumi-accept ()
   (interactive)

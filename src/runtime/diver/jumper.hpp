@@ -3,7 +3,6 @@
 
 #include "diving_message.hpp"
 #include "../../syntax/ast.hpp"
-#include <fstream>
 
 namespace shiranui{
     namespace runtime{
@@ -123,13 +122,8 @@ namespace shiranui{
                 void visit(syntax::ast::IdleFlyLine& node){
                 }
                 void visit(syntax::ast::FlyMark& node){
-                    std::fstream fs("/tmp/log.txt",std::fstream::out | std::fstream::app);
-                    dump(node.point,fs);
-                    dump(node.point+node.length,fs);
-                    dump(point,fs);
                     if(not in_range(node)) return;
                     int time = node.runtime_info.visit_time[index];
-                    dump(time,fs);
                     for(auto p : node.runtime_info.call_under){
                         if(p.second == time){
                             call_under = p.first;
@@ -162,10 +156,6 @@ namespace shiranui{
                                      const int point,const int index){
                 Jumper h(source,point,index);
                 h.visit(*source);
-                std::fstream fs("/tmp/log.txt",std::fstream::out | std::fstream::app);
-                dump(h.function,fs);
-                dump(h.call_under,fs);
-                fs.close();
                 if(h.function != nullptr and h.call_under >= 0){
                     return std::make_pair(h.call_under,h.function->body);
                 }else{

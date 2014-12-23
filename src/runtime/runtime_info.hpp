@@ -13,6 +13,14 @@ namespace shiranui{
         }
     }
 }
+namespace shiranui{
+    namespace syntax{
+        namespace ast{
+            struct Block;
+        }
+    }
+}
+
 
 namespace shiranui{
     namespace runtime{
@@ -23,6 +31,7 @@ namespace shiranui{
                 std::vector<int> visit_time;
                 // TODO:for can't handle well.
                 std::unordered_map<int,int> call_under;
+                std::unordered_map<int,std::pair<int,sp<syntax::ast::Block> > > up;
                 std::unordered_map<int,sp<value::Value>> return_value;
                 std::unordered_map<int,std::string> memo;
 
@@ -30,6 +39,7 @@ namespace shiranui{
                     return_value.clear();
                     call_under.clear();
                     memo.clear();
+                    up.clear();
                 }
                 int index_of_called(int under){
                     if(call_under.find(under) == call_under.end()) return -1;
@@ -38,6 +48,13 @@ namespace shiranui{
                                             visit_time.end(),
                                             id) - visit_time.begin();
                     return index;
+                }
+                std::pair<int,sp<syntax::ast::Block> > get_up(int i){
+                    if(up.find(i) != up.end()){
+                        return up[i];
+                    }else{
+                        return std::make_pair(-123,nullptr);
+                    }
                 }
             };
         }

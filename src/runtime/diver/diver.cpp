@@ -93,6 +93,16 @@ namespace shiranui{
                     return d;
                 }
             }
+            DivingMessage Diver::move_to_caller(){
+                if(undo_stack.empty()) return DivingMessage();
+                auto current = undo_stack.top();
+                auto parent = current.second->runtime_info.get_up(current.first);
+                if(parent.first >= 0 and parent.second != nullptr){
+                    return dive(parent.second,parent.first);
+                }else{
+                    return DivingMessage();
+                }
+            }
             DivingMessage Diver::jump(int point,int index){
                 auto p = use_jumper(source,point,index);
                 auto block = p.second;

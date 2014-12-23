@@ -93,6 +93,7 @@ namespace shiranui{
             int cur_t;
             int call_depth;
             std::stack<int> call_stack;
+            std::stack<sp<syntax::ast::Block> > call_stack_block;
             bool is_server;
             std::map<sp<syntax::ast::Block>,sp<syntax::ast::Function> > where_is_function_from;
             std::map<syntax::ast::Identifier,sp<syntax::ast::Function> > marker_to_lambda;
@@ -102,6 +103,8 @@ namespace shiranui{
             template<typename T>
             void after_visit(T&,int);
 
+            void push_callstack(int,sp<syntax::ast::Block>);
+            void pop_callstack();
             void visit(syntax::ast::Identifier&);
             void visit(syntax::ast::Variable&);
             void visit(syntax::ast::Number&);

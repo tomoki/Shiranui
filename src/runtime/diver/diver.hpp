@@ -26,6 +26,7 @@ namespace shiranui{
                 // point,flymark_index
                 DivingMessage jump(int,int);
                 DivingMessage surface(); // undo
+                DivingMessage move_to_caller();
                 DivingMessage scan_flymark(sp<syntax::ast::SourceCode>);
                 DivingMessage lift(int,int);
             };
