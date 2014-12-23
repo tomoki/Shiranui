@@ -374,6 +374,37 @@ string long_code =
             w();
 
         }
+        void run_jump_test(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            std::string s = "#+ f(10) -> 3628800;\n"
+                            "#+ f(3) -> 6;\n"
+                            "let f = \\f(n){\n"
+                            "    #* n -> 10,9,8,7,6,5,4,3,2,1;\n"
+                            "    if n = 1{\n"
+                            "        return 1;\n"
+                            "    }else{\n"
+                            "        return n * f(n-1);\n"
+                            "    }\n"
+                            "};";
+            for(int i=0;i<s.length();i++){
+                std::cerr << i << ":" << s[i] << std::endl;
+            }
+            int k = 0;
+            auto w = [&k](){
+                wait(100);
+                std::cerr << "-----" << k++ << "-----" << std::endl;
+            };
+            ps.on_change_command(make_change(1,0,s),1);
+            w();
+            ps.on_dive_command("3",1);
+            w();
+            ps.on_surface_command("",1);
+            // ps.on_jump_command("69 4",1);
+            // w();
+            // ps.on_surface_command("",1);
+            // w();
+        }
         void run_bad_dive_test(){
             stringstream in,out;
             PipeServer ps(in,cerr);
@@ -578,7 +609,8 @@ string long_code =
             // free_var();
             // run_memory_test();
             //parser_time_test();
-            run_dive_test();
+            // run_dive_test();
+            run_jump_test();
             //run_bad_program();
             //run_zero_div();
             // run_dive_tri();

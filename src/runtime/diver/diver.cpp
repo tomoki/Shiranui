@@ -85,7 +85,12 @@ namespace shiranui{
                     return DivingMessage();
                 }else{
                     // remove current state
+                    auto current_t = undo_stack.top();
                     undo_stack.pop();
+                    // maybe toplevel
+                    if(undo_stack.empty()){
+                        return dive(current_t.second,current_t.first);
+                    }
                     std::pair<int,sp<syntax::ast::Expression>> p = undo_stack.top();
                     auto d = dive(p.second,p.first);
                     // dive push new state.It should be removed.
