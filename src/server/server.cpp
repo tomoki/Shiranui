@@ -92,6 +92,11 @@ namespace shiranui{
             return send_command_with_two_points(COMMAND_DIVE_STRIKE,
                                                 start_point,end_point,loadcount);
         }
+        void PipeServer::send_dive_highlight(const int start_point,const int end_point,
+                                             const int loadcount){
+            return send_command_with_two_points(COMMAND_DIVE_HIGHLIGHT,
+                                                start_point,end_point,loadcount);
+        }
         void PipeServer::send_dive_explore(const int start_point,const int end_point,
                                            const std::string& what,const int loadcount){
             std::stringstream ss;
@@ -546,6 +551,11 @@ namespace shiranui{
                     ss >> start_point >> length;
                     int end_point = start_point + length;
                     send_dive_strike(start_point,end_point,loadcount);
+                }else if(command == HIGHLIGHT){
+                    int start_point,length;
+                    ss >> start_point >> length;
+                    int end_point = start_point + length;
+                    send_dive_highlight(start_point,end_point,loadcount);
                 }else if(command == EXPLORE){
                     int start_point,length;
                     ss >> start_point >> length;

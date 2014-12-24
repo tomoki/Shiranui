@@ -58,6 +58,8 @@
   "dive_strike")
 (defconst kasumi-command-dive-clear
   "dive_clear")
+(defconst kasumi-command-dive-highlight
+  "dive_highlight")
 (defconst kasumi-command-lock-flyline
   "lock_flyline")
 (defconst kasumi-command-flymark-result
@@ -216,6 +218,8 @@
       (kasumi-receive-runtimeerror value))
      ((string= command kasumi-command-dive-strike)
       (kasumi-receive-dive-strike value))
+     ((string= command kasumi-command-dive-highlight)
+      (kasumi-receive-dive-highlight value))
      ((string= command kasumi-command-dive-explore)
       (kasumi-receive-dive-explore value))
      ((string= command kasumi-command-lock-flyline)
@@ -255,7 +259,7 @@
        ((and (< diff 0) (> p (- where diff)))
         (kasumi-orig-point-sub (- p diff) (cdr lis)))
        (t (kasumi-orig-point-sub p (cdr lis)))))))
-  
+
 (defun kasumi-orig-point (p)
   (kasumi-orig-point-sub p point-diff))
 
@@ -338,6 +342,13 @@
     (kasumi-put-dive-strike (kasumi-string-to-fix-point (nth 0 beg-end-list))
                             (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
+
+(defun kasumi-receive-dive-highlight (value)
+  (let ((beg-end-list (split-string value " ")))
+    (kasumi-put-dive-highlight (kasumi-string-to-fix-point (nth 0 beg-end-list))
+                               (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+    ))
+
 
 (defun kasumi-receive-dive-explore (value)
   (let* ((lines        (split-string value "\n"))
@@ -542,6 +553,11 @@
     )
   "strike for dive")
 
+(defface kasumi-dive-highlight-face
+  '((t :inherit highlight)
+    )
+  "highlight for dive")
+
 (defface kasumi-explore-face
   '((((supports :underline (:style wave)))
      :underline (:color "Red1"))
@@ -556,6 +572,7 @@
      :underline t :inherit error))
   "current index of flymark"
   )
+
 (defun kasumi-put-face (face beg end)
   (save-restriction
     (let ((ol (make-overlay beg end)))
@@ -589,6 +606,9 @@
 
 (defun kasumi-put-dive-strike (beg end)
   (kasumi-put-dive-face 'kasumi-dive-strike-face beg end))
+
+(defun kasumi-put-dive-highlight (beg end)
+  (kasumi-put-dive-face 'kasumi-dive-highlight-face beg end))
 
 (defun kasumi-put-lock-flyline (beg end)
   (kasumi-put-dive-face 'kasumi-lock-flyline-face beg end))

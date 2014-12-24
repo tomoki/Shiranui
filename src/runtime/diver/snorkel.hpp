@@ -68,6 +68,7 @@ namespace shiranui{
                         message.add_strike(node);
                         return;
                     }
+                    message.add_highlight(node);
                     for(auto s : node.statements){
                         s->accept(*this);
                     }
