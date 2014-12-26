@@ -3,23 +3,14 @@
 
 #include "diving_message.hpp"
 #include "../value_printer.hpp"
+#include "../runtime_info.hpp"
 #include "../../syntax/ast.hpp"
 #include "../runner.hpp"
 
 namespace shiranui{
     namespace runtime{
         namespace diver{
-            template<typename T>
-            std::pair<int,sp<runtime::value::Value>> return_value(T& ast_node,
-                                                                  int call_under_id){
-                if(ast_node.runtime_info.call_under.find(call_under_id)
-                   != ast_node.runtime_info.call_under.end()){
-                    int id = ast_node.runtime_info.call_under[call_under_id];
-                    return std::make_pair(id,ast_node.runtime_info.return_value[id]);
-                }else{
-                    return std::make_pair(-2,nullptr);
-                }
-            }
+
             struct Snorkel : syntax::ast::VisitorForAST{
                 DivingMessage message;
                 std::vector<sp<syntax::ast::FunctionCall>> lift_candidate;
@@ -30,13 +21,13 @@ namespace shiranui{
                     source(s),call_under(c){
                 }
                 bool is_used_statement(syntax::ast::Statement& s){
-                    return return_value(s,call_under).second != nullptr;
+                    return infomation::return_value(s,call_under).second != nullptr;
                 }
                 void visit(syntax::ast::Identifier& node){
                     throw InternalException(std::make_shared<syntax::ast::Identifier>(node));
                 }
                 void visit(syntax::ast::Variable& node){
-                    auto p = return_value(node,call_under);
+                    auto p = infomation::return_value(node,call_under);
                     if(p.second != nullptr){
                         message.add_explore(node,to_reproductive(p.second,source));
                     }
@@ -85,7 +76,7 @@ namespace shiranui{
                     for(auto a : node.arguments){
                         a->accept(*this);
                     }
-                    auto p = return_value(node,call_under);
+                    auto p = infomation::return_value(node,call_under);
                     if(p.second != nullptr){
                         message.add_explore(node,to_reproductive(p.second,source));
                         // TODO: should not copy

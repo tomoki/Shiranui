@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "../syntax/ast.hpp"
-
+#include "version.hpp"
 
 namespace shiranui{
     namespace syntax{
@@ -30,11 +30,13 @@ namespace shiranui{
         }
     }
 }
+
 namespace shiranui{
     namespace runtime{
         namespace value{
             namespace ast = shiranui::syntax::ast;
             struct Value{
+                timemachine::version current_version;
                 virtual ~Value() {};
                 virtual void accept(VisitorForValue&) = 0;
             };
@@ -124,5 +126,6 @@ namespace shiranui{
         }
     }
 }
+
 
 #endif

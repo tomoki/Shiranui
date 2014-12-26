@@ -57,8 +57,10 @@ namespace shiranui {
 
         template <typename T>
         void Runner::after_visit(T &node, int cur_t_) {
+            using namespace infomation;
             if (is_server) {
-                node.runtime_info.return_value[cur_t_] = cur_v;
+                // store version_info too.
+                node.runtime_info.return_value[cur_t_] = make_return_value(cur_v);
             }
             call_depth--;
             boost::this_thread::interruption_point();

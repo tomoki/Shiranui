@@ -10,6 +10,7 @@ namespace shiranui{
     namespace runtime{
         namespace diver{
             using namespace syntax::ast;
+            using namespace infomation;
             Diver::Diver(sp<syntax::ast::SourceCode> source_)
                 : source(source_),current_id(infomation::TOPLEVEL){
             }

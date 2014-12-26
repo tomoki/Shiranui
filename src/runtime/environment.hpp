@@ -2,6 +2,7 @@
 #define ENVIRONMENT_HPP_INCLUDED
 
 #include "value.hpp"
+#include "version.hpp"
 #include "../syntax/ast.hpp"
 #include <map>
 #include <set>
@@ -10,6 +11,7 @@ namespace shiranui{
     namespace runtime{
         namespace environment{
             struct Environment{
+                timemachine::version current_version;
                 Environment();
                 Environment(sp<Environment> parent);
                 Environment(Environment *parent);

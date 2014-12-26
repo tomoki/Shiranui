@@ -2,7 +2,7 @@
 #define CLEANER_HPP_INCLUDED
 
 #include "../syntax/ast.hpp"
-#include "runtime_info.hpp"
+#include "value.hpp"
 
 #include <set>
 

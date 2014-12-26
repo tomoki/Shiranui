@@ -655,8 +655,8 @@ string long_code =
             // run_memory_test();
             //parser_time_test();
             // run_dive_test();
-            // run_jump_test();
-            run_move_to_caller_test();
+            run_jump_test();
+            // run_move_to_caller_test();
             //run_bad_program();
             //run_zero_div();
             // run_dive_tri();

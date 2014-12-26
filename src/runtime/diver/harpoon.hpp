@@ -3,6 +3,7 @@
 
 #include "diving_message.hpp"
 #include "../../syntax/ast.hpp"
+#include "../value_printer.hpp"
 
 namespace shiranui{
     namespace runtime{
@@ -103,7 +104,9 @@ namespace shiranui{
                     std::string returned_value;
                     for(size_t j=0;j<node.runtime_info.visit_time.size();j++){
                         int i = node.runtime_info.visit_time[j];
-                        returned_value += to_reproductive(node.runtime_info.return_value[i],source);
+                        auto r = node.runtime_info.return_value[i];
+                        auto p = timemachine::move(r.first,r.second);
+                        returned_value += to_reproductive(p,source);
                         if(j+1 != node.runtime_info.visit_time.size()){
                             returned_value += ",";
                         }

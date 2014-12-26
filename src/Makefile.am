@@ -9,7 +9,9 @@ shiranui_SOURCES = main.cpp \
                    runtime/environment.cpp \
                    server/server.cpp \
                    runtime/diver/diver.cpp \
+                   runtime/timemachine.cpp \
                    runtime/cleaner.cpp \
+                   runtime/runtime_info.cpp \
                    tester/tester.cpp \
                    runtime/dsl/dsl_runtime.cpp
 

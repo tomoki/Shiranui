@@ -4,15 +4,10 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include "value.hpp"
+#include "misc.hpp"
+#include "version.hpp"
+#include "timemachine.hpp"
 
-namespace shiranui{
-    namespace runtime{
-        namespace value{
-            struct Value;
-        }
-    }
-}
 namespace shiranui{
     namespace syntax{
         namespace ast{
@@ -21,19 +16,49 @@ namespace shiranui{
     }
 }
 
+namespace shiranui{
+    namespace runtime{
+        namespace value{
+            struct Value;
+        }
+    }
+}
 
 namespace shiranui{
     namespace runtime{
         namespace infomation{
             const int COUNT_FROM = 0;
             const int TOPLEVEL = -1;
+            using ReturnValue = std::pair<sp<value::Value>,timemachine::VersionMap>;
+
+            template<typename T>
+            std::pair<int,sp<runtime::value::Value>> return_value(T& ast_node,
+                                                                  int call_under_id);
+            template<typename T>
+            std::pair<int,sp<runtime::value::Value>> return_value(T& ast_node,
+                                                                  int call_under_id){
+                if(ast_node.runtime_info.call_under.find(call_under_id)
+                   != ast_node.runtime_info.call_under.end()){
+                    int id = ast_node.runtime_info.call_under[call_under_id];
+                    auto p = ast_node.runtime_info.return_value[id];
+                    return std::make_pair(id,timemachine::move(p.first,p.second));
+                }else{
+                    return std::make_pair(-2,nullptr);
+                }
+            }
+            ReturnValue make_return_value(sp<value::Value> v);
+            // ReturnValue make_return_value(sp<value::Value> v){
+            //     using namespace timemachine;
+            //     return ReturnValue(v,save(v));
+            // }
             struct RuntimeInfomation{
                 std::vector<int> visit_time;
                 // TODO:for can't handle well.
-                std::unordered_map<int,int> call_under;
-                std::unordered_map<int,std::pair<int,sp<syntax::ast::Block> > > up;
-                std::unordered_map<int,sp<value::Value>> return_value;
-                std::unordered_map<int,std::string> memo;
+                std::map<int,int> call_under;
+                std::map<int,std::pair<int,sp<syntax::ast::Block> > > up;
+                // std::unordered_map<int,sp<value::Value>> return_value;
+                std::map<int,ReturnValue> return_value;
+                std::map<int,std::string> memo;
 
                 void clear(){
                     return_value.clear();
@@ -57,6 +82,7 @@ namespace shiranui{
                     }
                 }
             };
+
         }
     }
 }
