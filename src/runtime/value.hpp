@@ -5,6 +5,7 @@
 #include <map>
 #include "../syntax/ast.hpp"
 #include "version.hpp"
+#include "change.hpp"
 
 namespace shiranui{
     namespace syntax{
@@ -36,7 +37,9 @@ namespace shiranui{
         namespace value{
             namespace ast = shiranui::syntax::ast;
             struct Value{
-                timemachine::version current_version;
+                timemachine::version current_version = 0;
+                std::vector<sp<timemachine::ChangeValue> > changes;
+                void push_change(sp<timemachine::ChangeValue>);
                 virtual ~Value() {};
                 virtual void accept(VisitorForValue&) = 0;
             };
@@ -136,6 +139,8 @@ namespace shiranui{
                 SetIndexChange(int,sp<value::Value>,sp<value::Value>);
                 void rollback(sp<value::Value>);
                 void flash(sp<value::Value>);
+                void rollback(value::Value*);
+                void flash(value::Value*);
             };
         }
     }

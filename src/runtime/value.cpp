@@ -8,6 +8,10 @@
 namespace shiranui{
     namespace runtime{
         namespace value{
+            void Value::push_change(sp<timemachine::ChangeValue> c){
+                changes.push_back(c);
+                current_version++;
+            }
             Integer::Integer(int v) : value(v) {};
             void Integer::accept(VisitorForValue& v){
                 v.visit(*this);
@@ -119,7 +123,11 @@ namespace shiranui{
                         if(array == nullptr or index == nullptr){
                             return nullptr;
                         }
+                        array->push_change(std::make_shared<timemachine::SetIndexChange>(index->value,
+                                                                                         array->value[index->value],
+                                                                                         args[2]));
                         array->value[index->value] = args[2];
+
                         return array;
                     }
                 }
@@ -208,19 +216,26 @@ namespace shiranui{
             using namespace value;
             SetIndexChange::SetIndexChange(int i,sp<Value> p,sp<Value> n)
                 : index(i),prev(p),next(n) {}
-            void SetIndexChange::rollback(sp<Value> target_){
-                auto target = std::dynamic_pointer_cast<Array>(target_);
+
+            void SetIndexChange::rollback(Value* target_){
+                auto target = dynamic_cast<Array*>(target_);
                 if(target == nullptr){
                     throw TimeMachineException();
                 }
                 target->value[index] = prev;
             }
-            void SetIndexChange::flash(sp<Value> target_){
-                auto target = std::dynamic_pointer_cast<Array>(target_);
+            void SetIndexChange::rollback(sp<Value> target){
+                return rollback(&*target);
+            }
+            void SetIndexChange::flash(Value* target_){
+                auto target = dynamic_cast<Array*>(target_);
                 if(target == nullptr){
                     throw TimeMachineException();
                 }
                 target->value[index] = next;
+            }
+            void SetIndexChange::flash(sp<Value> target){
+                return flash(&*target);
             }
         }
     }

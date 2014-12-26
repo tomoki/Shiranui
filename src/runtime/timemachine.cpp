@@ -63,6 +63,18 @@ namespace shiranui{
                       VisitedValue& vv,VisitedEnv& ve);
 
 
+            void send_time(Value* v,version move_to){
+                if(v->current_version < move_to){
+                    for(int i=v->current_version;i<move_to;i++){
+                        v->changes[i]->flash(v);
+                    }
+                }else{
+                    for(int i=v->current_version-1;i>=move_to;i--){
+                        v->changes[i]->rollback(v);
+                    }
+                }
+                v->current_version = move_to;
+            }
             struct TimeScale : VisitorForValue{
                 VersionMap vm;
                 VisitedValue& vv;
@@ -86,6 +98,7 @@ namespace shiranui{
                     // TODO: It is naive implementation
                     //  I should store which index store array or function
                     version move_to = get_stored_version(vm,&node);
+                    send_time(&node,move_to);
                     // restore value.
                     for(sp<Value> v : node.value){
                         v->accept(*this);

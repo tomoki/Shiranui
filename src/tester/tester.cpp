@@ -650,13 +650,13 @@ string long_code =
             PipeServer ps(in,cerr);
             string s = "let get = system_call(\"get\");\n"
                        "let set = system_call(\"set\");\n"
-                       "#+ f() -> [1000,2,3];\n"
+                       "#+ f() -> [3];\n"
                        "let f = \\(){\n"
-                       "    let ar = [1,2,3];\n"
-                       "    get(ar,1);\n"
-                       "    set(ar,0,1000);\n"
-                       "    get(ar,2);\n"
-                       "    set(ar,1,4444);\n"
+                       "    let ar = [0];\n"
+                       "    get(ar,0);\n"
+                       "    set(ar,0,2);\n"
+                       "    get(ar,0);\n"
+                       "    set(ar,0,3);\n"
                        "    return ar;\n"
                        "};";
             for(int i=0;i<s.length();i++){
@@ -672,6 +672,21 @@ string long_code =
             w();
             ps.on_dive_command("64",1);
             w();
+// let get = system_call("get");
+// let set = system_call("set");
+
+// #+ f() -> <|[1,a=[1000,5555,3],a]|>;
+// let f = \(){
+//     let ar = [1,2,3];
+//     let b = [1,2,ar];
+//     set(b,1,ar);
+//     get(ar,1);
+//     set(ar,0,1000);
+//     get(ar,2);
+//     set(ar,1,5555);
+//     return b;
+// };
+
         }
         void run_test(){
             // run_rec_test();
