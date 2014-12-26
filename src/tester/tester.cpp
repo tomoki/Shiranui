@@ -372,8 +372,8 @@ string long_code =
             w();
             ps.on_surface_command("",1);
             w();
-
         }
+
         void run_jump_test(){
             stringstream in,out;
             PipeServer ps(in,cerr);
@@ -643,8 +643,35 @@ string long_code =
                 }else{
                     dump(acc,std::cerr);
                 }
-
             }
+        }
+        void run_versioning_test_array(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string s = "let get = system_call(\"get\");\n"
+                       "let set = system_call(\"set\");\n"
+                       "#+ f() -> [1000,2,3];\n"
+                       "let f = \\(){\n"
+                       "    let ar = [1,2,3];\n"
+                       "    get(ar,1);\n"
+                       "    set(ar,0,1000);\n"
+                       "    get(ar,2);\n"
+                       "    set(ar,1,4444);\n"
+                       "    return ar;\n"
+                       "};";
+            for(int i=0;i<s.length();i++){
+                std::cerr << i << ":" << s[i] << std::endl;
+            }
+            int k = 0;
+            auto w = [&k](){
+                wait(100);
+                std::cerr << "-----" << k++ << "-----" << std::endl;
+            };
+            w();
+            ps.on_change_command(make_change(1,0,s),1);
+            w();
+            ps.on_dive_command("64",1);
+            w();
         }
         void run_test(){
             // run_rec_test();
@@ -655,7 +682,7 @@ string long_code =
             // run_memory_test();
             //parser_time_test();
             // run_dive_test();
-            run_jump_test();
+            // run_jump_test();
             // run_move_to_caller_test();
             //run_bad_program();
             //run_zero_div();
@@ -664,6 +691,7 @@ string long_code =
             // run_good_dive_test();
             //run_bad_dive_test();
             // run_flymark();
+            run_versioning_test_array();
         }
     }
 }

@@ -59,6 +59,27 @@ namespace shiranui{
                     parent->set(id,v);
                 }
             }
+            // ----- for rollback ---------------------------------
+            void Environment::remove(Identifier id){
+                if(vars.find(id) != vars.end()){
+                    vars.erase(id);
+                }else if(consts.find(id) != consts.end()){
+                    consts.erase(id);
+                }else{
+                    throw timemachine::TimeMachineException();
+                }
+            }
+            void Environment::force_set(Identifier id,sp<Value> v){
+                if(vars.find(id) != vars.end()){
+                    vars.erase(id);
+                }else if(consts.find(id) != consts.end()){
+                    consts.erase(id);
+                }else{
+                    throw timemachine::TimeMachineException();
+                }
+            }
+                // -----------------------------------------------
+
             void Environment::define(Identifier id,sp<Value> v,bool is_const){
                 if(is_const){
                     consts[id] = v;
@@ -109,5 +130,25 @@ namespace shiranui{
                 return ret;
             }
         }
+        namespace timemachine{
+            EnvSetChange::EnvSetChange(syntax::ast::Identifier i,sp<Value> p,sp<Value> n)
+                : id(i),prev(p),next(n) {}
+            void EnvSetChange::rollback(sp<environment::Environment> target){
+                // prev will not be nullptr
+                target->force_set(id,prev);
+            }
+            void EnvSetChange::flash(sp<environment::Environment> target){
+                target->force_set(id,next);
+            }
+            EnvDefineChange::EnvDefineChange(syntax::ast::Identifier i,sp<value::Value> v,bool is_const_)
+                : id(i),value(v),is_const(is_const_) {}
+            void EnvDefineChange::rollback(sp<environment::Environment> target){
+                target->remove(id);
+            }
+            void EnvDefineChange::flash(sp<environment::Environment> target){
+                target->define(id,value,is_const);
+            }
+        }
     }
+
 }

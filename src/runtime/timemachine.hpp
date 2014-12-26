@@ -3,17 +3,13 @@
 
 #include "version.hpp"
 #include "../misc.hpp"
+#include "change.hpp"
 
 
 // timemachine
 namespace shiranui{
     namespace runtime{
         namespace timemachine{
-            class TimeMachineException{
-            public:
-                TimeMachineException() {};
-                const char* what() const noexcept {return "TimeMachineException";}
-            };
             sp<value::Value> move(sp<value::Value>,const VersionMap&);
             VersionMap save(sp<value::Value>);
         }

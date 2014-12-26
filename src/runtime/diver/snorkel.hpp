@@ -29,6 +29,7 @@ namespace shiranui{
                 void visit(syntax::ast::Variable& node){
                     auto p = infomation::return_value(node,call_under);
                     if(p.second != nullptr){
+                        dump(p.second->current_version,std::cerr);
                         message.add_explore(node,to_reproductive(p.second,source));
                     }
                 }

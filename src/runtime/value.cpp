@@ -202,4 +202,27 @@ namespace shiranui {
     }
 }
 
+namespace shiranui{
+    namespace runtime{
+        namespace timemachine{
+            using namespace value;
+            SetIndexChange::SetIndexChange(int i,sp<Value> p,sp<Value> n)
+                : index(i),prev(p),next(n) {}
+            void SetIndexChange::rollback(sp<Value> target_){
+                auto target = std::dynamic_pointer_cast<Array>(target_);
+                if(target == nullptr){
+                    throw TimeMachineException();
+                }
+                target->value[index] = prev;
+            }
+            void SetIndexChange::flash(sp<Value> target_){
+                auto target = std::dynamic_pointer_cast<Array>(target_);
+                if(target == nullptr){
+                    throw TimeMachineException();
+                }
+                target->value[index] = next;
+            }
+        }
+    }
+}
 

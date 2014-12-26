@@ -127,5 +127,18 @@ namespace shiranui{
     }
 }
 
+namespace shiranui{
+    namespace runtime{
+        namespace timemachine{
+            struct SetIndexChange : ChangeValue{
+                int index;
+                sp<value::Value> prev,next;
+                SetIndexChange(int,sp<value::Value>,sp<value::Value>);
+                void rollback(sp<value::Value>);
+                void flash(sp<value::Value>);
+            };
+        }
+    }
+}
 
 #endif

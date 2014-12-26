@@ -2,6 +2,7 @@
 #define RUNNER_HPP_INCLUDED
 
 #include "value.hpp"
+#include "change.hpp"
 #include "environment.hpp"
 #include <exception>
 #include <sstream>
