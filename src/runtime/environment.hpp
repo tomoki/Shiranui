@@ -12,10 +12,10 @@ namespace shiranui{
         namespace environment{
             struct Environment{
                 timemachine::version current_version;
+                std::vector<sp<timemachine::ChangeEnv> > changes;
+                sp<Environment> parent;
                 Environment();
                 Environment(sp<Environment> parent);
-                Environment(Environment *parent);
-                sp<Environment> parent;
                 std::map<syntax::ast::Identifier,sp<value::Value>> vars;
                 std::map<syntax::ast::Identifier,sp<value::Value>> consts;
                 bool is_here(syntax::ast::Identifier id) const;
@@ -36,7 +36,7 @@ namespace shiranui{
         namespace timemachine{
             struct EnvSetChange : ChangeEnv{
                 syntax::ast::Identifier id;
-                sp<value::Value> prev,next; // prev is null if no binding previously.
+                sp<value::Value> prev,next;
                 EnvSetChange(syntax::ast::Identifier,sp<value::Value>,sp<value::Value>);
                 void rollback(sp<environment::Environment>);
                 void flash(sp<environment::Environment>);

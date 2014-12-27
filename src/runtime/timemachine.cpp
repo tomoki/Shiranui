@@ -48,22 +48,33 @@ namespace shiranui{
                 return get_stored_version(vm,&*p);
             }
 
-            version get_stored_version(const VersionMap& vm,Environment* p){
+            version get_stored_version(const VersionMap& vm,sp<Environment> p_){
                 const auto m = vm.second;
+                const auto p = &*p_;
                 if(m.find(p) == m.end()){
                     throw TimeMachineException();
                 }
                 return m.at(p);
-            }
-            version get_stored_version(const VersionMap& vm,sp<Environment> p){
-                return get_stored_version(vm,&*p);
             }
 
             void move(sp<Environment> v, const VersionMap& vm,
                       VisitedValue& vv,VisitedEnv& ve);
 
 
-            void send_time(Value* v,version move_to){
+            // void send_time(Value* v,version move_to){
+            //     if(v->current_version < move_to){
+            //         for(int i=v->current_version;i<move_to;i++){
+            //             v->changes[i]->flash(v);
+            //         }
+            //     }else{
+            //         for(int i=v->current_version-1;i>=move_to;i--){
+            //             v->changes[i]->rollback(v);
+            //         }
+            //     }
+            //     v->current_version = move_to;
+            // }
+            template<typename P>
+            void send_time(P v,version move_to){
                 if(v->current_version < move_to){
                     for(int i=v->current_version;i<move_to;i++){
                         v->changes[i]->flash(v);
@@ -75,6 +86,7 @@ namespace shiranui{
                 }
                 v->current_version = move_to;
             }
+
             struct TimeScale : VisitorForValue{
                 VersionMap vm;
                 VisitedValue& vv;
@@ -106,6 +118,7 @@ namespace shiranui{
                 }
                 void visit(UserFunction& node){
                     if(vv.find(&node) != vv.end()){return;}
+                    vv.insert(&node);
                     move(node.env,vm,vv,ve);
                 }
             };
@@ -162,10 +175,8 @@ namespace shiranui{
                       VisitedValue& vv,VisitedEnv& ve){
                 if(ve.find(&*v) != ve.end()) return;
                 ve.insert(&*v);
-                // TODO:rollback environment
                 version move_to = get_stored_version(vm,v);
-                // restore
-
+                send_time(v,move_to);
                 for(const auto& m : {v->vars,v->consts}){
                     for(auto p : m){
                         move(p.second,vm,vv,ve);

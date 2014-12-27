@@ -674,6 +674,39 @@ string long_code =
             ps.on_dive_command("64",1);
             w();
         }
+        void run_versioning_test_closure(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            string s = "let get = system_call(\"get\");\n"
+                       "let set = system_call(\"set\");\n"
+                       "#+ f() -> 0;\n"
+                       "let f = \\(){\n"
+                       "    let ar = [[1],2,3];\n"
+                       "    let g = \\k(){\n"
+                       "        return ar;\n"
+                       "    };\n"
+                       "    g();\n"
+                       "    set(ar,1,99);\n"
+                       "    g();\n"
+                       "    set(get(ar,0),0,123);\n"
+                       "    g();\n"
+                       "    return 0;\n"
+                       "};\n";
+
+            for(int i=0;i<s.length();i++){
+                std::cerr << i << ":" << s[i] << std::endl;
+            }
+            int k = 0;
+            auto w = [&k](){
+                wait(100);
+                std::cerr << "-----" << k++ << "-----" << std::endl;
+            };
+            w();
+            ps.on_change_command(make_change(1,0,s),1);
+            w();
+            ps.on_dive_command("64",1);
+            w();
+        }
         void run_test(){
             // run_rec_test();
             // run_rec_test2();
@@ -692,7 +725,8 @@ string long_code =
             // run_good_dive_test();
             //run_bad_dive_test();
             // run_flymark();
-            run_versioning_test_array();
+            // run_versioning_test_array();
+            run_versioning_test_closure();
         }
     }
 }

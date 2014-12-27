@@ -8,9 +8,6 @@ namespace shiranui{
         namespace environment{
             Environment::Environment(){
             }
-            Environment::Environment(Environment* par)
-                : parent(par){
-            }
             Environment::Environment(sp<Environment> par)
                 : parent(par){
             }
@@ -54,6 +51,8 @@ namespace shiranui{
             }
             void Environment::set(Identifier id,sp<Value> v){
                 if(is_here(id)){
+                    current_version++;
+                    changes.push_back(std::make_shared<timemachine::EnvSetChange>(id,vars[id],v));
                     vars[id] = v;
                 }else{
                     parent->set(id,v);
@@ -86,10 +85,13 @@ namespace shiranui{
                 }else{
                     vars[id] = v;
                 }
+                current_version++;
+                changes.push_back(std::make_shared<timemachine::EnvDefineChange>(id,v,is_const));
             }
             void Environment::clear(){
                 vars.clear();
                 consts.clear();
+                changes.clear();
                 parent = nullptr;
             }
             std::ostream& operator<<(std::ostream& os,const Environment& e){
