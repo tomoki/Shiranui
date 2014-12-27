@@ -622,6 +622,8 @@ string long_code =
                 {"{let f = \\ff(){g();};let g = \\gg(){f();};f;}","<|a=$(g->$(f->a)gg)ff|>"},
                 {"{let set = system_call(\"set\");let c = [1,2];let d = [3,4];set(c,0,d);set(d,1,c);let f = \\fid(){let cc = c;let dd = d;};}",
                  "<|$(c->a=[b=[3,a],2],d->b)fid|>"},
+                {"let a = 1;let f = \\k(){return a;};f;","<|$()k|>"}, // global const variable should not be included
+                {"mut a = 1;let f = \\k(){return a;};f;","<|$(a->1)k|>"}
             };
             for(auto pair_of_source_and_ret : tests){
                 std::string str = pair_of_source_and_ret.first;
@@ -680,14 +682,18 @@ string long_code =
             string s = "let get = system_call(\"get\");\n"
                        "let set = system_call(\"set\");\n"
                        "#+ f() -> 0;\n"
+                       "mut glob = 1;\n"
                        "let f = \\(){\n"
-                       "    let ar = [[1],2,3];\n"
+                       "    mut ar = [[1],2,3];\n"
                        "    let g = \\k(){\n"
+                       "        glob;\n"
                        "        return ar;\n"
                        "    };\n"
                        "    g();\n"
+                       "    glob <- [2];\n"
                        "    set(ar,1,99);\n"
                        "    g();\n"
+                       "    set(glob,0,567);\n"
                        "    set(get(ar,0),0,123);\n"
                        "    g();\n"
                        "    return 0;\n"
@@ -708,24 +714,24 @@ string long_code =
             w();
         }
         void run_test(){
-            run_rec_test();
-            run_rec_test2();
-            run_lambda_man_test();
-            to_repr_test();
-            free_var();
+            // run_rec_test();
+            // run_rec_test2();
+            // run_lambda_man_test();
+            // to_repr_test();
+            // free_var();
             // run_memory_test();
-            parser_time_test();
-            run_dive_test();
-            run_jump_test();
-            run_move_to_caller_test();
-            run_bad_program();
-            run_zero_div();
-            run_dive_tri();
-            run_plus();
-            run_good_dive_test();
-            run_bad_dive_test();
-            run_flymark();
-            run_versioning_test_array();
+            // parser_time_test();
+            // run_dive_test();
+            // run_jump_test();
+            // run_move_to_caller_test();
+            // run_bad_program();
+            // run_zero_div();
+            // run_dive_tri();
+            // run_plus();
+            // run_good_dive_test();
+            // run_bad_dive_test();
+            // run_flymark();
+            // run_versioning_test_array();
             run_versioning_test_closure();
         }
     }

@@ -129,7 +129,7 @@ namespace shiranui{
                                 global_env = global_env->parent;
                             }
                             for(auto p : free_vars){
-                                if(global_env->has(p.first)) continue;
+                                if(global_env->has(p.first) and global_env->is_const(p.first)) continue;
                                 free_not_global_vars[p.first] = p.second;
                             }
                         }
