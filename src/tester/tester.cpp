@@ -708,24 +708,24 @@ string long_code =
             w();
         }
         void run_test(){
-            // run_rec_test();
-            // run_rec_test2();
-            // run_lambda_man_test();
-            // to_repr_test();
-            // free_var();
+            run_rec_test();
+            run_rec_test2();
+            run_lambda_man_test();
+            to_repr_test();
+            free_var();
             // run_memory_test();
-            //parser_time_test();
-            // run_dive_test();
-            // run_jump_test();
-            // run_move_to_caller_test();
-            //run_bad_program();
-            //run_zero_div();
-            // run_dive_tri();
-            //run_plus();
-            // run_good_dive_test();
-            //run_bad_dive_test();
-            // run_flymark();
-            // run_versioning_test_array();
+            parser_time_test();
+            run_dive_test();
+            run_jump_test();
+            run_move_to_caller_test();
+            run_bad_program();
+            run_zero_div();
+            run_dive_tri();
+            run_plus();
+            run_good_dive_test();
+            run_bad_dive_test();
+            run_flymark();
+            run_versioning_test_array();
             run_versioning_test_closure();
         }
     }

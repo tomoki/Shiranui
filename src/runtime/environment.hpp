@@ -11,7 +11,7 @@ namespace shiranui{
     namespace runtime{
         namespace environment{
             struct Environment{
-                timemachine::version current_version;
+                timemachine::version current_version = 0;
                 std::vector<sp<timemachine::ChangeEnv> > changes;
                 sp<Environment> parent;
                 Environment();

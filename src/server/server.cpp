@@ -19,14 +19,15 @@ namespace shiranui{
                                       const int loadcount){
             std::stringstream ss;
             boost::this_thread::interruption_point();
-            os_lock.lock();
+            boost::mutex::scoped_lock(os_lock);
+            // os_lock.lock();
             if(value != ""){
                 os << how_many_lines(value) << " " << loadcount << " " << command << "\n"
                    << value << std::endl;
             }else{
                 os << how_many_lines(value) << " " << loadcount << " " << command << std::endl;
             }
-            os_lock.unlock();
+            // os_lock.unlock();
         }
         void PipeServer::send_command_with_two_points(const std::string& command,
                                                       const int start_point,
@@ -336,7 +337,7 @@ namespace shiranui{
             using namespace shiranui::runtime::diver;
 
             const auto start_time = std::chrono::system_clock::now();
-            send_debug_print(source,loadcount);
+            // send_debug_print(source,loadcount);
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;

@@ -41,6 +41,9 @@ namespace shiranui{
                    != ast_node.runtime_info.call_under.end()){
                     int id = ast_node.runtime_info.call_under[call_under_id];
                     auto p = ast_node.runtime_info.return_value[id];
+                    if(p.first == nullptr){
+                        return std::make_pair(-2,nullptr);
+                    }
                     return std::make_pair(id,timemachine::move(p.first,p.second));
                 }else{
                     return std::make_pair(-2,nullptr);

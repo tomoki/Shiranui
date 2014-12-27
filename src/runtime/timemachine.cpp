@@ -160,6 +160,7 @@ namespace shiranui{
             template<typename T>
             T move(T v,const VersionMap& vm,VisitedValue& vv,
                                             VisitedEnv& ve){
+                if(v == nullptr) throw TimeMachineException("move null value");
                 TimeScale ts(vm,vv,ve);
                 v->accept(ts);
                 return v;
@@ -173,6 +174,7 @@ namespace shiranui{
             // helper
             void move(sp<Environment> v, const VersionMap& vm,
                       VisitedValue& vv,VisitedEnv& ve){
+                if(v == nullptr) throw TimeMachineException("move null environment");
                 if(ve.find(&*v) != ve.end()) return;
                 ve.insert(&*v);
                 version move_to = get_stored_version(vm,v);
