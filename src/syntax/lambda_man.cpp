@@ -200,6 +200,10 @@ namespace shiranui{
             node.block->accept(*this);
         }
         void LambdaFreeVariableScanner::visit(ast::Assignment& node){
+            if(is_free(node.id)){
+                free.insert(node.id);
+            }else{
+            }
             node.value->accept(*this);
         }
         void LambdaFreeVariableScanner::visit(ast::TestFlyLine&){}
