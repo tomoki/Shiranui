@@ -70,9 +70,7 @@ namespace shiranui{
             }
             void Environment::force_set(Identifier id,sp<Value> v){
                 if(vars.find(id) != vars.end()){
-                    vars.erase(id);
-                }else if(consts.find(id) != consts.end()){
-                    consts.erase(id);
+                    vars[id] = v;
                 }else{
                     throw timemachine::TimeMachineException();
                 }
