@@ -60,6 +60,10 @@ namespace shiranui{
                 v.visit(*this);
             }
 
+            Ref::Ref(sp<Value> p) : to(p) {}
+            void Ref::accept(VisitorForValue& v){
+                v.visit(*this);
+            }
             namespace builtin{
                 PrintFunction::PrintFunction(){
                     name = "print";

@@ -81,7 +81,7 @@ namespace shiranui{
             };
             struct Ref : Value{
                 sp<Value> to;
-                Ref(sp<Value> v);
+                Ref(sp<Value>);
                 void accept(VisitorForValue&);
             };
             struct SystemCall : Function{

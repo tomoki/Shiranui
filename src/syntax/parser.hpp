@@ -267,18 +267,18 @@ namespace shiranui{
 
                 {
                     expression.name("expression");
-                    expression = ifelse_expr [qi::_val = qi::_1]
+                    expression = ref_expr [qi::_val = qi::_1]
                                | test [qi::_val = qi::_1]
                                ;
                     on_success(expression,set_location_info);
                 }
 
                 {
-                    ifelse_expr.name("if_else_expression");
-                    ifelse_expr= ("if" >> expression >> "then"
-                                       >> expression >> "else" >> expression)
-                                 [qi::_val = qi_make_shared<ast::IfElseExpression>(qi::_1,qi::_2,qi::_3)];
-                    on_success(ifelse_expr,set_location_info);
+                    ref_expr.name("ref expression");
+                    ref_expr = ("ref" >> expression)
+                        [qi::_val = qi_make_shared<ast::UnaryOperator>("ref",qi::_1)]
+                             ;
+                    on_success(ref_expr,set_location_info);
                 }
                 {
                     test.name("test");
@@ -362,6 +362,8 @@ namespace shiranui{
                                   [qi::_val = qi_make_shared<ast::UnaryOperator>("+",qi::_1)]
                                | ("-" >> power)
                                   [qi::_val = qi_make_shared<ast::UnaryOperator>("-",qi::_1)]
+                               | ("!" >> power)
+                                  [qi::_val = qi_make_shared<ast::UnaryOperator>("!",qi::_1)]
                                ;
                     on_success(unary,set_location_info);
                 }
@@ -516,6 +518,7 @@ namespace shiranui{
 
             rule_no_skip<ast::Identifier()> identifier;
             rule_with_skip<sp<ast::Expression>()> expression;
+            rule_with_skip<sp<ast::Expression>()> ref_expr;
             rule_with_skip<sp<ast::Expression>()> test;
 
             rule_with_local_for_binary<sp<ast::Expression>()> and_test;
@@ -544,7 +547,6 @@ namespace shiranui{
             rule_with_skip<sp<ast::ProbeStatement>()> probe_stmt;
             rule_with_skip<sp<ast::AssertStatement>()> assert_stmt;
 
-            rule_with_skip<sp<ast::IfElseExpression>()> ifelse_expr;
             rule_with_skip<sp<ast::Block>()> block;
             rule_with_skip<sp<ast::Assignment>()> assignment;
             rule_with_skip<sp<ast::FlyLine>()> flyline;

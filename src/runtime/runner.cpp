@@ -30,6 +30,7 @@ namespace shiranui {
         using shiranui::runtime::value::Return;
         using shiranui::runtime::value::SystemCall;
         using shiranui::runtime::value::BuiltinFunction;
+        using shiranui::runtime::value::Ref;
         using namespace shiranui::runtime::value::builtin;
         Runner::Runner(bool is_server_)
             : cur_v(std::make_shared<Integer>(0)),
@@ -441,6 +442,21 @@ namespace shiranui {
                         cur_v = std::make_shared<Boolean>(not(v->value));
                         AFTER_VISIT_MACRO(uop);
                     }
+                }
+            }
+            {
+                sp<Ref> v = std::dynamic_pointer_cast<Ref>(v_);
+                if(v != nullptr){
+                    if(uop.op == "!"){
+                        cur_v = v->to;
+                        AFTER_VISIT_MACRO(uop);
+                    }
+                }
+            }
+            {
+                if(uop.op == "ref"){
+                    cur_v = std::make_shared<Ref>(cur_v);
+                    AFTER_VISIT_MACRO(uop);
                 }
             }
 
