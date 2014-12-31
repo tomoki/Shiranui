@@ -210,6 +210,16 @@ namespace shiranui {
                 std::set<std::set<sp<Value> > > checked;
                 return check_equality(left,right,checked);
             }
+            bool is_ref_or_array(sp<Value> p){
+                bool is_ref = std::dynamic_pointer_cast<Ref>(p) != nullptr;
+                bool is_array = std::dynamic_pointer_cast<Array>(p) != nullptr;
+                return is_ref or is_array;
+            }
+            bool is_ref_or_array(Value* p){
+                bool is_ref = dynamic_cast<Ref*>(p) != nullptr;
+                bool is_array = dynamic_cast<Array*>(p) != nullptr;
+                return is_ref or is_array;
+            }
         }
     }
 }
@@ -241,6 +251,32 @@ namespace shiranui{
             void SetIndexChange::flash(sp<Value> target){
                 return flash(&*target);
             }
+
+            RefChange::RefChange(sp<Value> p,sp<Value> n)
+                : prev(p),next(n) {}
+
+            void RefChange::rollback(Value* target_){
+                auto target = dynamic_cast<Ref*>(target_);
+                if(target == nullptr){
+                    throw TimeMachineException();
+                }
+                target->to = prev;
+            }
+            void RefChange::rollback(sp<Value> target){
+                return rollback(&*target);
+            }
+            void RefChange::flash(Value* target_){
+                auto target = dynamic_cast<Ref*>(target_);
+                if(target == nullptr){
+                    throw TimeMachineException();
+                }
+                target->to = next;
+            }
+            void RefChange::flash(sp<Value> target){
+                return flash(&*target);
+            }
+
+
         }
     }
 }

@@ -178,7 +178,6 @@ namespace shiranui{
                 if(already.find(&v) != already.end()) return;
                 already.insert(&v);
                 v.to->accept(*this);
-                v.to = nullptr;
             }
             void ValueCleaner::visit(SystemCall&){
             }

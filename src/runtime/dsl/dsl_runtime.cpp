@@ -61,6 +61,10 @@ namespace shiranui{
                     }
                     cur_v = std::make_shared<value::UserFunction>(fast->parameters,fast->body,fenv);
                 }
+                void operator()(DSLRef& node){
+                    node.to->accept(*this);
+                    cur_v = std::make_shared<value::Ref>(cur_v);
+                }
             };
             // replace all variable occurences in DSL
             struct DSLVariableReplacer : value::VisitorForValue{
@@ -93,6 +97,10 @@ namespace shiranui{
                 }
                 void visit(value::Ref& node){
                     // TODO:writehere
+                    node.to->accept(*this);
+                    if(is_var(node.to)){
+                        node.to = find(node.to);
+                    }
                 }
                 void visit(value::Return&){}
                 void visit(value::SystemCall&){}

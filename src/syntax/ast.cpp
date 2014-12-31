@@ -152,6 +152,7 @@ namespace shiranui{
                 DSLArray::DSLArray() {};
                 DSLArray::DSLArray(std::vector<sp<DSLInner>> v) : value(v){}
                 DSLFunction::DSLFunction(myenv e,sp<DSLVariable> id): environment(e),lambda_id(id->name) {}
+                DSLRef::DSLRef(sp<DSLInner> v) : to(v) {}
                 DataDSL::DataDSL(sp<DSLInner> v) : inner(v) {}
             }
         }
@@ -247,6 +248,7 @@ namespace shiranui{
                 void DSLBoolean ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLString  ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLArray   ::accept(VisitorForDSL& visitor){return visitor(*this);}
+                void DSLRef     ::accept(VisitorForDSL& visitor){return visitor(*this);}
                 void DSLFunction::accept(VisitorForDSL& visitor){return visitor(*this);}
             }
         }

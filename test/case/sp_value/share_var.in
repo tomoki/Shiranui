@@ -1,0 +1,13 @@
+let hoge = \(){
+    let a = ref 1;
+    let h = \h(){
+        return !a;
+    };
+    let g = \g(){
+        a <- 5;
+        return h();
+    };
+    return g();
+};
+
+print(<|$(a->a=ref 1,h->$(a->a)h)g|>());

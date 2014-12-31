@@ -113,12 +113,9 @@ namespace shiranui{
                 };
             }
             bool check_equality(sp<Value> left,sp<Value> right);
-            template<typename T>
-            bool is_ref_or_array(T p){
-                bool is_ref = std::dynamic_pointer_cast<Ref>(p) != nullptr;
-                bool is_array = std::dynamic_pointer_cast<Array>(p) != nullptr;
-                return is_ref or is_array;
-            }
+            bool is_ref_or_array(sp<Value>);
+            bool is_ref_or_array(Value*);
+
         }
     }
 }
@@ -149,6 +146,14 @@ namespace shiranui{
                 int index;
                 sp<value::Value> prev,next;
                 SetIndexChange(int,sp<value::Value>,sp<value::Value>);
+                void rollback(sp<value::Value>);
+                void flash(sp<value::Value>);
+                void rollback(value::Value*);
+                void flash(value::Value*);
+            };
+            struct RefChange : ChangeValue{
+                sp<value::Value> prev,next;
+                RefChange(sp<value::Value>,sp<value::Value>);
                 void rollback(sp<value::Value>);
                 void flash(sp<value::Value>);
                 void rollback(value::Value*);

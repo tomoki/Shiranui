@@ -16,6 +16,9 @@ namespace shiranui{
                 s.back() = s.back()+1;
                 return s;
             }
+            bool is_userfunction(Value* v){
+                return dynamic_cast<UserFunction*>(v) != nullptr;
+            }
 
             // find value appearing twice
             struct ValueScanner : VisitorForValue{
@@ -24,9 +27,9 @@ namespace shiranui{
                 ValueScanner(sp<ast::SourceCode> code_)
                     : code(code_) {};
 
-                void visit(Integer& node){cnt[&node]++;}
-                void visit(String& node){cnt[&node]++;}
-                void visit(Boolean& node){cnt[&node]++;}
+                void visit(Integer& node){}
+                void visit(String& node){}
+                void visit(Boolean& node){}
                 void visit(Array& node){
                     cnt[&node]++;
                     if(cnt[&node] >= 2) return;
@@ -172,6 +175,7 @@ namespace shiranui{
                 os << node.name;
             }
             void PrettyPrinterForValue::visit(Ref& node){
+                if(check_already_occured(&node)) return;
                 os << "ref ";
                 node.to->accept(*this);
             }

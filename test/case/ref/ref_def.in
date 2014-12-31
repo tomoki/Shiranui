@@ -1,0 +1,8 @@
+let a = ref 3;
+let g = \k(){
+    a <- 5;
+    return !a;
+};
+
+print(g());
+print(!a);

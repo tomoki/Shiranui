@@ -551,6 +551,7 @@ namespace shiranui {
                     throw ConvertException(std::make_shared<syntax::ast::Assignment>(assign));
                 }
                 assign.value->accept(*this);
+                p->push_change(std::make_shared<timemachine::RefChange>(p->to,cur_v));
                 p->to = cur_v;
                 cur_v = p;
             }else{
