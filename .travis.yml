@@ -10,4 +10,4 @@ install:
 script:
     - autoreconf;automake --add-missing;autoreconf
     - ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
-    - make -j8 CXX=clang++ check
+    - make CXX=clang++ check

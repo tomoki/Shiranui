@@ -2,6 +2,7 @@
 #define VERSION_HPP_INCLUDED
 
 #include <map>
+#include <string>
 
 namespace shiranui{
     namespace runtime{
