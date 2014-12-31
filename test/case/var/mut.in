@@ -1,6 +1,6 @@
 mut a = 1;
-mut b = a;
-let unit = print(a = b);
+let b = a;
+print(!a = !b);
 a <- 3;
-let unit = print(a);
-let unit = print(b);
+print(!a);
+print(!b);

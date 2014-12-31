@@ -5,7 +5,7 @@ let f = \(){
         return 0;
     };
     let unused = g();
-    return a;
+    return !a;
 };
 
 let unit = print(f());

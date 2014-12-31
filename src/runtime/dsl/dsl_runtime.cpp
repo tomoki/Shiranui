@@ -57,8 +57,7 @@ namespace shiranui{
                     for(auto p : node.environment){
                         syntax::ast::Identifier i(p.first->name);
                         p.second->accept(*this);
-                        // define as mutable
-                        fenv->define(i,cur_v,false);
+                        fenv->define(i,cur_v);
                     }
                     cur_v = std::make_shared<value::UserFunction>(fast->parameters,fast->body,fenv);
                 }
@@ -85,13 +84,10 @@ namespace shiranui{
                 }
                 void visit(value::UserFunction& node){
                     // env defined by DSL always in top of env
-                    for(auto &vs : {node.env->vars,node.env->consts}){
-                        for(auto& p : vs){
-                            p.second->accept(*this);
-                            if(is_var(p.second)){
-                                // TODO:it will be invalid if rewrite environment
-                                node.env->set(p.first,find(p.second));
-                            }
+                    for(auto& p : node.env->vars){
+                        p.second->accept(*this);
+                        if(is_var(p.second)){
+                            node.env->define(p.first,find(p.second));
                         }
                     }
                 }

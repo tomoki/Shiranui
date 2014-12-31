@@ -13,8 +13,7 @@ namespace shiranui{
             }
 
             bool Environment::is_here(Identifier id) const{
-                return vars.find(id) != vars.end()
-                    or consts.find(id) != consts.end();
+                return vars.find(id) != vars.end();
 
             }
             bool Environment::has(Identifier id) const{
@@ -24,22 +23,9 @@ namespace shiranui{
                     return is_here(id) or parent->has(id);
                 }
             }
-            bool Environment::is_const(Identifier id) const{
-                if(is_here(id)){
-                    return consts.find(id) != consts.end();
-                }else if(parent == nullptr){
-                    return false;
-                }else{
-                    return parent->is_const(id);
-                }
-            }
             sp<Value> Environment::get(Identifier id){
                 if(is_here(id)){
-                    if(is_const(id)){
-                        return consts[id];
-                    }else{
-                        return vars[id];
-                    }
+                    return vars[id];
                 }else{
                     if(parent == nullptr){
                         // throw exception?
@@ -49,46 +35,25 @@ namespace shiranui{
                     }
                 }
             }
-            void Environment::set(Identifier id,sp<Value> v){
-                if(is_here(id)){
-                    current_version++;
-                    changes.push_back(std::make_shared<timemachine::EnvSetChange>(id,vars[id],v));
-                    vars[id] = v;
-                }else{
-                    parent->set(id,v);
-                }
-            }
             // ----- for rollback ---------------------------------
             void Environment::remove(Identifier id){
                 if(vars.find(id) != vars.end()){
                     vars.erase(id);
-                }else if(consts.find(id) != consts.end()){
-                    consts.erase(id);
                 }else{
                     throw timemachine::TimeMachineException();
                 }
             }
-            void Environment::force_set(Identifier id,sp<Value> v){
-                if(vars.find(id) != vars.end()){
-                    vars[id] = v;
-                }else{
-                    throw timemachine::TimeMachineException();
-                }
+            void Environment::force_define(Identifier id,sp<Value> v){
+                vars[id]= v;
             }
-                // -----------------------------------------------
-
-            void Environment::define(Identifier id,sp<Value> v,bool is_const){
-                if(is_const){
-                    consts[id] = v;
-                }else{
-                    vars[id] = v;
-                }
+            // -----------------------------------------------
+            void Environment::define(Identifier id,sp<Value> v){
+                vars[id] = v;
                 current_version++;
-                changes.push_back(std::make_shared<timemachine::EnvDefineChange>(id,v,is_const));
+                changes.push_back(std::make_shared<timemachine::EnvDefineChange>(id,v));
             }
             void Environment::clear(){
                 vars.clear();
-                consts.clear();
                 changes.clear();
                 parent = nullptr;
             }
@@ -98,10 +63,6 @@ namespace shiranui{
                     os << *(e.parent) << std::endl;
                 }
                 os << "===== layer  =====" << std::endl;
-                os << "---- consts ----" << std::endl;
-                for(const auto p : e.consts){
-                    os << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
-                }
                 os << "---- var    ----" << std::endl;
                 for(const auto p : e.vars){
                     os << p.first.name << " -> " << to_reproductive(p.second) << std::endl;
@@ -120,33 +81,23 @@ namespace shiranui{
                 }
 
                 // overwrite parent environment
-                for(auto m : {e.vars,e.consts}){
-                    for(auto p : m){
-                        if(filter.find(p.first) != filter.end()){
-                            ret[p.first] = p.second;
-                        }
+                for(auto p : e.vars){
+                    if(filter.find(p.first) != filter.end()){
+                        ret[p.first] = p.second;
                     }
                 }
                 return ret;
             }
         }
         namespace timemachine{
-            EnvSetChange::EnvSetChange(syntax::ast::Identifier i,sp<Value> p,sp<Value> n)
-                : id(i),prev(p),next(n) {}
-            void EnvSetChange::rollback(sp<environment::Environment> target){
-                // prev will not be nullptr
-                target->force_set(id,prev);
-            }
-            void EnvSetChange::flash(sp<environment::Environment> target){
-                target->force_set(id,next);
-            }
-            EnvDefineChange::EnvDefineChange(syntax::ast::Identifier i,sp<value::Value> v,bool is_const_)
-                : id(i),value(v),is_const(is_const_) {}
+            EnvDefineChange::EnvDefineChange(syntax::ast::Identifier i,sp<value::Value> v)
+                : id(i),value(v) {}
             void EnvDefineChange::rollback(sp<environment::Environment> target){
                 target->remove(id);
             }
             void EnvDefineChange::flash(sp<environment::Environment> target){
-                target->define(id,value,is_const);
+                // do not record this as change.
+                target->force_define(id,value);
             }
         }
     }

@@ -234,7 +234,7 @@ namespace shiranui {
                     }
                     sp<Environment> return_added = std::make_shared<Environment>(cur_e);
                     // convert Return to Value
-                    return_added->define(id, ret->value, true);
+                    return_added->define(id, ret->value);
                     cur_e = return_added;
                     block.post[i]->accept(*this);
                     cur_e = return_added->parent;
@@ -269,7 +269,7 @@ namespace shiranui {
                     sp<Environment> call_env = std::make_shared<Environment>(f->env);
                     for (int i = 0; i < static_cast<int>(f->parameters.size()); i++) {
                         fc.arguments[i]->accept(*this);
-                        call_env->define(f->parameters[i], cur_v, true);
+                        call_env->define(f->parameters[i], cur_v);
                     }
                     push_callstack(cur_t_,f->body);
                     this->cur_e = call_env;
@@ -469,7 +469,11 @@ namespace shiranui {
         void Runner::visit(syntax::ast::Definement &def) {
             BEFORE_VISIT_MACRO(def);
             def.value->accept(*this);
-            cur_e->define(def.id, cur_v, def.is_const);
+            if(def.is_const){
+                cur_e->define(def.id,cur_v);
+            }else{
+                cur_e->define(def.id,std::make_shared<Ref>(cur_v));
+            }
             AFTER_VISIT_MACRO(def);
         }
         void Runner::visit(syntax::ast::ExpressionStatement& es){
@@ -528,7 +532,7 @@ namespace shiranui {
             sp<Environment> before = cur_e;
             for (sp<Value> v : arr->value) {
                 sp<Environment> inner = std::make_shared<Environment>(before);
-                inner->define(fors.loop_var, v, false);
+                inner->define(fors.loop_var, v);
                 cur_e = inner;
                 fors.block->accept(*this);
                 sp<Return> ret = std::dynamic_pointer_cast<Return>(cur_v);
@@ -541,17 +545,16 @@ namespace shiranui {
         }
         void Runner::visit(syntax::ast::Assignment &assign) {
             BEFORE_VISIT_MACRO(assign);
-            if (cur_e->has(assign.id) and
-                    not cur_e->is_const(assign.id)) {
-                assign.value->accept(*this);
-                cur_e->set(assign.id, cur_v);
-            } else {
-                if (cur_e->has(assign.id)) {
-                    // maybe constant.
+            if(cur_e->has(assign.id)){
+                auto p = std::dynamic_pointer_cast<Ref>(cur_e->get(assign.id));
+                if(p == nullptr){
                     throw ConvertException(std::make_shared<syntax::ast::Assignment>(assign));
-                } else {
-                    throw NoSuchVariableException(std::make_shared<syntax::ast::Assignment>(assign));
                 }
+                assign.value->accept(*this);
+                p->to = cur_v;
+                cur_v = p;
+            }else{
+                throw NoSuchVariableException(std::make_shared<syntax::ast::Assignment>(assign));
             }
             AFTER_VISIT_MACRO(assign);
         }

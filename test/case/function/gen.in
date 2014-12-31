@@ -1,8 +1,8 @@
 let gen = \(){
     mut n = 0;
     let a = \(){
-        n <- n + 1;
-        return n;
+        n <- !n + 1;
+        return !n;
     };
     return a;
 };

@@ -27,10 +27,8 @@ namespace shiranui{
                 if(ve.find(p) != ve.end()) return;
                 ve.insert(p);
                 vm.second[p] = v->current_version;
-                for(const auto& m : {v->vars,v->consts}){
-                    for(auto p : m){
-                        save(p.second,vm,vv,ve);
-                    }
+                for(auto p : v->vars){
+                    save(p.second,vm,vv,ve);
                 }
                 if(v->parent != nullptr){
                     save_env(v->parent,vm,vv,ve);
@@ -191,10 +189,8 @@ namespace shiranui{
                 ve.insert(&*v);
                 version move_to = get_stored_version(vm,v);
                 send_time(v,move_to);
-                for(const auto& m : {v->vars,v->consts}){
-                    for(auto p : m){
-                        move(p.second,vm,vv,ve);
-                    }
+                for(auto p : v->vars){
+                    move(p.second,vm,vv,ve);
                 }
                 if(v->parent != nullptr){
                     move(v->parent,vm,vv,ve);

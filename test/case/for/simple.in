@@ -1,9 +1,9 @@
 let sum = \(n){
     mut a = 0;
     for i in [0..n-1] {
-        a <- a + i;
+        a <- !a + i;
     }
-    return a;
+    return !a;
 };
 
 let unit = print(sum(1));

@@ -113,6 +113,12 @@ namespace shiranui{
                 };
             }
             bool check_equality(sp<Value> left,sp<Value> right);
+            template<typename T>
+            bool is_ref_or_array(T p){
+                bool is_ref = std::dynamic_pointer_cast<Ref>(p) != nullptr;
+                bool is_array = std::dynamic_pointer_cast<Array>(p) != nullptr;
+                return is_ref or is_array;
+            }
         }
     }
 }

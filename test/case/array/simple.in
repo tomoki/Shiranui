@@ -1,9 +1,9 @@
 let sum = \(ar){
     mut ret = 0;
     for i in ar {
-        ret <- ret + i;
+        ret <- !ret + i;
     }
-    return ret;
+    return !ret;
 };
 
 let unit = print(sum([]));
