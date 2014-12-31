@@ -613,15 +613,16 @@ string long_code =
             std::vector<pair<string,string> > tests = {
                 {"1;","1"},
                 {"\"hoge\";","\"hoge\""},
-                {"\\id(){};","<|$()id|>"},
                 {"<|a=[a,1,1]|>;","<|a=[a,1,1]|>"},
                 {"<|a=[[1,a],2]|>;","<|a=[[1,a],2]|>"},
+                {"<|[[1,b=[1]],b]|>;","<|[[1,a],a=[1]]|>"}, // require bfs.
+                {"\\id(){};","<|$()id|>"},
                 {"{let g = \\b(n){return n;};let f = \\k(n){let b = g;return n;};f;}","<|$(g->$()b)k|>"},
                 {"{let f = \\fa(n){return n*f(n-1);};f;}","<|a=$(f->a)fa|>"},
                 {"{let add = \\t(a){return \\i(b){return add;};};add(3);}","<|$(add->a=$(add->a)t)i|>"},
                 {"{let f = \\ff(){g();};let g = \\gg(){f();};f;}","<|a=$(g->$(f->a)gg)ff|>"},
                 {"{let set = system_call(\"set\");let c = [1,2];let d = [3,4];set(c,0,d);set(d,1,c);let f = \\fid(){let cc = c;let dd = d;};}",
-                 "<|$(c->a=[b=[3,a],2],d->b)fid|>"},
+                 "<|$(c->a=[b,2],d->b=[3,a])fid|>"},
                 {"let a = 1;let f = \\k(){return a;};f;","<|$()k|>"}, // global const variable should not be included
                 {"mut a = 1;let f = \\k(){return a;};f;","<|$(a->ref 1)k|>"}
             };
@@ -685,16 +686,16 @@ string long_code =
                        "#+ f() -> 0;\n"
                        "mut glob = 1;\n"
                        "let f = \\(){\n"
-                       "    mut ar = [[1],2,3];\n"
+                       "    let ar = [[1],2,3];\n"
                        "    let g = \\k(){\n"
-                       "        glob;\n"
+                       "        !glob;\n"
                        "        return ar;\n"
                        "    };\n"
                        "    g();\n"
                        "    glob <- [2];\n"
                        "    set(ar,1,99);\n"
                        "    g();\n"
-                       "    set(glob,0,567);\n"
+                       "    set(!glob,0,567);\n"
                        "    set(get(ar,0),0,123);\n"
                        "    g();\n"
                        "    return 0;\n"
@@ -735,8 +736,8 @@ string long_code =
             // run_rec_test();
             // run_rec_test2();
             // run_lambda_man_test();
-            ref_test1();
-            to_repr_test();
+            // ref_test1();
+            // to_repr_test();
             // free_var();
             // run_memory_test();
             // parser_time_test();
@@ -748,10 +749,10 @@ string long_code =
             // run_dive_tri();
             // run_plus();
             // run_good_dive_test();
-            // run_bad_dive_test();
-            // run_flymark();
-            // run_versioning_test_array();
-            // run_versioning_test_closure();
+            run_bad_dive_test();
+            run_flymark();
+            run_versioning_test_array();
+            run_versioning_test_closure();
         }
     }
 }

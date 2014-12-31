@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "../syntax/lambda_man.hpp"
 #include <sstream>
+#include <queue>
 
 namespace shiranui{
     namespace runtime{
@@ -59,123 +60,298 @@ namespace shiranui{
                 }
             };
 
+            struct Task{
+                virtual bool is_done() = 0;
+                virtual void proceed() = 0;
+                virtual std::string get_result() = 0;
+                virtual Value* get_what() = 0;
+                // pass sourcecode for userfunction
+                virtual std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>) = 0;
+                virtual bool is_special_form() = 0;
 
-            PrettyPrinterForValue::PrettyPrinterForValue(std::ostream& os_,
-                                                         std::map<Value*,int> c,
-                                                         sp<ast::SourceCode> cod)
-                : os(os_),cur_name("a"),cnt(c),found_recursive(false),code(cod){
-                if(code != nullptr){
-                    where_is_function_from = code->where_is_function_from;
+                bool already_appeared = false;
+                bool first_appeared = false;
+                std::string dsl_name = "";
+                void is_already_appeared(std::string s){
+                    dsl_name = s;
+                    already_appeared = true;
                 }
-            }
-            bool PrettyPrinterForValue::already_appeared(Value* p){
-                return name.find(p) != name.end();
-            }
-            void PrettyPrinterForValue::use_prev_name(Value* p){
-                os << name[p];
-            }
-            void PrettyPrinterForValue::register_name(Value* p){
-                // if doesn't appear twice,there is no need to name.
-                if(cnt[p] >= 2){
-                    os << cur_name << "=";
-                    name[p] = cur_name;
-                    cur_name = next_name(cur_name);
+                void is_first_appeared(std::string s){
+                    dsl_name = s;
+                    first_appeared = true;
                 }
-            }
-            bool PrettyPrinterForValue::check_already_occured(Value* p){
-                if(already_appeared(p)){
-                    use_prev_name(p);
-                    found_recursive = true;
-                    return true;
+            };
+            template<typename P>
+            sp<Task> make_task(P);
+
+            struct IntegerTask : Task{
+                Integer* what;
+                IntegerTask(Integer* w) : what(w) {}
+                bool is_done(){return true;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                void proceed(){}
+                bool is_special_form(){return false;}
+                Value* get_what(){return what;}
+                std::string get_result(){
+                    std::stringstream ss;
+                    ss << what->value;
+                    return ss.str();
                 }
-                register_name(p);
-                return false;
-            }
-            void PrettyPrinterForValue::visit(Integer& node){
-                if(check_already_occured(&node)) return;
-                os << node.value;
-            }
-            void PrettyPrinterForValue::visit(String& node){
-                if(check_already_occured(&node)) return;
-                os << '"' << node.value << '"';
-            }
-            void PrettyPrinterForValue::visit(Boolean& node){
-                if(check_already_occured(&node)) return;
-                os << (node.value?"true":"false");
-            }
-            void PrettyPrinterForValue::visit(Array& node){
-                if(check_already_occured(&node)) return;
-                os << "[";
-                for(int i=0;i<static_cast<int>(node.value.size());i++){
-                    node.value[i]->accept(*this);
-                    if(i != static_cast<int>(node.value.size())-1){
-                        os << ",";
+            };
+            struct StringTask : Task{
+                String* what;
+                StringTask(String* w) : what(w) {}
+                bool is_done(){return true;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                void proceed(){}
+                bool is_special_form(){return false;}
+                Value* get_what(){return what;}
+                std::string get_result(){
+                    return '\"' + what->value + '\"';
+                }
+            };
+            struct InvalidTask : Task{
+                std::string message;
+                InvalidTask(std::string m) : message(m) {}
+                bool is_done(){return true;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                void proceed(){}
+                bool is_special_form(){return false;}
+                Value* get_what(){return nullptr;}
+                std::string get_result(){
+                    return '\"' + message + '\"';
+                }
+            };
+            struct BooleanTask : Task{
+                Boolean* what;
+                BooleanTask(Boolean* w) : what(w) {}
+                bool is_done(){return true;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                void proceed(){}
+                bool is_special_form(){return false;}
+                Value* get_what(){return what;}
+                std::string get_result(){
+                    std::string ret = what->value?"true":"false";
+                    return ret;
+                }
+            };
+            struct ArrayTask : Task{
+                Array* what;
+                int child_tasks;
+                std::vector<int> in_progress_tasks;
+                std::vector<sp<Task> > tasks;
+                ArrayTask(Array* w) : what(w) {}
+                bool is_done(){return already_appeared or child_tasks == 0;}
+                bool is_special_form(){
+                    if(already_appeared or first_appeared) return true;
+                    for(auto t : tasks){
+                        if(t->is_special_form()) return true;
                     }
+                    return false;
                 }
-                os << "]";
-            }
-            void PrettyPrinterForValue::visit(UserFunction& node){
-                if(check_already_occured(&node)) return;
-                // please make me DSL!
-                found_recursive = true;
-                if(where_is_function_from.find(node.body) != where_is_function_from.end()){
-                    sp<ast::Function> f = where_is_function_from[node.body];
+                Value* get_what(){return what;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
+                    child_tasks = what->value.size();
+                    for(int i=0;i<child_tasks;i++){
+                        in_progress_tasks.push_back(i);
+                        tasks.push_back(make_task(what->value[i]));
+                    }
+                    return tasks;
+                }
+                void proceed(){
+                    if(is_done()) return;
+                    std::vector<int> in_progress_next;
+                    for(int i : in_progress_tasks){
+                        if(not tasks[i]->is_done()){
+                            in_progress_next.push_back(i);
+                            tasks[i]->proceed();
+                        }
+                    }
+                    child_tasks = in_progress_next.size();
+                }
+                std::string get_result(){
+                    if(already_appeared) return dsl_name;
+                    std::string ret = "";
+                    if(first_appeared){
+                        ret += dsl_name + "=";
+                    }
+                    ret += "[";
+                    for(int i=0;i<tasks.size();i++){
+                        if(i != 0) ret += ",";
+                        ret += tasks[i]->get_result();
+                    }
+                    ret += "]";
+                    return ret;
+                }
+            };
+            struct UserFunctionTask : Task{
+                UserFunction* what;
+                int child_tasks;
+                std::vector<int> in_progress_tasks;
+                std::vector<std::string> names;
+                std::vector<sp<Task> > tasks;
+                bool unknown = false;
+                bool no_name = false;
+                std::string func_id = "";
+                UserFunctionTask(UserFunction* w) : what(w) {}
+                bool is_done(){return already_appeared or child_tasks == 0;}
+                bool is_special_form(){
+                    return true; // userfunction require special form
+                }
+                Value* get_what(){return what;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode> code){
+                    if(code == nullptr){
+                        unknown = true;
+                        return {};
+                    }
+                    if(code->where_is_function_from.find(what->body)
+                               == code->where_is_function_from.end()){
+                        unknown = true;
+                        return {};
+                    }
+                    auto f = code->where_is_function_from[what->body];
                     if(f->lambda_id.name.size() == 0){
-                        os << "$()no_name";
-                    }else{
-                        auto syntactic_frees = syntax::scan_free_variable(f);
-
-                        // if global has var,they should not be included
-                        std::map<syntax::ast::Identifier,sp<value::Value> > free_not_global_vars;
-                        {
-                            auto free_vars = filter_environment(node.env,syntactic_frees);
-                            auto global_env = node.env;
-                            while(global_env->parent != nullptr){
-                                global_env = global_env->parent;
-                            }
-                            for(auto p : free_vars){
-                                if(global_env->has(p.first) and !is_ref_or_array(p.second)) continue;
-                                free_not_global_vars[p.first] = p.second;
-                            }
-                        }
-
-                        os << "$";
-                        os << "(";
-                        for(auto it = free_not_global_vars.begin();
-                            it != free_not_global_vars.end();++it){
-                            os << it->first.name << "->";
-                            it->second->accept(*this);
-                            if(std::next(it) != free_not_global_vars.end()){
-                                os << ",";
-                            }
-                        }
-                        os << ")";
-                        os << f->lambda_id.name;
+                        no_name = true;
+                        return {};
                     }
-                }else{
-                    os << "$()unknown";
+                    func_id = f->lambda_id.name;
+                    auto syntactic_frees = syntax::scan_free_variable(f);
+
+                    // if global has var,they should not be included
+                    std::map<syntax::ast::Identifier,sp<value::Value> > free_not_global_vars;
+                    {
+                        auto free_vars = filter_environment(what->env,syntactic_frees);
+                        auto global_env = what->env;
+                        while(global_env->parent != nullptr){
+                            global_env = global_env->parent;
+                        }
+                        for(auto p : free_vars){
+                            if(global_env->has(p.first) and !is_ref_or_array(p.second)) continue;
+                            free_not_global_vars[p.first] = p.second;
+                        }
+                    }
+                    child_tasks = free_not_global_vars.size();
+                    {
+                        int i = 0;
+                        for(auto p : free_not_global_vars){
+                            in_progress_tasks.push_back(i);
+                            names.push_back(p.first.name);
+                            tasks.push_back(make_task(p.second));
+                            i++;
+                        }
+                    }
+                    return tasks;
                 }
-            }
-            void PrettyPrinterForValue::visit(Return& node){
-                if(check_already_occured(&node)) return;
-                os << "(return ";
-                node.value->accept(*this);
-                os << ")";
-            }
-            // builtin
-            void PrettyPrinterForValue::visit(SystemCall& node){
-                if(check_already_occured(&node)) return;
-                os << "system_call";
+                void proceed(){
+                    if(is_done()) return;
+                    std::vector<int> in_progress_next;
+                    for(int i : in_progress_tasks){
+                        if(not tasks[i]->is_done()){
+                            in_progress_next.push_back(i);
+                            tasks[i]->proceed();
+                        }
+                    }
+                    child_tasks = in_progress_next.size();
+                }
+                std::string get_result(){
+                    if(already_appeared) return dsl_name;
+                    if(unknown) return "$()unknown";
+                    if(no_name) return "$()no_name";
+                    std::string ret = "";
+                    if(first_appeared){
+                        ret += dsl_name + "=";
+                    }
+                    ret += "$(";
+                    for(int i=0;i<tasks.size();i++){
+                        if(i != 0) ret += ",";
+                        ret += names[i] + "->" + tasks[i]->get_result();
+                    }
+                    ret += ")";
+                    ret += func_id;
+                    return ret;
+                }
+            };
+            struct RefTask : Task{
+                Ref* what;
+                bool child_done = false;
+                sp<Task> child;
+                RefTask(Ref* w) : what(w) {}
+                bool is_done(){return already_appeared or child_done;}
+                bool is_special_form(){
+                    if(already_appeared or first_appeared) return true;
+                    if(child->is_special_form()) return true;
+                    return false;
+                }
+                Value* get_what(){return what;}
+                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
+                    child = make_task(what->to);
+                    return {child};
+                }
+                void proceed(){
+                    if(is_done()) return;
+                    child->proceed();
+                    child_done = child->is_done();
+                }
+                std::string get_result(){
+                    if(already_appeared) return dsl_name;
+                    std::string ret = "";
+                    if(first_appeared){
+                        ret += dsl_name + "=";
+                    }
+                    ret += "ref ";
+                    ret += child->get_result();
+                    return ret;
+                }
+            };
+
+            struct TaskMaker : VisitorForValue{
+                sp<Task> ret;
+                void visit(Integer& i)         {ret = std::make_shared<IntegerTask>(&i);}
+                void visit(String& s)          {ret = std::make_shared<StringTask>(&s);}
+                void visit(Boolean& b)         {ret = std::make_shared<BooleanTask>(&b);}
+                void visit(Array& a)           {ret = std::make_shared<ArrayTask>(&a);}
+                void visit(UserFunction& u)    {ret = std::make_shared<UserFunctionTask>(&u);}
+                void visit(Ref& re)            {ret = std::make_shared<RefTask>(&re);}
+                void visit(Return&)            {ret = std::make_shared<InvalidTask>("return?");}
+                void visit(SystemCall&)        {ret = std::make_shared<InvalidTask>("SystemCall?");}
+                void visit(BuiltinFunction& bf){ret = std::make_shared<InvalidTask>(bf.name);}
+            };
+            template<typename P>
+            sp<Task> make_task(P v){
+                TaskMaker t;
+                v->accept(t);
+                return t.ret;
             }
 
-            void PrettyPrinterForValue::visit(BuiltinFunction& node){
-                if(check_already_occured(&node)) return;
-                os << node.name;
-            }
-            void PrettyPrinterForValue::visit(Ref& node){
-                if(check_already_occured(&node)) return;
-                os << "ref ";
-                node.to->accept(*this);
+            void bfs_to_check_task_should_be_skipped(sp<Task> t_,sp<Value> top,
+                                                     sp<syntax::ast::SourceCode> code){
+                ValueScanner s(code);
+                top->accept(s);
+                auto cnt = s.cnt;
+                std::map<Value*,std::string> name;
+                std::queue<sp<Task> > que;
+                que.push(t_);
+                std::string current_name = "a";
+                while(not que.empty()){
+                    sp<Task> t = que.front();
+                    que.pop();
+                    Value* what = t->get_what();
+                    if(what == nullptr) continue;
+                    // check cnt to exclude integer,string,...
+                    if(cnt.find(what) != cnt.end() and cnt[what] >= 2){
+                        if(name.find(what) != name.end()){
+                            t->is_already_appeared(name[what]);
+                            continue;
+                        }else{
+                            t->is_first_appeared(current_name);
+                            name[what] = current_name;
+                            current_name = next_name(current_name);
+                        }
+                    }
+                    for(auto c : t->get_child_tasks(code)){
+                        que.push(c);
+                    }
+                }
             }
         }
     }
@@ -184,22 +360,18 @@ namespace shiranui{
 namespace shiranui{
     namespace runtime{
         namespace value{
-            // helper functions.
-            std::string to_reproductive(sp<Value> vi,sp<syntax::ast::SourceCode> w,bool is_top){
-                std::stringstream ss;
-                ValueScanner s(w);
-                vi->accept(s);
-                PrettyPrinterForValue p(ss,s.cnt,w);
-                vi->accept(p);
-                if(p.found_recursive && is_top){
-                    return "<|" + ss.str() + "|>";
+            std::string to_reproductive(sp<Value> vi,sp<syntax::ast::SourceCode> w){
+                auto task = make_task(&*vi);
+                bfs_to_check_task_should_be_skipped(task,vi,w);
+                while(not task->is_done()){
+                    task->proceed();
+                }
+                if(task->is_special_form()){
+                    return "<|" + task->get_result() + "|>";
                 }else{
-                    return ss.str();
+                    return task->get_result();
                 }
             }
-            // std::string to_reproductive(sp<Value> vi){
-            //     return to_reproductive(vi,nullptr);
-            // }
         }
     }
 }
