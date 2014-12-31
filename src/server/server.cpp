@@ -10,6 +10,18 @@ namespace shiranui{
             : is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE){
         }
 
+        PipeServer::~PipeServer(){
+            main_thread.interrupt();
+            main_thread.join();
+            for(sp<boost::thread> t : flyline_threads){
+                t->interrupt();
+                t->join();
+            }
+            current_diver = nullptr;
+            flyline_threads.clear();
+            program_per_flyline.clear();
+            diver_per_flyline.clear();
+        }
         void PipeServer::start(){
             boost::thread receive(&PipeServer::receive,this);
             receive.join();
@@ -17,17 +29,16 @@ namespace shiranui{
 
         void PipeServer::send_command(const std::string& command,const std::string& value,
                                       const int loadcount){
-            std::stringstream ss;
+
             boost::this_thread::interruption_point();
-            boost::mutex::scoped_lock(os_lock);
-            // os_lock.lock();
+            os_lock.lock();
             if(value != ""){
                 os << how_many_lines(value) << " " << loadcount << " " << command << "\n"
                    << value << std::endl;
             }else{
                 os << how_many_lines(value) << " " << loadcount << " " << command << std::endl;
             }
-            // os_lock.unlock();
+            os_lock.unlock();
         }
         void PipeServer::send_command_with_two_points(const std::string& command,
                                                       const int start_point,

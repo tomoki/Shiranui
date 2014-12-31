@@ -732,6 +732,36 @@ string long_code =
             ps.on_change_command(make_change(1,0,s),1);
             w();
         }
+        void run_complex_serialize(){
+            stringstream in,out;
+            PipeServer ps(in,cerr);
+            std::string s = "let set = system_call(\"set\");\n"
+                            "let get = system_call(\"get\");\n"
+                            "\n"
+                            "#+ p() -> <|$(c->[1,a],d->a=[3])h|>;\n"
+                            "#+ <|$(c->[1,a],d->a=[3])h|> -> <|$(c->[1,a],d->a=[3])h|>;\n"
+                            "\n"
+                            "let p = \\(){\n"
+                            "    let c = [1,2];\n"
+                            "    let d = [3];\n"
+                            "    set(c,1,d);\n"
+                            "\n"
+                            "    let h = \\h(){\n"
+                            "        return get(c,0) + get(d,0);\n"
+                            "    };\n"
+                            "    return h;\n"
+                            "};\n"
+                          ;
+            int k = 0;
+            auto w = [&k](){
+                wait(100);
+                std::cerr << "-----" << k++ << "-----" << std::endl;
+            };
+            for(int i=0;i<50;i++){
+                w();
+                ps.on_change_command(make_change(1,0,s),i+1);
+            }
+        }
         void run_test(){
             // run_rec_test();
             // run_rec_test2();
@@ -753,6 +783,7 @@ string long_code =
             run_flymark();
             run_versioning_test_array();
             run_versioning_test_closure();
+            run_complex_serialize();
         }
     }
 }

@@ -52,6 +52,7 @@ namespace shiranui{
             sp<runtime::diver::Diver> current_diver;
 
             PipeServer(std::istream&,std::ostream&);
+            ~PipeServer();
 
             void start();
             void send_command(const std::string&,const std::string&,const int);
