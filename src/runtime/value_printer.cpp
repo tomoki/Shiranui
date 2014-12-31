@@ -16,9 +16,6 @@ namespace shiranui{
                 s.back() = s.back()+1;
                 return s;
             }
-            bool is_userfunction(Value* v){
-                return dynamic_cast<UserFunction*>(v) != nullptr;
-            }
 
             // find value appearing twice
             struct ValueScanner : VisitorForValue{
@@ -57,6 +54,7 @@ namespace shiranui{
                 void visit(BuiltinFunction& node){cnt[&node]++;}
                 void visit(Ref& node){
                     cnt[&node]++;
+                    if(cnt[&node] >= 2) return;
                     node.to->accept(*this);
                 }
             };
