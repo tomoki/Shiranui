@@ -50,6 +50,7 @@ namespace shiranui{
                 void visit(runtime::value::Return&);
                 void visit(runtime::value::SystemCall&);
                 void visit(runtime::value::BuiltinFunction&);
+                void visit(runtime::value::Ref&);
             };
         }
     }

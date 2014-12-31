@@ -121,6 +121,12 @@ namespace shiranui{
                     vv.insert(&node);
                     move(node.env,vm,vv,ve);
                 }
+                void visit(Ref& node){
+                    if(vv.find(&node) != vv.end()){return;}
+                    vv.insert(&node);
+                    send_time(&node,get_stored_version(vm,&node));
+                    node.to->accept(*this);
+                }
             };
             // TODO:do not recursive.
             struct VersionDisk : VisitorForValue{
@@ -154,6 +160,12 @@ namespace shiranui{
                     vv.insert(&node);
                     store_value_version(vm,&node);
                     save_env(node.env,vm,vv,ve);
+                }
+                void visit(Ref& node){
+                    if(vv.find(&node) != vv.end()){return;};
+                    vv.insert(&node);
+                    store_value_version(vm,&node);
+                    node.to->accept(*this);
                 }
             };
 

@@ -39,6 +39,7 @@ namespace shiranui{
                 void visit(Return&);
                 void visit(SystemCall&);
                 void visit(BuiltinFunction&);
+                void visit(Ref&);
             };
         }
     }

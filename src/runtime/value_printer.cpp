@@ -52,6 +52,10 @@ namespace shiranui{
                 void visit(Return& node){cnt[&node]++;}
                 void visit(SystemCall& node){cnt[&node]++;}
                 void visit(BuiltinFunction& node){cnt[&node]++;}
+                void visit(Ref& node){
+                    cnt[&node]++;
+                    node.to->accept(*this);
+                }
             };
 
 
@@ -166,6 +170,10 @@ namespace shiranui{
             void PrettyPrinterForValue::visit(BuiltinFunction& node){
                 if(check_already_occured(&node)) return;
                 os << node.name;
+            }
+            void PrettyPrinterForValue::visit(Ref& node){
+                os << "ref ";
+                node.to->accept(*this);
             }
         }
     }

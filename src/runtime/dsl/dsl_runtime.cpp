@@ -78,12 +78,8 @@ namespace shiranui{
                 void visit(value::Array& node){
                     for(auto& p : node.value){
                         p->accept(*this);
-                        if(var_occurrences.find(p) != var_occurrences.end()){
-                            DSLVariable v = var_occurrences[p];
-                            if(var_defines.find(v) == var_defines.end()){
-                                throw DSLUnknownVariable(top);
-                            }
-                            p = var_defines[v];
+                        if(is_var(p)){
+                            p = find(p);
                         }
                     }
                 }
@@ -92,19 +88,29 @@ namespace shiranui{
                     for(auto &vs : {node.env->vars,node.env->consts}){
                         for(auto& p : vs){
                             p.second->accept(*this);
-                            if(var_occurrences.find(p.second) != var_occurrences.end()){
-                                DSLVariable v = var_occurrences[p.second];
-                                if(var_defines.find(v) == var_defines.end()){
-                                    throw DSLUnknownVariable(top);
-                                }
-                                node.env->set(p.first,var_defines[v]);
+                            if(is_var(p.second)){
+                                // TODO:it will be invalid if rewrite environment
+                                node.env->set(p.first,find(p.second));
                             }
                         }
                     }
                 }
+                void visit(value::Ref& node){
+                    // TODO:writehere
+                }
                 void visit(value::Return&){}
                 void visit(value::SystemCall&){}
                 void visit(value::BuiltinFunction&){}
+                bool is_var(sp<value::Value> p){
+                    return var_occurrences.find(p) != var_occurrences.end();
+                }
+                sp<value::Value> find(sp<value::Value> p){
+                    DSLVariable v = var_occurrences[p];
+                    if(var_defines.find(v) == var_defines.end()){
+                        throw DSLUnknownVariable(top);
+                    }
+                    return var_defines[v];
+                }
             };
             sp<value::Value> run_dsl(sp<DSLInner> dsl,
                                      const std::map<syntax::ast::Identifier,sp<syntax::ast::Function> >&marker_to_lambda,

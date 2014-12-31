@@ -79,6 +79,11 @@ namespace shiranui{
                              sp<environment::Environment>);
                 void accept(VisitorForValue&);
             };
+            struct Ref : Value{
+                sp<Value> to;
+                Ref(sp<Value> v);
+                void accept(VisitorForValue&);
+            };
             struct SystemCall : Function{
                 SystemCall();
                 void accept(VisitorForValue&);
@@ -125,6 +130,7 @@ namespace shiranui{
                 virtual void visit(Return&)                       = 0;
                 virtual void visit(SystemCall&)                   = 0;
                 virtual void visit(BuiltinFunction&)              = 0;
+                virtual void visit(Ref&)                          = 0;
             };
         }
     }
