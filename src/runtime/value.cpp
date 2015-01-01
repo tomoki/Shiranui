@@ -220,6 +220,10 @@ namespace shiranui {
                 bool is_array = dynamic_cast<Array*>(p) != nullptr;
                 return is_ref or is_array;
             }
+            bool is_userfunction(sp<Value> p){
+                bool is_uf = std::dynamic_pointer_cast<UserFunction>(p) != nullptr;
+                return is_uf;
+            }
         }
     }
 }

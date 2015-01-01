@@ -115,7 +115,8 @@ namespace shiranui{
             bool check_equality(sp<Value> left,sp<Value> right);
             bool is_ref_or_array(sp<Value>);
             bool is_ref_or_array(Value*);
-
+            bool is_userfunction(sp<Value>);
+            // bool is_userfunction(Value*);
         }
     }
 }

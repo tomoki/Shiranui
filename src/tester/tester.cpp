@@ -783,7 +783,7 @@ string long_code =
             run_flymark();
             run_versioning_test_array();
             run_versioning_test_closure();
-            run_complex_serialize();
+            // run_complex_serialize();
         }
     }
 }

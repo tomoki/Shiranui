@@ -226,7 +226,8 @@ namespace shiranui{
                             global_env = global_env->parent;
                         }
                         for(auto p : free_vars){
-                            if(global_env->has(p.first) and !is_ref_or_array(p.second)) continue;
+                            if(global_env->has(p.first) and (!is_ref_or_array(p.second) and
+                                                             !is_userfunction(p.second))) continue;
                             free_not_global_vars[p.first] = p.second;
                         }
                     }
