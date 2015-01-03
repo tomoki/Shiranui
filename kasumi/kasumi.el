@@ -164,14 +164,16 @@
       (cons (car (take-nth command-loadcount-value-rest 3))
             (kasumi-parse (nth 3 command-loadcount-value-rest))))))
 
-(defun kasumi-debug-print (str)
-  (let ((prev (current-buffer)))
-    (progn
-      (switch-to-buffer (process-buffer shiranui-process))
-      (goto-char (point-max))
-      (insert str)
-      (insert "\n")
-      (switch-to-buffer prev))))
+(defconst DEBUG nil)
+(defun kasumi-debug-print (str &optional force)
+  (if (or DEBUG force)
+      (let ((prev (current-buffer)))
+        (progn
+          (switch-to-buffer (process-buffer shiranui-process))
+          (goto-char (point-max))
+          (insert str)
+          (insert "\n")
+          (switch-to-buffer prev)))))
 
 
 ;; need newline end of string?
@@ -360,7 +362,7 @@
     ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
     (progn
       (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
-                                  start end value))
+                                  start end value) t)
       (kasumi-put-explore start end)
       (setq explore-data (cons (list start end value) explore-data))
       )
@@ -693,7 +695,7 @@
                              (where (buffer-substring-no-properties start end))
                              )
                         (format "%s at [%d,%d] = %s" where start end value)))
-                    sorted "\n"))
+                    sorted "\n") t)
         (let ((ret-start (nth 0 (nth 0 sorted)))
               (ret-end   (nth 1 (nth 0 sorted)))
               (ret-value (nth 2 (nth 0 sorted))))

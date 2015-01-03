@@ -1,7 +1,91 @@
-// let true = 1=1;
-// let false = 1/=1;
-
 let print = system_call("print");
 let get = system_call("get");
 let set = system_call("set");
 let len = system_call("length");
+
+#- filter([1,2,3,4],\(n){return n % 2 = 0;}) -> [2,4];
+let filter = \(lis,pred){
+    mut cnt = 0;
+    for i in lis{
+        if pred(i) {
+            cnt <- !cnt + 1;
+        }
+    }
+    let ret = [0..!cnt);
+    mut index = 0;
+    for i in lis{
+        if pred(i){
+            set(ret,!index,i);
+            index <- !index + 1;
+        }
+    }
+    return ret;
+};
+
+#- map([1,2,3],\(x){
+    return x*x;
+}) -> [1,4,9];
+let map = \(lis,func){
+    let ret = [0..len(lis));
+    for i in [0..len(lis)) {
+        // ret[i] <- func(lis[i]);
+        set(ret,i,func(get(lis,i)));
+    }
+    return ret;
+};
+
+#- concat([1,2,3],[4,5,6]) -> [1,2,3,4,5,6];
+let concat = \(a,b){
+    let length = len(a) + len(b);
+    let ret = [0..length);
+    mut index = 0;
+    for i in a{
+        set(ret,!index,i);
+        index <- !index + 1;
+    }
+    for j in b{
+        set(ret,!index,j);
+        index <- !index + 1;
+    }
+    return ret;
+};
+
+#- cdr([1,2,3]) -> [2,3];
+#- cdr([1,2,3,4,5]) -> [2,3,4,5];
+let cdr = \(lis){
+    pre {
+        assert len(lis) >= 1;
+    }
+    let length = len(lis);
+    let ret = [0..length-1);
+    for i in [1..length){
+        set(ret,i-1,get(lis,i));
+    }
+    return ret;
+};
+
+#- qsort([3,2,5,4,1]) -> [1,2,3,4,5];
+#- qsort([]) -> [];
+#- qsort([1]) -> [1];
+#- qsort([3,2]) -> [2,3];
+let qsort = \(lis){
+    if len(lis) <= 1 {
+        return lis;
+    }
+    if len(lis) = 2 {
+        if get(lis,0) <= get(lis,1) {
+            return lis;
+        }else{
+            return [get(lis,1),get(lis,0)];
+        }
+    }
+    let pivot = get(lis,0);
+    let pivot_removed = cdr(lis);
+    let left = filter(pivot_removed,\(n){
+        return n < pivot;
+    });
+    let right = filter(pivot_removed,\(n){
+        return pivot <= n;
+    });
+    return concat(concat(qsort(left),[pivot]),qsort(right));
+};
