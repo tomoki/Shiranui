@@ -33,7 +33,16 @@ let map = \(lis,func){
     }
     return ret;
 };
-
+#- foldl([1,2,3],\(x,y){
+    return x+y;
+},0) -> 6;
+let foldl = \(lis,f,zero){
+    mut ret = zero;
+    for i in lis{
+        ret <- f(!ret,i);
+    }
+    return !ret;
+};
 #- concat([1,2,3],[4,5,6]) -> [1,2,3,4,5,6];
 let concat = \(a,b){
     let length = len(a) + len(b);
@@ -90,13 +99,17 @@ let qsort = \(lis){
     return concat(concat(qsort(left),[pivot]),qsort(right));
 };
 
-#- foldl([1,2,3],\(x,y){
-    return x+y;
-},0) -> 6;
-let foldl = \(lis,f,zero){
-    mut ret = zero;
-    for i in lis{
-        ret <- f(!ret,i);
+#- nCr(3,2) -> 3;
+#- nCr(4,6) -> 0;
+#- nCr(4,0) -> 1;
+let nCr = \(n,r){
+    if n < r {
+        return 0;
+    }
+    mut ret = 1;
+    for i in [0..r){
+        ret <- !ret * (n-i);
+        ret <- !ret / (i+1);
     }
     return !ret;
 };
