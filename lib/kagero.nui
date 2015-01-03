@@ -89,3 +89,14 @@ let qsort = \(lis){
     });
     return concat(concat(qsort(left),[pivot]),qsort(right));
 };
+
+#- foldl([1,2,3],\(x,y){
+    return x+y;
+},0) -> 6;
+let foldl = \(lis,f,zero){
+    mut ret = zero;
+    for i in lis{
+        ret <- f(!ret,i);
+    }
+    return !ret;
+};
