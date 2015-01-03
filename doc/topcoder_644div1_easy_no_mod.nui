@@ -1,0 +1,109 @@
+let print = system_call("print");
+let get = system_call("get");
+let set = system_call("set");
+let len = system_call("length");
+
+
+let filter = \(lis,pred){
+    mut cnt = 0;
+    for i in lis{
+        if pred(i) {
+            cnt <- !cnt + 1;
+        }
+    }
+    let ret = [0..!cnt);
+    mut index = 0;
+    for i in lis{
+        if pred(i){
+            set(ret,!index,i);
+            index <- !index + 1;
+        }
+    }
+    return ret;
+};
+let concat = \(a,b){
+    let length = len(a) + len(b);
+    let ret = [0..length);
+    mut index = 0;
+    for i in a{
+        set(ret,!index,i);
+        index <- !index + 1;
+    }
+    for j in b{
+        set(ret,!index,j);
+        index <- !index + 1;
+    }
+    return ret;
+};
+
+let cdr = \(lis){
+    pre {
+        assert len(lis) >= 1;
+    }
+    let length = len(lis);
+    let ret = [0..length-1);
+    for i in [1..length){
+        set(ret,i-1,get(lis,i));
+    }
+    return ret;
+};
+
+let qsort = \(lis){
+    if len(lis) <= 1 {
+        return lis;
+    }
+    if len(lis) = 2 {
+        if get(lis,0) <= get(lis,1) {
+            return lis;
+        }else{
+            return [get(lis,1),get(lis,0)];
+        }
+    }
+    let pivot = get(lis,0);
+    let pivot_removed = cdr(lis);
+    let left = filter(pivot_removed,\(n){
+        return n < pivot;
+    });
+    let right = filter(pivot_removed,\(n){
+        return pivot <= n;
+    });
+    return concat(concat(qsort(left),[pivot]),qsort(right));
+};
+
+#+ nCr(3,2) -> 3;
+let nCr = \(n,r){
+    if n < r {
+        return 0;
+    }
+    mut ret = 1;
+    for i in [0..r){
+        ret <- !ret * (n-i);
+        ret <- !ret / (i+1);
+    }
+    return !ret;
+};
+
+#+ 1 -> 1;
+#- solve([1,4,6,7,9],2,3) -> 6;
+#- solve([1,6,2,7,4,2,6,1,5,2,4],4,3) -> 60;
+#- solve([1,4,5,7,10,11,13,16,18],4,3) -> 0;
+#- solve([55,2,7,232,52,5,5332,623,52,6,532,5147],6,10000) -> 924;
+
+let solve = \(os,M,K){
+    let osize = qsort(os);
+    let O = len(osize);
+    mut ret = 0;
+    for i in [0..O){
+        let min_size = get(osize,i);
+        mut selectable = 0;
+        for j in [i+1..O){
+            if(get(osize,j) - min_size <= K){
+                selectable <- !selectable + 1;
+            }
+        }
+        if(!selectable >= M-1){
+            ret <- !ret + nCr(!selectable,M-1);
+        }
+    }
+    return !ret;
+};
