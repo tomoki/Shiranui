@@ -111,6 +111,12 @@ namespace shiranui{
                             return std::make_shared<Integer>(s->value.size());
                         }
                     }
+                    {
+                        auto s = std::dynamic_pointer_cast<String>(args[0]);
+                        if(s != nullptr){
+                            return std::make_shared<Integer>(s->value.size());
+                        }
+                    }
                     return nullptr;
                 }
                 SetIndex::SetIndex(){
@@ -127,12 +133,16 @@ namespace shiranui{
                         if(array == nullptr or index == nullptr){
                             return nullptr;
                         }
-                        array->push_change(std::make_shared<timemachine::SetIndexChange>(index->value,
-                                                                                         array->value[index->value],
-                                                                                         args[2]));
-                        array->value[index->value] = args[2];
+                        if(0 <= index->value and index->value < array->value.size()){
+                            array->push_change(std::make_shared<timemachine::SetIndexChange>(index->value,
+                                                                                             array->value[index->value],
+                                                                                             args[2]));
+                            array->value[index->value] = args[2];
 
-                        return array;
+                            return array;
+                        }else{
+                            return nullptr;
+                        }
                     }
                 }
                 GetIndex::GetIndex(){
@@ -142,12 +152,32 @@ namespace shiranui{
                 }
                 sp<Value> GetIndex::run(std::vector<sp<Value>> args){
                     if(args.size() != 2) return nullptr;
-                    sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
-                    sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
-                    if(array == nullptr or index == nullptr){
-                        return nullptr;
+                    {
+                        sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
+                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        if(array != nullptr and index != nullptr){
+                            if(0 <= index->value and index->value < array->value.size()){
+                                return array->value[index->value];
+                            }else{
+                                // throw exception
+                                return nullptr;
+                            }
+                        }
                     }
-                    return array->value[index->value];
+                    {
+                        auto string = std::dynamic_pointer_cast<String>(args[0]);
+                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        if(string != nullptr and index != nullptr){
+                            if(0 <= index->value and index->value < string->value.size()){
+                                std::stringstream ss;
+                                ss << string->value[index->value];
+                                return std::make_shared<String>(ss.str());
+                            }else{
+                                return nullptr;
+                            }
+                        }
+                    }
+                    return nullptr;
                 }
             }
         }
