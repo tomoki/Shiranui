@@ -205,7 +205,8 @@
      ((string= command kasumi-command-debug-print)
       (kasumi-debug-print value))
      ((string= command kasumi-command-dive-clear)
-      (kasumi-remove-all-dive-overlay))
+      (kasumi-receive-dive-clear))
+
      ((not correct-load-count)
       (kasumi-debug-print (format "loadcount %d is old.ignore it." lc)))
      ((string= command kasumi-command-syntaxerror)
@@ -662,7 +663,16 @@
                          (number-to-string (kasumi-orig-point (point))))
   ))
 
-
+(defun kasumi-receive-dive-clear ()
+  (progn
+    (kasumi-remove-all-overlay)
+    (if (not DEBUG)
+        (let ((prev (current-buffer)))
+          (progn
+            (switch-to-buffer (process-buffer shiranui-process))
+            (erase-buffer)
+            (switch-to-buffer prev))))
+    ))
 
 (defun kasumi-select-explore-sub ()
   (interactive)
