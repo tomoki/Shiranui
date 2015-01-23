@@ -167,13 +167,11 @@
 (defconst DEBUG nil)
 (defun kasumi-debug-print (str &optional force)
   (if (or DEBUG force)
-      (let ((prev (current-buffer)))
-        (progn
-          (switch-to-buffer (process-buffer shiranui-process))
-          (goto-char (point-max))
-          (insert str)
-          (insert "\n")
-          (switch-to-buffer prev)))))
+      (save-current-buffer
+        (set-buffer  (process-buffer shiranui-process))
+        (goto-char (point-max))
+        (insert str)
+        (insert "\n"))))
 
 
 ;; need newline end of string?
@@ -643,12 +641,10 @@
   (progn
     (kasumi-remove-all-dive-overlay)
     (if (not DEBUG)
-        (let ((prev (current-buffer)))
+        (save-current-buffer
           (progn
-            (switch-to-buffer (process-buffer shiranui-process))
-            (erase-buffer)
-            (switch-to-buffer prev))))
-    ))
+            (set-buffer (process-buffer shiranui-process))
+            (erase-buffer))))))
 
 (defun kasumi-select-explore-sub ()
   (interactive)
@@ -695,6 +691,42 @@
     )
   ))
 
+(defun kasumi-select-highlight ()
+  (interactive)
+  (kasumi-select-clear)
+  (if mark-active
+      (progn
+        (kasumi-select-highlight-sub (region-beginning) (region-end)
+                                     explore-data (length explore-data))
+    )))
+
+(defun kasumi-select-highlight-sub (from to data index)
+  (if (not (null data))
+      (let* ((head  (car data))
+             (hfrom (nth 0 head))
+             (hto   (nth 1 head))
+             (value (nth 2 head))
+             (tail (cdr data)))
+        (if (<= from hfrom hto to)
+            (save-current-buffer
+              (set-buffer (process-buffer shiranui-process))
+              (goto-char (point-min))
+              (kasumi-put-dive-highlight (line-beginning-position index)
+                                         (line-beginning-position (+ index 1)))))
+        (kasumi-select-highlight-sub from to tail (- index 1)))))
+
+(defun kasumi-select-clear ()
+  (interactive)
+  (save-current-buffer
+    (set-buffer (process-buffer shiranui-process))
+    (kasumi-remove-all-dive-overlay)))
+
+(defun kasumi-move-hook ()
+  (or executing-kbd-macro
+      (input-pending-p)
+      (progn
+        (kasumi-select-highlight)
+        )))
 (defun kasumi-lift-sub (from to)
   (kasumi-send-command kasumi-command-lift
                        (format "%d %d"
@@ -836,7 +868,10 @@
   (setq major-mode 'kasumi-mode)
 
   (setq mode-name "Kasumi")
+
+  (add-hook 'post-command-hook 'kasumi-move-hook t t)
   ;;  first boot.
+  (kasumi-remove-all-overlay)
   (kasumi-refresh (point-min) (point-max) 0)
   (run-hooks 'kasumi-mode-hook))
 
