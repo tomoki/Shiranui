@@ -512,67 +512,43 @@
    (mapconcat 'kasumi-send-change-sub (reverse changes) "\n")))
 
 (defface kasumi-syntaxerror-face
-  '((((supports :underline (:style wave)))
-     :underline (:style wave :color "Red1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:style wave :color "red1")))
     "Used for syntaxerror")
 
 (defface kasumi-runtimeerror-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Red1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:color "red1")))
     "Used for runtimeerror")
 
 (defface kasumi-goodflyline-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Green1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:color "green1")))
     "Used for flyline that passed test")
 
 (defface kasumi-badflyline-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Red1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:color "red1")))
     "Used for flyline that didn't pass test")
 
 (defface kasumi-idleflyline-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Yellow1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:color "blue1")))
     "Used for flyline that run")
 
 (defface kasumi-lock-flyline-face
-  '((t :weight bold)
-    )
+  '((t :weight bold))
   "lock flyline")
 
 (defface kasumi-dive-strike-face
-  '((t :strike-through t)
-    )
+  '((t :strike-through t))
   "strike for dive")
 
 (defface kasumi-dive-highlight-face
-  '((t :inherit highlight)
-    )
+  '((t :inherit highlight))
   "highlight for dive")
 
 (defface kasumi-explore-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Red1"))
-    (t
-     :underline t :inherit error))
+  '((t :underline (:color "red1")))
   "where you can explore"
   )
 (defface kasumi-flymark-index-face
-  '((((supports :underline (:style wave)))
-     :underline (:color "Green"))
-    (t
-     :underline t :inherit error))
+  '((t  :underline (:color "green1")))
   "current index of flymark"
   )
 
@@ -665,7 +641,7 @@
 
 (defun kasumi-receive-dive-clear ()
   (progn
-    (kasumi-remove-all-overlay)
+    (kasumi-remove-all-dive-overlay)
     (if (not DEBUG)
         (let ((prev (current-buffer)))
           (progn
