@@ -396,8 +396,9 @@
 
 (defun kasumi-receive-lock-flyline (value)
   (let ((beg-end-list (split-string value " ")))
+    (kasumi-remove-all-lock-overlay)
     (kasumi-put-lock-flyline (kasumi-string-to-fix-point (nth 0 beg-end-list))
-                            (kasumi-string-to-fix-point (nth 1 beg-end-list)))
+                             (kasumi-string-to-fix-point (nth 1 beg-end-list)))
     ))
 
 (defun kasumi-receive-flymark-result (value)
@@ -566,6 +567,14 @@
         (overlay-put ol 'face face)
         ol))))
 
+(defun kasumi-put-lock-face (face beg end)
+  (save-restriction
+    (let ((ol (make-overlay beg end)))
+      (progn
+        (overlay-put ol 'category 'kasumi-lock-face)
+        (overlay-put ol 'face face)
+        ol))))
+
 (defun kasumi-put-syntaxerror (beg end)
   (kasumi-put-face 'kasumi-syntaxerror-face beg end))
 
@@ -588,7 +597,7 @@
   (kasumi-put-dive-face 'kasumi-dive-highlight-face beg end))
 
 (defun kasumi-put-lock-flyline (beg end)
-  (kasumi-put-dive-face 'kasumi-lock-flyline-face beg end))
+  (kasumi-put-lock-face 'kasumi-lock-flyline-face beg end))
 
 (defun kasumi-put-explore (beg end)
   (kasumi-put-dive-face 'kasumi-explore-face beg end))
@@ -602,6 +611,10 @@
 (defun kasumi-remove-all-dive-overlay ()
   (interactive)
   (remove-overlays (point-min) (point-max) 'category 'kasumi-dive-face))
+
+(defun kasumi-remove-all-lock-overlay ()
+  (interactive)
+  (remove-overlays (point-min) (point-max) 'category 'kasumi-lock-face))
 
 (defun add-change (begin length insertion)
   (setq changes (cons (list begin length insertion) changes)))
