@@ -61,7 +61,7 @@ namespace shiranui{
                 where = e;
             }
             std::string str(){
-                return "\"Division by 0\"";
+                return "\"Internal error\"";
             }
         };
         struct ZeroDivException : RuntimeException{
@@ -69,7 +69,7 @@ namespace shiranui{
                 where = e;
             }
             std::string str() {
-                return "\"Max call-depth exceeded\"";
+                return "\"Division by 0\"";
             }
         };
         struct AssertException : RuntimeException{

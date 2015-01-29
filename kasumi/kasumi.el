@@ -677,7 +677,7 @@
                              (where (buffer-substring-no-properties start end))
                              )
                         (format "%s at [%d,%d] = %s" where start end value)))
-                    sorted "\n") t)
+                    sorted "\n"))
         (let ((ret-start (nth 0 (nth 0 sorted)))
               (ret-end   (nth 1 (nth 0 sorted)))
               (ret-value (nth 2 (nth 0 sorted))))
