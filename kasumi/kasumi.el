@@ -360,7 +360,8 @@
          )
     ;; (kasumi-debug-print (format "(%d,%d) = %s" start end value))))
     (progn
-      (kasumi-debug-print (format "%s at [%d,%d] = %s" (buffer-substring-no-properties start end)
+      (kasumi-debug-print (format "%s at [%d,%d] = %s"
+                                  (concat (filter (lambda (c) (not (= c ?\n))) (buffer-substring-no-properties start end)))
                                   start end value) t)
       (kasumi-put-explore start end)
       (setq explore-data (cons (list start end value) explore-data))

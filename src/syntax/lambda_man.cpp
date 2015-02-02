@@ -87,12 +87,19 @@ namespace shiranui{
         void LambdaMarkerScanner::visit(ast::Assignment& node){
             node.value->accept(*this);
         }
-        void LambdaMarkerScanner::visit(ast::TestFlyLine&){}
-        void LambdaMarkerScanner::visit(ast::IdleFlyLine&){}
+        void LambdaMarkerScanner::visit(ast::TestFlyLine& node){
+            node.left->accept(*this);
+        }
+        void LambdaMarkerScanner::visit(ast::IdleFlyLine& node){
+            node.left->accept(*this);
+        }
         void LambdaMarkerScanner::visit(ast::FlyMark&){}
         void LambdaMarkerScanner::visit(ast::SourceCode& node){
             for(auto s : node.statements){
                 s->accept(*this);
+            }
+            for(auto p : node.flylines){
+                p->accept(*this);
             }
         }
         void LambdaMarkerScanner::visit(ast::DSL::DataDSL&){}
@@ -212,6 +219,9 @@ namespace shiranui{
         void LambdaFreeVariableScanner::visit(ast::SourceCode& node){
             for(auto s : node.statements){
                 s->accept(*this);
+            }
+            for(auto p : node.flylines){
+                p->accept(*this);
             }
         }
         void LambdaFreeVariableScanner::visit(ast::DSL::DataDSL&){}
