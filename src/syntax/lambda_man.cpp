@@ -88,10 +88,10 @@ namespace shiranui{
             node.value->accept(*this);
         }
         void LambdaMarkerScanner::visit(ast::TestFlyLine& node){
-            node.left->accept(*this);
+            // node.left->accept(*this);
         }
         void LambdaMarkerScanner::visit(ast::IdleFlyLine& node){
-            node.left->accept(*this);
+            // node.left->accept(*this);
         }
         void LambdaMarkerScanner::visit(ast::FlyMark&){}
         void LambdaMarkerScanner::visit(ast::SourceCode& node){
