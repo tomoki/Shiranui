@@ -98,9 +98,9 @@ namespace shiranui{
             for(auto s : node.statements){
                 s->accept(*this);
             }
-            for(auto p : node.flylines){
-                p->accept(*this);
-            }
+            // for(auto p : node.flylines){
+            //    p->accept(*this);
+            // }
         }
         void LambdaMarkerScanner::visit(ast::DSL::DataDSL&){}
         std::pair<
