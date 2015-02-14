@@ -6,7 +6,7 @@ Shiranui combines Live programming and Design-by-Contract,on-the-fly testcase ma
 ![shiranui logo](logo_small.png)
 
 # Screencast
-[![Shiranui screencast](http://img.youtube.com/vi/Tk0foGkrA4I/0.jpg)](https://www.youtube.com/watch?v=Tk0foGkrA4I)
+[![Shiranui screencast](http://img.youtube.com/vi/4okfUkQ_HoA/0.jpg)](https://www.youtube.com/watch?v=4okfUkQ_HoA)
 
 # How to build
 
