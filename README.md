@@ -24,6 +24,20 @@ $ ./configure
 $ make
 ```
 
+## How to build on Mac OS
+I used macports to install boost.
+
+```
+$ export LIBRARY_PATH=$LIBRARY_PATH:/opt/local/lib
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/local/lib
+$ export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/opt/local/include
+$ export DYLD_LIBRARY_PATH=/opt/local/lib
+$ autoreconf
+$ automake --add-missing
+$ autoreconf
+$ ./configure
+$ make
+```
 
 # How to run
 
@@ -42,7 +56,7 @@ No arguments options:
   -t [ --test ]         test(donot use.)
 ```
 
-## run in IDE(Emacs)
+## Run in IDE(Emacs)
 Shiranui's primary development environment is Emacs.
 At first,eval kasumi/kasumi.el (use "M-x eval-current-buffer").
 Next,open main.nui and run "M-x kasumi-mode".
