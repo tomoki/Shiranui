@@ -29,7 +29,7 @@ namespace shiranui{
     namespace syntax{
         namespace ast{
             struct LocationInfo{
-                unsigned int point,length;
+                int point,length;
             };
             struct MainNode : LocationInfo{
                 runtime::infomation::RuntimeInfomation runtime_info;
