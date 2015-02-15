@@ -138,7 +138,12 @@ namespace shiranui{
                     }
                     node.pred->accept(*this);
                     node.ifblock->accept(*this);
-                    node.elseblock->accept(*this);
+                    // if there is no elseblock,we create one.
+                    //  it has point 0 and length 0.
+                    if(node.elseblock->point > 0 and
+                       node.elseblock->length > 0){
+                        node.elseblock->accept(*this);
+                    }
                 }
                 // should return forstatement?
                 void visit(syntax::ast::ForStatement& node){

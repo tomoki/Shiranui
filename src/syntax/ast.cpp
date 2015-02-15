@@ -89,6 +89,8 @@ namespace shiranui{
             // IfElseStatement
             IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock)
                 : pred(e),ifblock(iblock),elseblock(new Block({})){
+                elseblock->point = 0;
+                elseblock->length = 0;
             }
             IfElseStatement::IfElseStatement(sp<Expression> e,sp<Block> iblock,sp<Block> eblock)
                 : pred(e),ifblock(iblock),elseblock(eblock){
