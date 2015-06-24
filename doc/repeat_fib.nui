@@ -1,0 +1,32 @@
+let get = system_call("get");
+#+ 1 -> 1;
+
+let plus_1 = \(n){
+    return n + 1;
+};
+
+#- repeat(3,plus_1,0) -> 3;
+let repeat = \repeat(n,f,i) {
+    if n = 0 {
+        return i;
+    }else{
+        return f(repeat(n-1,f,i));
+    }
+};
+
+#- fib(1) -> 1;
+#- fib(2) -> 2;
+#- fib(10) -> 89;
+#- <|$()fibi|>([1,0]) -> [1,1];
+#- <|$()fibi|>([1,1]) -> [2,1];
+#- <|$()fibi|>([2,1]) -> [3,2];
+#- <|$()fibi|>([3,2]) -> [5,3];
+#- <|$()fibi|>([55,34]) -> [89,55];
+let fib = \fib(n){
+    let fibi = \fibi(lis){
+        let pa = get(lis,0);
+        let pb = get(lis,1);
+        return [pa+pb,pa];
+    };
+    return get(repeat(n,fibi,[1,0]),0);
+};
