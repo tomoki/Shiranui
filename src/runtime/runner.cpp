@@ -278,7 +278,7 @@ namespace shiranui {
                     pop_callstack();
                     sp<Return> ret = std::dynamic_pointer_cast<Return>(this->cur_v);
                     if (ret == nullptr) {
-                        throw ConvertException(std::make_shared<syntax::ast::FunctionCall>(fc));
+                        cur_v = this->cur_v; // does not require 
                     } else {
                         cur_v = ret->value;
                     }
