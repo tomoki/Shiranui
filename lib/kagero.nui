@@ -73,16 +73,37 @@ let cdr = \(lis){
     return ret;
 };
 
-#- qsort([3,2,5,4,1]) -> [1,2,3,4,5];
-#- qsort([]) -> [];
-#- qsort([1]) -> [1];
-#- qsort([3,2]) -> [2,3];
-let qsort = \(lis){
+#- abs(3) -> 3;
+#- abs(-3) -> 3;
+let abs = \abs(a){
+    if a < 0 {
+        return -a;
+    }else{
+        return a;
+    }
+};
+#- compare_abs(1,2) -> true;
+#- compare_abs(1,-2) -> true;
+#- compare_abs(-2,1) -> false;
+let compare_abs = \compare_abs(a,b){
+    return abs(a) < abs(b);
+};
+
+let compare_int = \compare_int(a,b){
+    return a < b;
+};
+#- qsort([-3,2,-5,4,1],compare_abs) -> [1,2,-3,4,-5];
+#- qsort([-3,2,-2,4,1],compare_abs) -> [1,-2,2,-3,4];
+#- qsort([3,2,5,4,1],compare_int) -> [1,2,3,4,5];
+#- qsort([],compare_int) -> [];
+#- qsort([1],compare_int) -> [1];
+#- qsort([3,2],compare_int) -> [2,3];
+let qsort = \qsort(lis,cmp){
     if len(lis) <= 1 {
         return lis;
     }
     if len(lis) = 2 {
-        if get(lis,0) <= get(lis,1) {
+        if cmp(get(lis,0),get(lis,1)) {
             return lis;
         }else{
             return [get(lis,1),get(lis,0)];
@@ -91,13 +112,14 @@ let qsort = \(lis){
     let pivot = get(lis,0);
     let pivot_removed = cdr(lis);
     let left = filter(pivot_removed,\(n){
-        return n < pivot;
+        return not cmp(pivot,n);
     });
     let right = filter(pivot_removed,\(n){
-        return pivot <= n;
+        return cmp(pivot,n);
     });
-    return concat(concat(qsort(left),[pivot]),qsort(right));
+    return concat(concat(qsort(left,cmp),[pivot]),qsort(right,cmp));
 };
+
 
 #- nCr(3,2) -> 3;
 #- nCr(4,6) -> 0;
