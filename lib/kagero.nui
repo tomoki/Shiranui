@@ -4,7 +4,7 @@ let set = system_call("set");
 let len = system_call("length");
 
 #- filter([1,2,3,4],\(n){return n % 2 = 0;}) -> [2,4];
-let filter = \(lis,pred){
+let filter = \filter(lis,pred){
     mut cnt = 0;
     for i in lis{
         if pred(i) {
@@ -25,7 +25,7 @@ let filter = \(lis,pred){
 #- map([1,2,3],\(x){
     return x*x;
 }) -> [1,4,9];
-let map = \(lis,func){
+let map = \map(lis,func){
     let ret = [0..len(lis));
     for i in [0..len(lis)) {
         // ret[i] <- func(lis[i]);
@@ -36,7 +36,7 @@ let map = \(lis,func){
 #- foldl([1,2,3],\(x,y){
     return x+y;
 },0) -> 6;
-let foldl = \(lis,f,zero){
+let foldl = \foldl(lis,f,zero){
     mut ret = zero;
     for i in lis{
         ret <- f(!ret,i);
@@ -44,7 +44,8 @@ let foldl = \(lis,f,zero){
     return !ret;
 };
 #- concat([1,2,3],[4,5,6]) -> [1,2,3,4,5,6];
-let concat = \(a,b){
+#- <|$()concat|>([1,2,-3],[4,-5]) -> [1,2,-3,4,-5];
+let concat = \concat(a,b){
     let length = len(a) + len(b);
     let ret = [0..length);
     mut index = 0;
@@ -61,7 +62,7 @@ let concat = \(a,b){
 
 #- cdr([1,2,3]) -> [2,3];
 #- cdr([1,2,3,4,5]) -> [2,3,4,5];
-let cdr = \(lis){
+let cdr = \cdr(lis){
     pre {
         assert len(lis) >= 1;
     }
@@ -111,10 +112,10 @@ let qsort = \qsort(lis,cmp){
     }
     let pivot = get(lis,0);
     let pivot_removed = cdr(lis);
-    let left = filter(pivot_removed,\(n){
+    let left = filter(pivot_removed,\left_f(n){
         return not cmp(pivot,n);
     });
-    let right = filter(pivot_removed,\(n){
+    let right = filter(pivot_removed,\right_f(n){
         return cmp(pivot,n);
     });
     return concat(concat(qsort(left,cmp),[pivot]),qsort(right,cmp));
@@ -124,7 +125,7 @@ let qsort = \qsort(lis,cmp){
 #- nCr(3,2) -> 3;
 #- nCr(4,6) -> 0;
 #- nCr(4,0) -> 1;
-let nCr = \(n,r){
+let nCr = \nCr(n,r){
     if n < r {
         return 0;
     }
