@@ -42,6 +42,10 @@ namespace shiranui {
                 destructor.clear();
                 usable = true;
             }
+            size_t used(){
+                return index;
+            }
+
             template<class T, class... Types>
             T* create(Types... args){
                 size_t new_index = index + sizeof(T);
@@ -66,6 +70,7 @@ namespace shiranui {
             }
             ~MemoryManager(){
                 for(Memory* m : chunks){
+                    m->destruct_all();
                     free(m);
                 }
                 chunks.clear();

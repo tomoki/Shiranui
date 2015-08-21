@@ -64,6 +64,61 @@ namespace shiranui{
         void wait(int milli){
             boost::this_thread::sleep(boost::posix_time::milliseconds(milli));
         }
+        void check_leak(std::string str){
+            using namespace shiranui;
+            using namespace shiranui::syntax;
+            using namespace shiranui::runtime;
+
+            Memory* memory = new Memory(268435456*3);
+
+            for(int i=0;i<10;i++){
+                shiranui::runtime::Runner r(memory);
+                shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
+
+                pos_iterator_t first(str.begin()),last(str.end());
+                pos_iterator_t iter = first;
+                sp<ast::SourceCode> program;
+                bool ok = false;
+                try{
+                    Parser<pos_iterator_t> resolver(memory);
+                    ok = parse(iter,last,resolver,program);
+                }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
+                    std::cerr << "expected: ";
+                    std::cerr << x.what_ << std::endl;
+                    std::cerr << "got: \"" << std::string(x.first, x.last) << '"' << std::endl;
+                }
+                if(ok and iter == last){
+                    program->accept(printer);
+                    try{
+                        program->accept(r);
+                        std::cerr << runtime::value::to_reproductive(r.cur_v) << std::endl;
+                    }catch(NoSuchVariableException e){
+                        std::cerr << "No such variable: ";
+                        e.where->accept(printer);
+                        std::cerr << std::endl;
+                    }catch(ConvertException e){
+                        std::cerr << "Convert Error: ";
+                        e.where->accept(printer);
+                        std::cerr << std::endl;
+                    }catch(RuntimeException e){
+                        std::cerr << "Something RuntimeException: ";
+                        e.where->accept(printer);
+                        std::cerr << std::endl;
+                    }catch(MemoryLimitException e){
+                        std::cerr << "memory over" << std::endl;
+                    }
+                }else{
+                    std::cerr << "parse failed" << std::endl;
+                }
+                memory->destruct_all();
+                memory->seek();
+            }
+        }
+
+        void run_check_leak(){
+            string tosend = "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }}; f(35);";
+            check_leak(tosend);
+        }
         void run_alloc_test(){
             string tosend = "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }}; f(30);";
             run_program(tosend);
@@ -90,19 +145,15 @@ namespace shiranui{
         void run_memory_test3(){
             stringstream in;
             PipeServer ps(in,cerr);
-            string tosend = "#+ f(24) -> ; #+ f(10) -> ; #+ f(5) -> ; #+f(30) -> 55;\n"
+            string tosend = "#+ f(24) -> ; #+ f(10) -> ; #+ f(5) -> ; #+f(25) -> 55; #+f(30) -> 55;\n"
                 "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }};";
 
-            try{
             ps.on_change_command(make_change(1,0,tosend),1);
             wait(1000);
             for(int i=0;i<10;i++){
-                cerr << i << endl;
+                cerr << "t:" << i << " m:" << ps.mem_manager.chunks.size() << endl;
                 ps.on_change_command(make_change(1,tosend.size(),tosend),1);
-                wait(10000);
-            }
-            }catch (std::exception e){
-                std::cerr << "HOGEEEEEEEEEEE" << std::endl;
+                wait(300);
             }
             cerr << "check memory state" << endl;
             wait(5000);
@@ -121,6 +172,20 @@ namespace shiranui{
             }
             cerr << "check memory state" << endl;
             wait(5000);
+        }
+        void run_memory_test4(){
+            stringstream in;
+            PipeServer ps(in,cerr);
+            string tosend = "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }}; f(35);";
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(100);
+            for(int i=0;i<5;i++){
+                cerr << i << endl;
+                ps.on_change_command(make_change(1,tosend.size(),tosend),1);
+                wait(1000);
+            }
+            cerr << "check memory state" << endl;
+            wait(100);
         }
         void parser_time_test(){
             using namespace syntax;
@@ -815,6 +880,8 @@ string long_code =
             // free_var();
             // run_memory_test2();
             run_memory_test3();
+            // run_check_leak();
+            // run_memory_test4();
             // parser_time_test();
             // run_dive_test();
             // run_jump_test();

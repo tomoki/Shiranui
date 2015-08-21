@@ -42,7 +42,9 @@ namespace shiranui{
             std::string source;
             int flyline_lock;
             runtime::MemoryManager mem_manager;
-            runtime::Memory mem_for_toplevel;
+
+            runtime::MemoryManager mem_manager_for_toplevel;
+            runtime::Memory* previous_mem_for_toplevel;
 
             boost::thread main_thread;
             //boost::mutex main_thread_waiting_mutex;
@@ -53,6 +55,7 @@ namespace shiranui{
             std::vector<std::shared_ptr<runtime::diver::Diver>> diver_per_flyline;
             std::vector<runtime::Memory*> previous_memorys;
             std::shared_ptr<runtime::diver::Diver> current_diver;
+
 
             PipeServer(std::istream&,std::ostream&);
             ~PipeServer();

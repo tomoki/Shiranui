@@ -8,8 +8,7 @@
 namespace shiranui{
     namespace server{
         PipeServer::PipeServer(std::istream& i,std::ostream& o)
-            : is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE), mem_for_toplevel(268435456){
-            mem_manager.reserve(10);
+            : previous_mem_for_toplevel(nullptr), is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE){
         }
 
         PipeServer::~PipeServer(){
@@ -349,13 +348,18 @@ namespace shiranui{
             using namespace shiranui::runtime::DSL;
             using namespace shiranui::runtime::diver;
 
+            if(previous_mem_for_toplevel != nullptr){
+                previous_mem_for_toplevel->destruct_all_in_thread();
+                previous_mem_for_toplevel->seek();
+            }
+            Memory* mem_for_toplevel = mem_manager_for_toplevel.get(1)[0];
+            previous_mem_for_toplevel = mem_for_toplevel;
 
             const auto start_time = std::chrono::system_clock::now();
-            // send_debug_print(source,loadcount);
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
-            Parser<pos_iterator_t> resolver(&mem_for_toplevel);
+            Parser<pos_iterator_t> resolver(mem_for_toplevel);
             sp<SourceCode> program;
             try{
                 ok = parse(iter,last,resolver,program);
@@ -365,7 +369,7 @@ namespace shiranui{
                 return;
             }
             if(ok and iter == last){
-                Runner r(&mem_for_toplevel, true);
+                Runner r(mem_for_toplevel, true);
                 try{
                     program->accept(r);
                 }catch(NoSuchVariableException e){
