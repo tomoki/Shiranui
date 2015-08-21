@@ -12,8 +12,6 @@ namespace shiranui{
             struct ChangeValue : Change{
                 virtual void rollback(value::Value*) = 0;
                 virtual void flash(value::Value*)    = 0;
-                virtual void rollback(sp<value::Value>) = 0;
-                virtual void flash(sp<value::Value>)    = 0;
             };
             struct ChangeEnv : Change{
                 virtual void rollback(sp<environment::Environment>) = 0;

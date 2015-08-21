@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "../syntax/ast.hpp"
+#include "memory.hpp"
 #include "version.hpp"
 #include "change.hpp"
 
@@ -66,7 +67,6 @@ namespace shiranui{
             struct Return : Value{
                 sp<Value> value;
                 Return(Value*);
-                Return(sp<Value>);
                 void accept(VisitorForValue&);
             };
             struct Function : Value{
@@ -89,6 +89,8 @@ namespace shiranui{
                 void accept(VisitorForValue&);
             };
             struct BuiltinFunction : Function{
+                Memory* memory; // workplace.
+                BuiltinFunction(Memory*);
                 std::string name;
                 void accept(VisitorForValue&);
                 // if run is fault,return nullptr.
@@ -96,24 +98,23 @@ namespace shiranui{
             };
             namespace builtin{
                 struct PrintFunction : BuiltinFunction{
-                    PrintFunction();
+                    PrintFunction(Memory*);
                     sp<Value> run(std::vector<sp<Value>>);
                 };
                 struct LengthFunction: BuiltinFunction{
-                    LengthFunction();
+                    LengthFunction(Memory*);
                     sp<Value> run(std::vector<sp<Value>>);
                 };
                 struct SetIndex : BuiltinFunction{
-                    SetIndex();
+                    SetIndex(Memory*);
                     sp<Value> run(std::vector<sp<Value>>);
                 };
                 struct GetIndex : BuiltinFunction{
-                    GetIndex();
+                    GetIndex(Memory*);
                     sp<Value> run(std::vector<sp<Value>>);
                 };
             }
             bool check_equality(sp<Value> left,sp<Value> right);
-            bool is_ref_or_array(sp<Value>);
             bool is_ref_or_array(Value*);
             bool is_userfunction(sp<Value>);
             // bool is_userfunction(Value*);
@@ -147,16 +148,12 @@ namespace shiranui{
                 int index;
                 sp<value::Value> prev,next;
                 SetIndexChange(int,sp<value::Value>,sp<value::Value>);
-                void rollback(sp<value::Value>);
-                void flash(sp<value::Value>);
                 void rollback(value::Value*);
                 void flash(value::Value*);
             };
             struct RefChange : ChangeValue{
                 sp<value::Value> prev,next;
                 RefChange(sp<value::Value>,sp<value::Value>);
-                void rollback(sp<value::Value>);
-                void flash(sp<value::Value>);
                 void rollback(value::Value*);
                 void flash(value::Value*);
             };

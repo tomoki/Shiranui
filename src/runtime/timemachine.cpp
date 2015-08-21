@@ -42,9 +42,6 @@ namespace shiranui{
                 }
                 return m.at(p);
             }
-            version get_stored_version(const VersionMap& vm,sp<Value> p){
-                return get_stored_version(vm,&*p);
-            }
 
             version get_stored_version(const VersionMap& vm,sp<Environment> p_){
                 const auto m = vm.second;

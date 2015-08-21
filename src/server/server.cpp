@@ -1,19 +1,21 @@
 #include "server.hpp"
 #include "../runtime/value_printer.hpp"
 #include "../runtime/dsl/dsl_exception.hpp"
+#include "../runtime/memory.hpp"
 #include <sstream>
 #include <chrono>
 
 namespace shiranui{
     namespace server{
         PipeServer::PipeServer(std::istream& i,std::ostream& o)
-            : is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE){
+            : is(i),os(o),flyline_lock(FLYLINE_LOCK_FREE), mem_for_toplevel(268435456){
+            mem_manager.reserve(10);
         }
 
         PipeServer::~PipeServer(){
             main_thread.interrupt();
             main_thread.join();
-            for(sp<boost::thread> t : flyline_threads){
+            for(auto t : flyline_threads){
                 t->interrupt();
                 t->join();
             }
@@ -187,7 +189,7 @@ namespace shiranui{
                                            const int loadcount){
             main_thread.interrupt();
             main_thread.join();
-            for(sp<boost::thread> t : flyline_threads){
+            for(auto t : flyline_threads){
                 t->interrupt();
                 t->join();
             }
@@ -265,7 +267,7 @@ namespace shiranui{
             }
         }
         // TODO: should treat point.(if left is list...)
-        void PipeServer::dive_start(sp<runtime::diver::Diver> diver,
+        void PipeServer::dive_start(std::shared_ptr<runtime::diver::Diver> diver,
                                     sp<syntax::ast::FlyLine> sf,
                                     sp<syntax::ast::SourceCode> source_ast,
                                     const int loadcount){
@@ -275,7 +277,7 @@ namespace shiranui{
             diver->clear();
             send_dive_clear(loadcount);
             {
-                sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                sp<TestFlyLine> l = dynamic_cast<TestFlyLine*>(sf);
                 if(l != nullptr){
                     DivingMessage ms = diver->scan_flymark(source_ast);
                     ms = ms + diver->dive(l->left);
@@ -283,7 +285,7 @@ namespace shiranui{
                 }
             }
             {
-                sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                sp<IdleFlyLine> l = dynamic_cast<IdleFlyLine*>(sf);
                 if(l != nullptr){
                     DivingMessage ms = diver->scan_flymark(source_ast);
                     ms = ms + diver->dive(l->left);
@@ -297,7 +299,7 @@ namespace shiranui{
             }
         }
 
-        void PipeServer::dive(sp<runtime::diver::Diver> diver,int point,const int loadcount){
+        void PipeServer::dive(std::shared_ptr<runtime::diver::Diver> diver,int point,const int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->dive(point);
             send_diving_message(ms,loadcount);
@@ -316,12 +318,12 @@ namespace shiranui{
             }
         }
         // undo for diver.
-        void PipeServer::surface(sp<runtime::diver::Diver> diver,int loadcount){
+        void PipeServer::surface(std::shared_ptr<runtime::diver::Diver> diver,int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->surface();
             send_diving_message(ms,loadcount);
         }
-        void PipeServer::move_to_caller(sp<runtime::diver::Diver> diver,int loadcount){
+        void PipeServer::move_to_caller(std::shared_ptr<runtime::diver::Diver> diver,int loadcount){
             using namespace shiranui::runtime::diver;
             DivingMessage ms = diver->move_to_caller();
             send_diving_message(ms,loadcount);
@@ -347,12 +349,13 @@ namespace shiranui{
             using namespace shiranui::runtime::DSL;
             using namespace shiranui::runtime::diver;
 
+
             const auto start_time = std::chrono::system_clock::now();
             // send_debug_print(source,loadcount);
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
             bool ok = false;
-            Parser<pos_iterator_t> resolver;
+            Parser<pos_iterator_t> resolver(&mem_for_toplevel);
             sp<SourceCode> program;
             try{
                 ok = parse(iter,last,resolver,program);
@@ -362,7 +365,7 @@ namespace shiranui{
                 return;
             }
             if(ok and iter == last){
-                Runner r(true);
+                Runner r(&mem_for_toplevel, true);
                 try{
                     program->accept(r);
                 }catch(NoSuchVariableException e){
@@ -390,15 +393,25 @@ namespace shiranui{
                     int end_point = start_point + e.where->length;
                     send_runtimeerror(start_point,end_point,loadcount);
                     return;
+                }catch(MemoryLimitException e){
+                    send_debug_print("Memory Limit exceeded", loadcount);
+                    return;
                 }
                 program_per_flyline = std::vector<sp<SourceCode>>(program->flylines.size(),nullptr);
-                diver_per_flyline = std::vector<sp<Diver>>(program->flylines.size(),nullptr);
+                diver_per_flyline = std::vector<std::shared_ptr<Diver>>(program->flylines.size(),nullptr);
                 // TODO:should kill diver process
                 current_diver = nullptr;
 
+                for(auto m : previous_memorys){
+                    m->destruct_all_in_thread();
+                }
+                std::vector<Memory*> current_mem = mem_manager.get(static_cast<int>(program->flylines.size()));
+                previous_memorys = current_mem;
                 for(int i=0;i<static_cast<int>(program->flylines.size());i++){
+                    Memory* mem = current_mem[i];
+                    mem->seek(); // FIXME: no destruct?.
                     flyline_threads.push_back(std::make_shared<boost::thread>(
-                             boost::bind(&PipeServer::run_flyline,this,source,i,loadcount)));
+                        boost::bind(&PipeServer::run_flyline, this, mem, source,i,loadcount)));
                 }
             }else{
                 send_syntaxerror(std::distance(first,iter),std::distance(first,last),loadcount);
@@ -411,7 +424,9 @@ namespace shiranui{
             send_debug_print(ts.str(),loadcount);
         }
 
-        void PipeServer::run_flyline(std::string source,const int flyline_index,
+        void PipeServer::run_flyline(runtime::Memory* memory,
+                                     std::string source,
+                                     const int flyline_index,
                                      const int loadcount){
             using namespace shiranui;
             using namespace shiranui::syntax;
@@ -422,22 +437,22 @@ namespace shiranui{
             const auto start_time = std::chrono::system_clock::now();
             pos_iterator_t first(source.begin()),last(source.end());
             pos_iterator_t iter = first;
-            Parser<pos_iterator_t> resolver;
+            Parser<pos_iterator_t> resolver(memory);
             sp<SourceCode> program;
             parse(iter,last,resolver,program);
 
             boost::this_thread::interruption_point();
             program_per_flyline[flyline_index] = program; // TODO:use better way.
-            Runner r(true);
+            Runner r(memory,true);
             sp<FlyLine> sf = program->flylines[flyline_index];
             program->accept(r); // do not cause exception.
 
             {
-                sp<TestFlyLine> l = std::dynamic_pointer_cast<TestFlyLine>(sf);
+                sp<TestFlyLine> l = dynamic_cast<TestFlyLine*>(sf);
                 if(l != nullptr) run_testflyline(r,l,loadcount);
             }
             {
-                sp<IdleFlyLine> l = std::dynamic_pointer_cast<IdleFlyLine>(sf);
+                sp<IdleFlyLine> l = dynamic_cast<IdleFlyLine*>(sf);
                 if(l != nullptr) run_idleflyline(r,l,program,loadcount);
             }
             diver_per_flyline[flyline_index] = std::make_shared<Diver>(program);
@@ -449,7 +464,7 @@ namespace shiranui{
             const auto time_span = end_time - start_time;
             std::stringstream ts;
             ts << "Exec [" << flyline_index << "]: " << std::chrono::duration_cast<std::chrono::milliseconds>(time_span).count() << "[ms]";
-            //send_debug_print(ts.str(),loadcount);
+            send_debug_print(ts.str(),loadcount);
         }
 
         void PipeServer::run_testflyline(runtime::Runner& r,
@@ -489,6 +504,8 @@ namespace shiranui{
             }catch(DSLUnknownVariable e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
             }catch(DSLAlreadyUsedVariable e){
+                return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
+            }catch(MemoryLimitException e){
                 return send_bad_flyline(start_point, end_point, remove_start, remove_length, " || " + e.str(), loadcount);
             }
 
@@ -540,7 +557,10 @@ namespace shiranui{
                 return run_idleflyline_sub(e.str());
             }catch(DSLAlreadyUsedVariable e){
                 return run_idleflyline_sub(e.str());
+            }catch(MemoryLimitException e){
+                return run_idleflyline_sub(e.str());
             }
+
 
             sp<Value> left = r.cur_v;
             std::string left_str = to_reproductive(left,program);

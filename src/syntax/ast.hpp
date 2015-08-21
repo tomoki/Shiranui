@@ -80,9 +80,9 @@ namespace shiranui{
                 virtual ~Array() {};
             };
             struct Interval : Array{
-                sp<Expression> start,end,next;
+                Expression* start, *end, *next;
                 bool right_close;
-                Interval(sp<Expression>,sp<Expression>,sp<Expression>,bool);
+                Interval(Expression*,Expression*,Expression*,bool);
                 void accept(VisitorForAST&);
             };
             struct Enum : Array{

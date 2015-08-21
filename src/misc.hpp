@@ -10,7 +10,7 @@
 #define dump(x,to)  to << #x << "=" << (x) << " (F:" << __FILE__ << " L:" <<__LINE__ << ")"<< std::endl
 
 template<typename T>
-using sp = std::shared_ptr<T>;
+using sp = T*;
 
 namespace shiranui{
     template<typename T,typename IT>

@@ -15,13 +15,13 @@ namespace shiranui{
                << s;
             return ss.str();
         }
-        void run_memory_test();
         void run_program(std::string str){
             using namespace shiranui;
             using namespace shiranui::syntax;
             using namespace shiranui::runtime;
 
-            shiranui::runtime::Runner r;
+            Memory* memory = new Memory(268435456);
+            shiranui::runtime::Runner r(memory);
             shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
 
             pos_iterator_t first(str.begin()),last(str.end());
@@ -29,7 +29,7 @@ namespace shiranui{
             sp<ast::SourceCode> program;
             bool ok = false;
             try{
-                Parser<pos_iterator_t> resolver;
+                Parser<pos_iterator_t> resolver(memory);
                 ok = parse(iter,last,resolver,program);
             }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
                 std::cerr << "expected: ";
@@ -53,33 +53,71 @@ namespace shiranui{
                     std::cerr << "Something RuntimeException: ";
                     e.where->accept(printer);
                     std::cerr << std::endl;
-                }catch(exception e){
-                    std::cerr << "what?" << std::endl;
+                }catch(MemoryLimitException e){
+                    std::cerr << "memory over" << std::endl;
                 }
             }else{
                 std::cerr << "parse failed" << std::endl;
             }
-
+            memory->destruct_all();
         }
         void wait(int milli){
             boost::this_thread::sleep(boost::posix_time::milliseconds(milli));
+        }
+        void run_alloc_test(){
+            string tosend = "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }}; f(30);";
+            run_program(tosend);
         }
         void run_memory_test(){
             stringstream in,out;
             PipeServer ps(in,cerr);
             string tosend = "#+f(100000) -> 55;\n"
                             "let f = \\(n){\n"
-                            "  mut ret = 0;\n"
-                            "  for i in [1..n] { ret <- ret + i;}\n"
+                            "  let ret = ref 0;\n"
+                            "  for i in [1..n] { ret <- !ret + i;}\n"
                             "  return ret;"
                             "};\n";
-
 
             ps.on_change_command(make_change(1,0,tosend),1);
             for(int i=0;i<30000;i++){
                 cerr << i << endl;
                 ps.on_change_command(make_change(1,tosend.size(),tosend),1);
                 wait(1000);
+            }
+            cerr << "check memory state" << endl;
+            wait(5000);
+        }
+        void run_memory_test3(){
+            stringstream in;
+            PipeServer ps(in,cerr);
+            string tosend = "#+ f(24) -> ; #+ f(10) -> ; #+ f(5) -> ; #+f(30) -> 55;\n"
+                "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }};";
+
+            try{
+            ps.on_change_command(make_change(1,0,tosend),1);
+            wait(1000);
+            for(int i=0;i<10;i++){
+                cerr << i << endl;
+                ps.on_change_command(make_change(1,tosend.size(),tosend),1);
+                wait(10000);
+            }
+            }catch (std::exception e){
+                std::cerr << "HOGEEEEEEEEEEE" << std::endl;
+            }
+            cerr << "check memory state" << endl;
+            wait(5000);
+        }
+        void run_memory_test2(){
+            stringstream in;
+            PipeServer ps(in,cerr);
+            string tosend = "#+ f(40) -> ; #+ f(10) -> ; #+ f(5) -> ; #+f(30) -> 55;\n"
+                "let f = \\(n){ if n <= 1 { return n; } else { return f(n-1) + f(n-2); }};";
+
+            ps.on_change_command(make_change(1,0,tosend),1);
+            for(int i=0;i<50;i++){
+                cerr << i << endl;
+                ps.on_change_command(make_change(1,tosend.size(),tosend),1);
+                wait(2000);
             }
             cerr << "check memory state" << endl;
             wait(5000);
@@ -319,14 +357,16 @@ string long_code =
             for(int i=0;i<3;i++){
                 long_code = long_code + long_code;
             }
-            for(int i=0;i<10;i++){
+
+            for(int i=0;i<5;i++){
+                runtime::Memory* memory = new runtime::Memory(10000000);
                 const auto start_time = std::chrono::system_clock::now();
                 pos_iterator_t first(long_code.begin()),last(long_code.end());
                 pos_iterator_t iter = first;
                 sp<ast::SourceCode> program;
                 bool ok = false;
                 try{
-                    Parser<pos_iterator_t> resolver;
+                    Parser<pos_iterator_t> resolver(memory);
                     ok = parse(iter,last,resolver,program);
                     // ok = boost::spirit::qi::phrase_parse(iter,last,resolver,skipper,program);
                 }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
@@ -563,12 +603,13 @@ string long_code =
             using namespace shiranui::runtime;
 
             std::string str = "let f = \\hogepoyo(){return 1;};";
-            shiranui::runtime::Runner r;
+            Memory* memory = new Memory(268435456);
+            shiranui::runtime::Runner r(memory);
             pos_iterator_t first(str.begin()),last(str.end());
             pos_iterator_t iter = first;
             sp<ast::SourceCode> program;
             bool ok = false;
-            Parser<pos_iterator_t> resolver;
+            Parser<pos_iterator_t> resolver(memory);
             ok = parse(iter,last,resolver,program);
             program->accept(r);
             dump(program->where_is_function_from.size(),std::cerr);
@@ -581,15 +622,16 @@ string long_code =
             using namespace shiranui::runtime;
             std::string str = "let add = \\(a){return \\inner(b){return a+b;};};\n"
                               "add(3);";
-            shiranui::runtime::Runner r;
+            Memory* memory = new Memory(268435456);
+            shiranui::runtime::Runner r(memory);
             pos_iterator_t first(str.begin()),last(str.end());
             pos_iterator_t iter = first;
             sp<ast::SourceCode> program;
-            Parser<pos_iterator_t> resolver;
+            Parser<pos_iterator_t> resolver(memory);
             parse(iter,last,resolver,program);
             program->accept(r);
             auto p = r.cur_v;
-            auto f = std::dynamic_pointer_cast<value::UserFunction>(r.cur_v);
+            auto f = dynamic_cast<value::UserFunction*>(r.cur_v);
             auto af = program->where_is_function_from[f->body];
             dump(f,std::cerr);
             dump(af,std::cerr);
@@ -628,11 +670,12 @@ string long_code =
             };
             for(auto pair_of_source_and_ret : tests){
                 std::string str = pair_of_source_and_ret.first;
-                shiranui::runtime::Runner r;
+                Memory* memory = new Memory(268435456);
+                shiranui::runtime::Runner r(memory);
                 pos_iterator_t first(str.begin()),last(str.end());
                 pos_iterator_t iter = first;
                 sp<ast::SourceCode> program;
-                Parser<pos_iterator_t> resolver;
+                Parser<pos_iterator_t> resolver(memory);
                 parse(iter,last,resolver,program);
                 program->accept(r);
                 auto p = r.cur_v;
@@ -763,13 +806,15 @@ string long_code =
             }
         }
         void run_test(){
+            // run_alloc_test(); 
             // run_rec_test();
             // run_rec_test2();
             // run_lambda_man_test();
             // ref_test1();
             // to_repr_test();
             // free_var();
-            // run_memory_test();
+            // run_memory_test2();
+            run_memory_test3();
             // parser_time_test();
             // run_dive_test();
             // run_jump_test();
@@ -779,10 +824,10 @@ string long_code =
             // run_dive_tri();
             // run_plus();
             // run_good_dive_test();
-            run_bad_dive_test();
-            run_flymark();
-            run_versioning_test_array();
-            run_versioning_test_closure();
+            // run_bad_dive_test();
+            // run_flymark();
+            // run_versioning_test_array();
+            // run_versioning_test_closure();
             // run_complex_serialize();
         }
     }

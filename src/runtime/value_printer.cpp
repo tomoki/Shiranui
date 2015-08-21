@@ -43,7 +43,7 @@ namespace shiranui{
                            != code->where_is_function_from.end()){
                             sp<ast::Function> f = code->where_is_function_from[node.body];
                             auto syntactic_frees = syntax::scan_free_variable(f);
-                            auto free_vars = filter_environment(node.env,syntactic_frees);
+                            auto free_vars = filter_environment(*(node.env),syntactic_frees);
                             for(auto p : free_vars){
                                 p.second->accept(*this);
                             }
@@ -66,7 +66,7 @@ namespace shiranui{
                 virtual std::string get_result() = 0;
                 virtual Value* get_what() = 0;
                 // pass sourcecode for userfunction
-                virtual std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>) = 0;
+                virtual std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>) = 0;
                 virtual bool is_special_form() = 0;
 
                 bool already_appeared = false;
@@ -82,13 +82,13 @@ namespace shiranui{
                 }
             };
             template<typename P>
-            sp<Task> make_task(P);
+            std::shared_ptr<Task> make_task(P);
 
             struct IntegerTask : Task{
                 Integer* what;
                 IntegerTask(Integer* w) : what(w) {}
                 bool is_done(){return true;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
                 void proceed(){}
                 bool is_special_form(){return false;}
                 Value* get_what(){return what;}
@@ -102,7 +102,7 @@ namespace shiranui{
                 String* what;
                 StringTask(String* w) : what(w) {}
                 bool is_done(){return true;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
                 void proceed(){}
                 bool is_special_form(){return false;}
                 Value* get_what(){return what;}
@@ -114,7 +114,7 @@ namespace shiranui{
                 std::string message;
                 InvalidTask(std::string m) : message(m) {}
                 bool is_done(){return true;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
                 void proceed(){}
                 bool is_special_form(){return false;}
                 Value* get_what(){return nullptr;}
@@ -126,7 +126,7 @@ namespace shiranui{
                 Boolean* what;
                 BooleanTask(Boolean* w) : what(w) {}
                 bool is_done(){return true;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){return {};}
                 void proceed(){}
                 bool is_special_form(){return false;}
                 Value* get_what(){return what;}
@@ -139,7 +139,7 @@ namespace shiranui{
                 Array* what;
                 int child_tasks;
                 std::vector<int> in_progress_tasks;
-                std::vector<sp<Task> > tasks;
+                std::vector<std::shared_ptr<Task> > tasks;
                 ArrayTask(Array* w) : what(w) {}
                 bool is_done(){return already_appeared or child_tasks == 0;}
                 bool is_special_form(){
@@ -150,7 +150,7 @@ namespace shiranui{
                     return false;
                 }
                 Value* get_what(){return what;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
                     child_tasks = what->value.size();
                     for(int i=0;i<child_tasks;i++){
                         in_progress_tasks.push_back(i);
@@ -189,7 +189,7 @@ namespace shiranui{
                 int child_tasks;
                 std::vector<int> in_progress_tasks;
                 std::vector<std::string> names;
-                std::vector<sp<Task> > tasks;
+                std::vector<std::shared_ptr<Task> > tasks;
                 bool unknown = false;
                 bool no_name = false;
                 std::string func_id = "";
@@ -199,7 +199,7 @@ namespace shiranui{
                     return true; // userfunction require special form
                 }
                 Value* get_what(){return what;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode> code){
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode> code){
                     if(code == nullptr){
                         unknown = true;
                         return {};
@@ -220,7 +220,7 @@ namespace shiranui{
                     // if global has var,they should not be included
                     std::map<syntax::ast::Identifier,sp<value::Value> > free_not_global_vars;
                     {
-                        auto free_vars = filter_environment(what->env,syntactic_frees);
+                        auto free_vars = filter_environment(*(what->env),syntactic_frees);
                         auto global_env = what->env;
                         while(global_env->parent != nullptr){
                             global_env = global_env->parent;
@@ -275,7 +275,7 @@ namespace shiranui{
             struct RefTask : Task{
                 Ref* what;
                 bool child_done = false;
-                sp<Task> child;
+                std::shared_ptr<Task> child;
                 RefTask(Ref* w) : what(w) {}
                 bool is_done(){return already_appeared or child_done;}
                 bool is_special_form(){
@@ -284,7 +284,7 @@ namespace shiranui{
                     return false;
                 }
                 Value* get_what(){return what;}
-                std::vector<sp<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
+                std::vector<std::shared_ptr<Task> > get_child_tasks(sp<syntax::ast::SourceCode>){
                     child = make_task(what->to);
                     return {child};
                 }
@@ -306,7 +306,7 @@ namespace shiranui{
             };
 
             struct TaskMaker : VisitorForValue{
-                sp<Task> ret;
+                std::shared_ptr<Task> ret;
                 void visit(Integer& i)         {ret = std::make_shared<IntegerTask>(&i);}
                 void visit(String& s)          {ret = std::make_shared<StringTask>(&s);}
                 void visit(Boolean& b)         {ret = std::make_shared<BooleanTask>(&b);}
@@ -318,23 +318,23 @@ namespace shiranui{
                 void visit(BuiltinFunction& bf){ret = std::make_shared<InvalidTask>(bf.name);}
             };
             template<typename P>
-            sp<Task> make_task(P v){
+            std::shared_ptr<Task> make_task(P v){
                 TaskMaker t;
                 v->accept(t);
                 return t.ret;
             }
 
-            void bfs_to_check_task_should_be_skipped(sp<Task> t_,sp<Value> top,
+            void bfs_to_check_task_should_be_skipped(std::shared_ptr<Task> t_,sp<Value> top,
                                                      sp<syntax::ast::SourceCode> code){
                 ValueScanner s(code);
                 top->accept(s);
                 auto cnt = s.cnt;
                 std::map<Value*,std::string> name;
-                std::queue<sp<Task> > que;
+                std::queue<std::shared_ptr<Task> > que;
                 que.push(t_);
                 std::string current_name = "a";
                 while(not que.empty()){
-                    sp<Task> t = que.front();
+                    std::shared_ptr<Task> t = que.front();
                     que.pop();
                     Value* what = t->get_what();
                     if(what == nullptr) continue;

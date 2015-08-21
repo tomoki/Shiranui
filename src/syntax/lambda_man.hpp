@@ -9,8 +9,8 @@
 namespace shiranui{
     namespace syntax{
         struct LambdaMarkerScanner : ast::VisitorForAST{
-            std::map<sp<ast::Block>,sp<ast::Function> > where_are_you_from;
-            std::map<ast::Identifier,sp<ast::Function> > marker_to_lambda;
+            std::map<ast::Block*,    ast::Function*> where_are_you_from;
+            std::map<ast::Identifier,ast::Function*> marker_to_lambda;
             void visit(ast::Identifier&);
             void visit(ast::Variable&);
             void visit(ast::Number&);

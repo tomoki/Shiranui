@@ -33,10 +33,11 @@ namespace shiranui{
         }
         void LambdaMarkerScanner::visit(ast::Function& node){
             // FIXME: copy is safe,BUT should not.(runtime_infomation is not shared)
-            auto copy = std::make_shared<ast::Function>(node);
-            where_are_you_from[node.body] = copy;
+            // auto copy = std::make_shared<ast::Function>(node);
+            // where_are_you_from[node.body] = copy;
+            where_are_you_from[node.body] = &node;
             if(node.lambda_id.name != ""){
-                marker_to_lambda[node.lambda_id] = copy;
+                marker_to_lambda[node.lambda_id] = &node;
             }
             node.body->accept(*this);
         }

@@ -17,7 +17,9 @@ void repl(){
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
     using namespace shiranui::runtime::DSL;
-    shiranui::runtime::Runner r;
+    const size_t memory_size = 268435456;
+    Memory* memory = new Memory(memory_size);
+    shiranui::runtime::Runner r(memory);
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
     std::cerr << "This is " << PACKAGE_STRING << std::endl;
     while(true){
@@ -34,7 +36,7 @@ void repl(){
         sp<ast::SourceCode> program;
         bool ok = false;
         try{
-            Parser<pos_iterator_t> resolver;
+            Parser<pos_iterator_t> resolver(memory);
             ok = parse(iter,last,resolver,program);
         }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
             std::cerr << "expected: ";
@@ -85,7 +87,9 @@ void exec(const std::string content){
     using namespace shiranui::syntax;
     using namespace shiranui::runtime;
     using namespace shiranui::runtime::DSL;
-    shiranui::runtime::Runner r;
+    const size_t memory_size = 268435456;
+    Memory* memory = new Memory(memory_size);
+    shiranui::runtime::Runner r(memory);
     shiranui::syntax::ast::PrettyPrinterForAST printer(std::cerr);
     std::string str = content;
     pos_iterator_t first(str.begin()),last(str.end());
@@ -93,7 +97,7 @@ void exec(const std::string content){
     sp<ast::SourceCode> program;
     bool ok = false;
     try{
-        Parser<pos_iterator_t> resolver;
+        Parser<pos_iterator_t> resolver(memory);
         ok = parse(iter,last,resolver,program);
     }catch (boost::spirit::qi::expectation_failure<pos_iterator_t> const& x){
         std::cerr << "expected: ";

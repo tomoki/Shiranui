@@ -128,8 +128,8 @@ namespace shiranui{
             SourceCode::SourceCode(){
             }
             SourceCode::~SourceCode(){
-                runtime::infomation::Cleaner c;
-                accept(c);
+                // runtime::infomation::Cleaner c;
+                // accept(c);
             }
             SourceCode::SourceCode(std::vector<sp<Statement>> ss)
                 : statements(ss){

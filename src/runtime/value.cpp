@@ -34,7 +34,6 @@ namespace shiranui{
 
             // Return
             Return::Return(Value* v) : value(v) {}
-            Return::Return(sp<Value> v) : value(v) {}
             void Return::accept(VisitorForValue& v){
                 v.visit(*this);
             }
@@ -56,6 +55,9 @@ namespace shiranui{
                 v.visit(*this);
             }
 
+
+            BuiltinFunction::BuiltinFunction(Memory* memory_)
+                : memory(memory_) {}
             void BuiltinFunction::accept(VisitorForValue& v){
                 v.visit(*this);
             }
@@ -65,7 +67,7 @@ namespace shiranui{
                 v.visit(*this);
             }
             namespace builtin{
-                PrintFunction::PrintFunction(){
+                PrintFunction::PrintFunction(Memory* memory) : BuiltinFunction(memory){
                     name = "print";
                     parameters = {ast::Identifier("str")};
                 }
@@ -74,7 +76,7 @@ namespace shiranui{
                         return nullptr;
                     }
                     {
-                        sp<String> s = std::dynamic_pointer_cast<String>(args[0]);
+                        sp<String> s = dynamic_cast<String*>(args[0]);
                         if(s != nullptr){
                             std::cout << s->value << std::endl;
                             // TODO change to unit
@@ -82,14 +84,14 @@ namespace shiranui{
                         }
                     }
                     {
-                        sp<Integer> s = std::dynamic_pointer_cast<Integer>(args[0]);
+                        sp<Integer> s = dynamic_cast<Integer*>(args[0]);
                         if(s != nullptr){
                             std::cout << s->value << std::endl;
                             return s;
                         }
                     }
                     {
-                        sp<Boolean> s = std::dynamic_pointer_cast<Boolean>(args[0]);
+                        sp<Boolean> s = dynamic_cast<Boolean*>(args[0]);
                         if(s != nullptr){
                             std::cout << (s->value?"true":"false") << std::endl;
                             return s;
@@ -97,7 +99,7 @@ namespace shiranui{
                     }
                     return nullptr;
                 }
-                LengthFunction::LengthFunction(){
+                LengthFunction::LengthFunction(Memory* memory) : BuiltinFunction(memory){
                     name = "len";
                     parameters = {ast::Identifier("array")};
                 }
@@ -106,20 +108,20 @@ namespace shiranui{
                         return nullptr;
                     }
                     {
-                        sp<Array> s = std::dynamic_pointer_cast<Array>(args[0]);
+                        sp<Array> s = dynamic_cast<Array*>(args[0]);
                         if(s != nullptr){
-                            return std::make_shared<Integer>(s->value.size());
+                            return memory->create<Integer>(s->value.size());
                         }
                     }
                     {
-                        auto s = std::dynamic_pointer_cast<String>(args[0]);
+                        auto s = dynamic_cast<String*>(args[0]);
                         if(s != nullptr){
-                            return std::make_shared<Integer>(s->value.size());
+                            return memory->create<Integer>(s->value.size());
                         }
                     }
                     return nullptr;
                 }
-                SetIndex::SetIndex(){
+                SetIndex::SetIndex(Memory* memory) : BuiltinFunction(memory){
                     name = "set";
                     parameters = {ast::Identifier{"array"},
                                   ast::Identifier{"index"},
@@ -128,15 +130,18 @@ namespace shiranui{
                 sp<Value> SetIndex::run(std::vector<sp<Value>> args){
                     if(args.size() != 3) return nullptr;
                     {
-                        sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
-                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        sp<Array> array = dynamic_cast<Array*>(args[0]);
+                        sp<Integer> index = dynamic_cast<Integer*>(args[1]);
                         if(array == nullptr or index == nullptr){
                             return nullptr;
                         }
                         if(0 <= index->value and index->value < array->value.size()){
-                            array->push_change(std::make_shared<timemachine::SetIndexChange>(index->value,
-                                                                                             array->value[index->value],
-                                                                                             args[2]));
+                            array->push_change(memory->create<timemachine::SetIndexChange>(index->value,
+                                                                                           array->value[index->value],
+                                                                                           args[2]));
+                            // array->push_change(std::make_shared<timemachine::SetIndexChange>(index->value,
+                            //                                                                  array->value[index->value],
+                            //                                                                  args[2]));
                             array->value[index->value] = args[2];
 
                             return array;
@@ -145,7 +150,7 @@ namespace shiranui{
                         }
                     }
                 }
-                GetIndex::GetIndex(){
+                GetIndex::GetIndex(Memory* memory) : BuiltinFunction(memory){
                     name = "get";
                     parameters = {ast::Identifier{"array"},
                                   ast::Identifier{"index"}};
@@ -153,8 +158,8 @@ namespace shiranui{
                 sp<Value> GetIndex::run(std::vector<sp<Value>> args){
                     if(args.size() != 2) return nullptr;
                     {
-                        sp<Array> array = std::dynamic_pointer_cast<Array>(args[0]);
-                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        sp<Array> array = dynamic_cast<Array*>(args[0]);
+                        sp<Integer> index = dynamic_cast<Integer*>(args[1]);
                         if(array != nullptr and index != nullptr){
                             if(0 <= index->value and index->value < array->value.size()){
                                 return array->value[index->value];
@@ -165,13 +170,13 @@ namespace shiranui{
                         }
                     }
                     {
-                        auto string = std::dynamic_pointer_cast<String>(args[0]);
-                        sp<Integer> index = std::dynamic_pointer_cast<Integer>(args[1]);
+                        auto string = dynamic_cast<String*>(args[0]);
+                        sp<Integer> index = dynamic_cast<Integer*>(args[1]);
                         if(string != nullptr and index != nullptr){
                             if(0 <= index->value and index->value < string->value.size()){
                                 std::stringstream ss;
                                 ss << string->value[index->value];
-                                return std::make_shared<String>(ss.str());
+                                return memory->create<String>(ss.str());
                             }else{
                                 return nullptr;
                             }
@@ -199,29 +204,29 @@ namespace shiranui {
                 }
                 checked.insert({left,right});
                 {
-                    auto l = std::dynamic_pointer_cast<Integer>(left);
-                    auto r = std::dynamic_pointer_cast<Integer>(right);
+                    auto l = dynamic_cast<Integer*>(left);
+                    auto r = dynamic_cast<Integer*>(right);
                     if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
-                    auto l = std::dynamic_pointer_cast<Boolean>(left);
-                    auto r = std::dynamic_pointer_cast<Boolean>(right);
+                    auto l = dynamic_cast<Boolean*>(left);
+                    auto r = dynamic_cast<Boolean*>(right);
                     if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
-                    auto l = std::dynamic_pointer_cast<String>(left);
-                    auto r = std::dynamic_pointer_cast<String>(right);
+                    auto l = dynamic_cast<String*>(left);
+                    auto r = dynamic_cast<String*>(right);
                     if(l != nullptr and r != nullptr){
                         return l->value == r->value;
                     }
                 }
                 {
-                    auto l = std::dynamic_pointer_cast<Array>(left);
-                    auto r = std::dynamic_pointer_cast<Array>(right);
+                    auto l = dynamic_cast<Array*>(left);
+                    auto r = dynamic_cast<Array*>(right);
                     if(l != nullptr and r != nullptr){
                         if(l->value.size() != r->value.size()){
                             return false;
@@ -240,18 +245,13 @@ namespace shiranui {
                 std::set<std::set<sp<Value> > > checked;
                 return check_equality(left,right,checked);
             }
-            bool is_ref_or_array(sp<Value> p){
-                bool is_ref = std::dynamic_pointer_cast<Ref>(p) != nullptr;
-                bool is_array = std::dynamic_pointer_cast<Array>(p) != nullptr;
-                return is_ref or is_array;
-            }
             bool is_ref_or_array(Value* p){
                 bool is_ref = dynamic_cast<Ref*>(p) != nullptr;
                 bool is_array = dynamic_cast<Array*>(p) != nullptr;
                 return is_ref or is_array;
             }
             bool is_userfunction(sp<Value> p){
-                bool is_uf = std::dynamic_pointer_cast<UserFunction>(p) != nullptr;
+                bool is_uf = dynamic_cast<UserFunction*>(p) != nullptr;
                 return is_uf;
             }
         }
@@ -272,18 +272,12 @@ namespace shiranui{
                 }
                 target->value[index] = prev;
             }
-            void SetIndexChange::rollback(sp<Value> target){
-                return rollback(&*target);
-            }
             void SetIndexChange::flash(Value* target_){
                 auto target = dynamic_cast<Array*>(target_);
                 if(target == nullptr){
                     throw TimeMachineException();
                 }
                 target->value[index] = next;
-            }
-            void SetIndexChange::flash(sp<Value> target){
-                return flash(&*target);
             }
 
             RefChange::RefChange(sp<Value> p,sp<Value> n)
@@ -296,9 +290,6 @@ namespace shiranui{
                 }
                 target->to = prev;
             }
-            void RefChange::rollback(sp<Value> target){
-                return rollback(&*target);
-            }
             void RefChange::flash(Value* target_){
                 auto target = dynamic_cast<Ref*>(target_);
                 if(target == nullptr){
@@ -306,11 +297,6 @@ namespace shiranui{
                 }
                 target->to = next;
             }
-            void RefChange::flash(sp<Value> target){
-                return flash(&*target);
-            }
-
-
         }
     }
 }

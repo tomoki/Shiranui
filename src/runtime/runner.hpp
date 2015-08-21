@@ -4,6 +4,7 @@
 #include "value.hpp"
 #include "change.hpp"
 #include "environment.hpp"
+#include "memory.hpp"
 #include <exception>
 #include <sstream>
 #include <stack>
@@ -22,7 +23,7 @@ namespace shiranui{
             }
             std::string str(){
                 {
-                    auto p = std::dynamic_pointer_cast<syntax::ast::Variable>(where);
+                    auto p = dynamic_cast<syntax::ast::Variable*>(where);
                     if (p != nullptr) {
                         std::stringstream ss;
                         ss << '\"' << "No such variable: " << p->value.name << '\"';
@@ -30,7 +31,7 @@ namespace shiranui{
                     }
                 }
                 {
-                    auto p = std::dynamic_pointer_cast<syntax::ast::Assignment>(where);
+                    auto p = dynamic_cast<syntax::ast::Assignment*>(where);
                     if (p != nullptr) {
                         std::stringstream ss;
                         ss << '\"' << "No such variable: " << p->id.name << '\"';
@@ -89,6 +90,7 @@ namespace shiranui{
             }
         };
         struct Runner : shiranui::syntax::ast::VisitorForAST{
+            Memory* memory;
             sp<value::Value> cur_v;
             sp<environment::Environment> cur_e;
             int cur_t;
@@ -98,7 +100,7 @@ namespace shiranui{
             bool is_server;
             std::map<sp<syntax::ast::Block>,sp<syntax::ast::Function> > where_is_function_from;
             std::map<syntax::ast::Identifier,sp<syntax::ast::Function> > marker_to_lambda;
-            Runner(bool=false);
+            Runner(Memory*, bool=false);
             template<typename T>
             int before_visit(T&);
             template<typename T>

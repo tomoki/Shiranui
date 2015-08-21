@@ -24,7 +24,7 @@ namespace shiranui{
                     return infomation::return_value(s,call_under).second != nullptr;
                 }
                 void visit(syntax::ast::Identifier& node){
-                    throw InternalException(std::make_shared<syntax::ast::Identifier>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::Variable& node){
                     auto p = infomation::return_value(node,call_under);
@@ -80,7 +80,7 @@ namespace shiranui{
                     if(p.second != nullptr){
                         message.add_explore(node,to_reproductive(p.second,source));
                         // TODO: should not copy
-                        lift_candidate.push_back(std::make_shared<syntax::ast::FunctionCall>(node));
+                        lift_candidate.push_back(&(node));
                     }
                 }
                 void visit(syntax::ast::BinaryOperator& node){
@@ -162,10 +162,10 @@ namespace shiranui{
                     node.value->accept(*this);
                 }
                 void visit(syntax::ast::TestFlyLine& node){
-                    throw InternalException(std::make_shared<syntax::ast::TestFlyLine>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::IdleFlyLine& node){
-                    throw InternalException(std::make_shared<syntax::ast::IdleFlyLine>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::FlyMark& node){
                     int when = node.runtime_info.index_of_called(call_under);

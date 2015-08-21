@@ -6,10 +6,10 @@ using shiranui::syntax::ast::Identifier;
 namespace shiranui{
     namespace runtime{
         namespace environment{
-            Environment::Environment(){
+            Environment::Environment(Memory* memory_) : memory(memory_), parent(nullptr){
             }
-            Environment::Environment(sp<Environment> par)
-                : parent(par){
+            Environment::Environment(Memory* memory_, sp<Environment> par)
+                : memory(memory_), parent(par){
             }
 
             bool Environment::is_here(Identifier id) const{
@@ -50,7 +50,7 @@ namespace shiranui{
             void Environment::define(Identifier id,sp<Value> v){
                 vars[id] = v;
                 current_version++;
-                changes.push_back(std::make_shared<timemachine::EnvDefineChange>(id,v));
+                changes.push_back(memory->create<timemachine::EnvDefineChange>(id,v));
             }
             void Environment::clear(){
                 vars.clear();
@@ -73,7 +73,7 @@ namespace shiranui{
 
             std::map<syntax::ast::Identifier,
                      sp<value::Value> >
-            filter_environment(const Environment& e,std::set<syntax::ast::Identifier> filter){
+            filter_environment(Environment& e,std::set<syntax::ast::Identifier> filter){
                 std::map<syntax::ast::Identifier,sp<value::Value> > ret;
                 // first,filter parent
                 if(e.parent != nullptr){

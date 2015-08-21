@@ -7,6 +7,7 @@ namespace shiranui{
         namespace DSL{
             using namespace syntax::ast::DSL;
             struct DSLRunner : VisitorForDSL{
+                Memory* memory;
                 sp<DSLInner> top;
                 sp<value::Value> cur_v;
                 // replace to ...
@@ -14,11 +15,11 @@ namespace shiranui{
                 std::map<DSLVariable,sp<value::Value> > var_defines;
                 std::map<syntax::ast::Identifier,sp<syntax::ast::Function> > marker_to_lambda;
                 sp<environment::Environment> env;
-                DSLRunner(sp<DSLInner> t,const decltype(marker_to_lambda) &m2l,
+                DSLRunner(Memory* memory_, sp<DSLInner> t,const decltype(marker_to_lambda) &m2l,
                           sp<environment::Environment> e)
-                    : top(t),marker_to_lambda(m2l),env(e) {}
+                    : memory(memory_), top(t),marker_to_lambda(m2l),env(e) {}
                 void operator()(DSLVariable& node){
-                    sp<value::Integer> place_holder = std::make_shared<value::Integer>(-1);
+                    sp<value::Integer> place_holder = memory->create<value::Integer>(-1);
                     var_occurrences[place_holder] = node;
                     cur_v = place_holder;
                 }
@@ -30,13 +31,13 @@ namespace shiranui{
                     var_defines[*node.var] = cur_v;
                 }
                 void operator()(DSLBoolean& node){
-                    cur_v = std::make_shared<value::Boolean>(node.value);
+                    cur_v = memory->create<value::Boolean>(node.value);
                 }
                 void operator()(DSLInteger& node){
-                    cur_v = std::make_shared<value::Integer>(node.value);
+                    cur_v = memory->create<value::Integer>(node.value);
                 }
                 void operator()(DSLString& node){
-                    cur_v = std::make_shared<value::String>(node.value);
+                    cur_v = memory->create<value::String>(node.value);
                 }
                 void operator()(DSLArray& node){
                     std::vector<sp<value::Value> > ret;
@@ -44,7 +45,7 @@ namespace shiranui{
                         p->accept(*this);
                         ret.push_back(cur_v);
                     }
-                    cur_v = std::make_shared<value::Array>(ret);
+                    cur_v = memory->create<value::Array>(ret);
                 }
                 void operator()(DSLFunction& node){
                     sp<syntax::ast::Function> fast = marker_to_lambda[node.lambda_id];
@@ -53,17 +54,17 @@ namespace shiranui{
                     }
                     // parent is where dsl was evaled.
                     // TODO: is it correct?
-                    sp<environment::Environment> fenv = std::make_shared<environment::Environment>(env);
+                    sp<environment::Environment> fenv = memory->create<environment::Environment>(memory, env);
                     for(auto p : node.environment){
                         syntax::ast::Identifier i(p.first->name);
                         p.second->accept(*this);
                         fenv->define(i,cur_v);
                     }
-                    cur_v = std::make_shared<value::UserFunction>(fast->parameters,fast->body,fenv);
+                    cur_v = memory->create<value::UserFunction>(fast->parameters,fast->body,fenv);
                 }
                 void operator()(DSLRef& node){
                     node.to->accept(*this);
-                    cur_v = std::make_shared<value::Ref>(cur_v);
+                    cur_v = memory->create<value::Ref>(cur_v);
                 }
             };
             // replace all variable occurences in DSL
@@ -116,10 +117,11 @@ namespace shiranui{
                     return var_defines[v];
                 }
             };
-            sp<value::Value> run_dsl(sp<DSLInner> dsl,
+            sp<value::Value> run_dsl(Memory* memory,
+                                     sp<DSLInner> dsl,
                                      const std::map<syntax::ast::Identifier,sp<syntax::ast::Function> >&marker_to_lambda,
                                      sp<environment::Environment> env){
-                DSLRunner runner(dsl,marker_to_lambda,env);
+                DSLRunner runner(memory,dsl,marker_to_lambda,env);
                 dsl->accept(runner);
                 sp<value::Value> ret = runner.cur_v;
                 DSLVariableReplacer replacer(dsl,runner.var_occurrences,runner.var_defines);

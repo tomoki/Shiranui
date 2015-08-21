@@ -41,15 +41,18 @@ namespace shiranui{
             boost::mutex os_lock;
             std::string source;
             int flyline_lock;
+            runtime::MemoryManager mem_manager;
+            runtime::Memory mem_for_toplevel;
 
             boost::thread main_thread;
             //boost::mutex main_thread_waiting_mutex;
             //boost::condition main_thread_waiting;
 
-            std::vector<sp<boost::thread>> flyline_threads;
+            std::vector<std::shared_ptr<boost::thread>> flyline_threads;
             std::vector<sp<syntax::ast::SourceCode>> program_per_flyline;
-            std::vector<sp<runtime::diver::Diver>> diver_per_flyline;
-            sp<runtime::diver::Diver> current_diver;
+            std::vector<std::shared_ptr<runtime::diver::Diver>> diver_per_flyline;
+            std::vector<runtime::Memory*> previous_memorys;
+            std::shared_ptr<runtime::diver::Diver> current_diver;
 
             PipeServer(std::istream&,std::ostream&);
             ~PipeServer();
@@ -92,13 +95,13 @@ namespace shiranui{
             void on_lift_command(const std::string&,const int);
             void on_jump_command(const std::string&,const int);
             void exec(std::string,const int);
-            void dive_start(sp<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
+            void dive_start(std::shared_ptr<runtime::diver::Diver>,sp<syntax::ast::FlyLine>,
                             sp<syntax::ast::SourceCode>,const int);
-            void dive(sp<runtime::diver::Diver>,int,const int);
-            void surface(sp<runtime::diver::Diver>,int);
-            void move_to_caller(sp<runtime::diver::Diver>,int);
+            void dive(std::shared_ptr<runtime::diver::Diver>,int,const int);
+            void surface(std::shared_ptr<runtime::diver::Diver>,int);
+            void move_to_caller(std::shared_ptr<runtime::diver::Diver>,int);
             void send_diving_message(runtime::diver::DivingMessage,int);
-            void run_flyline(std::string,int,const int);
+            void run_flyline(runtime::Memory*,std::string,int,const int);
             void run_testflyline(runtime::Runner&,sp<syntax::ast::TestFlyLine>,const int);
             void run_idleflyline(runtime::Runner&,sp<syntax::ast::IdleFlyLine>,
                                  sp<syntax::ast::SourceCode>,const int);

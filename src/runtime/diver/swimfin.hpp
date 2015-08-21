@@ -15,7 +15,7 @@ namespace shiranui{
                     : treasure(nullptr),point(point_){
                 }
                 void visit(syntax::ast::Identifier& node){
-                    throw InternalException(std::make_shared<syntax::ast::Identifier>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::Variable& node){
                     if(not in_range(node)) return;
@@ -62,7 +62,7 @@ namespace shiranui{
                 }
                 void visit(syntax::ast::FunctionCall& node){
                     if(not in_range(node)) return;
-                    treasure = std::make_shared<syntax::ast::FunctionCall>(node);
+                    treasure = &(node);
                     node.function->accept(*this);
                     for(auto a : node.arguments){
                         a->accept(*this);
@@ -122,15 +122,15 @@ namespace shiranui{
                 }
                 void visit(syntax::ast::TestFlyLine& node){
                     if(not in_range(node)) return;
-                    throw InternalException(std::make_shared<syntax::ast::TestFlyLine>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::IdleFlyLine& node){
                     if(not in_range(node)) return;
-                    throw InternalException(std::make_shared<syntax::ast::IdleFlyLine>(node));
+                    throw InternalException(&(node));
                 }
                 void visit(syntax::ast::FlyMark& node){
                     if(not in_range(node)) return;
-                    // throw InternalException(std::make_shared<FlyMark>(node));
+                    // throw InternalException(&(node));
                 }
                 void visit(syntax::ast::SourceCode& node){
                     if(not in_range(node)) return;

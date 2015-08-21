@@ -20,7 +20,8 @@ namespace shiranui{
                 using namespace shiranui::syntax::ast;
                 auto exp_or_for = use_swimfin(*source,point);
                 {
-                    auto p = std::dynamic_pointer_cast<Expression>(exp_or_for);
+                    // auto p = std::dynamic_pointer_cast<Expression>(exp_or_for);
+                    auto p = dynamic_cast<Expression*>(exp_or_for);
                     if(p != nullptr){
                         return dive(p);
                     }
@@ -43,10 +44,10 @@ namespace shiranui{
                 using namespace shiranui::runtime::value;
                 auto next_id = return_value(*exp,lower_id).first;
                 {
-                    auto p = std::dynamic_pointer_cast<FunctionCall>(exp);
+                    auto p = dynamic_cast<FunctionCall*>(exp);
                     if(p != nullptr){
                         auto pp = return_value(*p->function,lower_id);
-                        auto uf = std::dynamic_pointer_cast<UserFunction>(pp.second);
+                        auto uf = dynamic_cast<UserFunction*>(pp.second);
                         if(uf == nullptr){
                             DivingMessage d;
                             d.add_error(*p,"Not called");

@@ -24,6 +24,8 @@
 #include "../point_iterator.hpp"
 #include "skipper.hpp"
 
+#include "../runtime/memory.hpp"
+
 // to put line,column info to AST,see following url.
 // http://stackoverflow.com/questions/19612657/boostspirit-access-position-iterator-from-semantic-actions
 namespace shiranui{
@@ -32,16 +34,16 @@ namespace shiranui{
         typedef point_iterator<std::string::const_iterator> pos_iterator_t;
 
         template<typename T>
-        struct qi_make_shared_struct{
+        struct alloc_memory_struct{
             template<typename... Args>
-            sp<T> operator()(Args&&... args) const{
-                return std::make_shared<T>(std::forward<Args>(args)...);
+            sp<T> operator()(runtime::Memory* mem, Args&&... args) const{
+                return mem->create<T>(std::forward<Args>(args)...);
             }
         };
         template<typename T,typename... Args>
-        auto qi_make_shared(Args&&... args)
-            -> decltype(boost::phoenix::function<qi_make_shared_struct<T>>()(std::forward<Args>(args)...)){
-            return boost::phoenix::function<qi_make_shared_struct<T>>()(std::forward<Args>(args)...);
+        auto alloc_memory(runtime::Memory* mem, Args&&... args)
+            -> decltype(boost::phoenix::function<alloc_memory_struct<T>>()(mem, std::forward<Args>(args)...)){
+            return boost::phoenix::function<alloc_memory_struct<T>>()(mem, std::forward<Args>(args)...);
         }
 
         template<typename Iterator>
@@ -84,8 +86,7 @@ namespace shiranui{
             }
         };
         template<typename Iterator=pos_iterator_t,typename Skipper=CommentSkipper<Iterator>>
-        struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>()
-                      ,Skipper>{
+        struct Parser : public boost::spirit::qi::grammar<Iterator,sp<ast::SourceCode>(),Skipper>{
             using skip_type = Skipper;
             template<typename T>
             using rule_no_skip = qi::rule<Iterator,T>;
@@ -93,11 +94,11 @@ namespace shiranui{
             using rule_with_skip = qi::rule<Iterator,T,Skipper>;
             template<typename T>
             using rule_with_local_for_binary = qi::rule<Iterator,boost::spirit::locals<Iterator>,T,Skipper>;
-            // change const_definement to sourcecode.
-            Parser() : Parser::base_type(source),
-                       annotate(){
-                namespace ph = boost::phoenix;
 
+            runtime::Memory* memory;
+            // change const_definement to sourcecode.
+            Parser(runtime::Memory* memory_) : memory(memory_), Parser::base_type(source), annotate(){
+                namespace ph = boost::phoenix;
                 using boost::spirit::repository::qi::iter_pos;
                 //using namespace qi::ascii;
                 using namespace qi::standard_wide;
@@ -112,7 +113,7 @@ namespace shiranui{
 
                 {
                     integer.name("integer");
-                    integer    = qi::int_ [qi::_val = qi_make_shared<ast::Number>(qi::_1)];
+                    integer    = qi::int_ [qi::_val = alloc_memory<ast::Number>(memory, qi::_1)];
                     on_success(integer,set_location_info);
                 }
 
@@ -120,7 +121,7 @@ namespace shiranui{
                     string.name("string");
                     string = lit("\"") > 
                                boost::spirit::as_string[*(char_ - "\"")]
-                                [qi::_val = qi_make_shared<ast::String>(qi::_1)]
+                               [qi::_val = alloc_memory<ast::String>(memory, qi::_1)]
                            > lit("\"");
 
                     on_success(string,set_location_info);
@@ -128,9 +129,9 @@ namespace shiranui{
                 {
                     boolean.name("boolean");
                     boolean = lit("true")
-                             [qi::_val = qi_make_shared<ast::Boolean>(true)]
+                             [qi::_val = alloc_memory<ast::Boolean>(memory, true)]
                             | lit("false")
-                             [qi::_val = qi_make_shared<ast::Boolean>(false)]
+                            [qi::_val = alloc_memory<ast::Boolean>(memory, false)]
                             ;
                     on_success(boolean,set_location_info);
                 }
@@ -138,36 +139,36 @@ namespace shiranui{
                 {
                     array.name("array");
                     array = (qi::lexeme["["] >> "]")
-                             [qi::_val = qi_make_shared<ast::Enum>()]
+                             [qi::_val = alloc_memory<ast::Enum>(memory)]
                           | ("[" >> (expression % ",") >> "]")
-                             [qi::_val = qi_make_shared<ast::Enum>(qi::_1)]
+                             [qi::_val = alloc_memory<ast::Enum>(memory,qi::_1)]
                           | ("[" >> expression >> ".." >> expression >> "]")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,nullptr,qi::_2,true)]
+                             [qi::_val = alloc_memory<ast::Interval>(memory,qi::_1,nullptr,qi::_2,true)]
                           | ("[" >> expression >> "," >> expression >> ".." >> expression >> "]")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3,true)]
+                             [qi::_val = alloc_memory<ast::Interval>(memory,qi::_1,qi::_2,qi::_3,true)]
                           | ("[" >> expression >> ".." >> expression >> ")")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,nullptr,qi::_2,false)]
+                             [qi::_val = alloc_memory<ast::Interval>(memory,qi::_1,nullptr,qi::_2,false)]
                           | ("[" >> expression >> "," >> expression >> ".." >> expression >> ")")
-                             [qi::_val = qi_make_shared<ast::Interval>(qi::_1,qi::_2,qi::_3,false)]
+                             [qi::_val = alloc_memory<ast::Interval>(memory,qi::_1,qi::_2,qi::_3,false)]
 
                           ;
                     on_success(array,set_location_info);
                 }
                 {
                     variable.name("variable");
-                    variable   = identifier [qi::_val = qi_make_shared<ast::Variable>(qi::_1)];
+                    variable   = identifier [qi::_val = alloc_memory<ast::Variable>(memory,qi::_1)];
                     on_success(variable,set_location_info);
                 }
                 {
                     function.name("function");
                     function  = (lit("\\") >> identifier >> "(" >> (identifier % ",") >> ")" >> block)
-                                  [qi::_val = qi_make_shared<ast::Function>(qi::_1,qi::_2,qi::_3)]
+                                  [qi::_val = alloc_memory<ast::Function>(memory,qi::_1,qi::_2,qi::_3)]
                                | (lit("\\") >> identifier >> "(" >> ")" >> block)
-                                  [qi::_val = qi_make_shared<ast::Function>(qi::_1,std::vector<ast::Identifier>(),qi::_2)]
+                                  [qi::_val = alloc_memory<ast::Function>(memory,qi::_1,std::vector<ast::Identifier>(),qi::_2)]
                                | (lit("\\") >> "(" >> (identifier % ",") >> ")" >> block)
-                                  [qi::_val = qi_make_shared<ast::Function>(qi::_1,qi::_2)]
+                                  [qi::_val = alloc_memory<ast::Function>(memory,qi::_1,qi::_2)]
                                | (lit("\\") > "(" > ")" > block)
-                                  [qi::_val = qi_make_shared<ast::Function>(std::vector<ast::Identifier>(),qi::_1)]
+                                  [qi::_val = alloc_memory<ast::Function>(memory,std::vector<ast::Identifier>(),qi::_1)]
                                ;
                     on_success(function,set_location_info);
 
@@ -176,58 +177,58 @@ namespace shiranui{
                 {
                     definement.name("definement");
                     definement = ("let" > identifier > "=" > expression)
-                                  [qi::_val = qi_make_shared<ast::Definement>(qi::_1,qi::_2,true)]
+                                  [qi::_val = alloc_memory<ast::Definement>(memory, qi::_1,qi::_2,true)]
                                | ("mut" > identifier > "=" > expression)
-                                  [qi::_val = qi_make_shared<ast::Definement>(qi::_1,qi::_2,false)]
+                                  [qi::_val = alloc_memory<ast::Definement>(memory, qi::_1,qi::_2,false)]
                                ;
                     on_success(definement,set_location_info);
                 }
                 {
                     expression_statement.name("expression_statement");
                     expression_statement = (qi::eps >> expression)
-                                           [qi::_val = qi_make_shared<ast::ExpressionStatement>(qi::_1)]
+                                           [qi::_val = alloc_memory<ast::ExpressionStatement>(memory,qi::_1)]
                                          ;
                     on_success(expression_statement,set_location_info);
                 }
                 {
                     ifelse_stmt.name("if_else_statement");
                     ifelse_stmt= ("if" >> expression >> block >> "else" >> block)
-                                  [qi::_val = qi_make_shared<ast::IfElseStatement>(qi::_1,qi::_2,qi::_3)]
+                                  [qi::_val = alloc_memory<ast::IfElseStatement>(memory,qi::_1,qi::_2,qi::_3)]
                                | ("if" >> expression >> block)
-                                  [qi::_val = qi_make_shared<ast::IfElseStatement>(qi::_1,qi::_2)]
+                                  [qi::_val = alloc_memory<ast::IfElseStatement>(memory,qi::_1,qi::_2)]
                                ;
                     on_success(ifelse_stmt,set_location_info);
                 }
                 {
                     for_stmt.name("for_statement");
                     for_stmt = ("for" > identifier > "in" > expression > block)
-                                [qi::_val = qi_make_shared<ast::ForStatement>(qi::_1,qi::_2,qi::_3)];
+                                [qi::_val = alloc_memory<ast::ForStatement>(memory,qi::_1,qi::_2,qi::_3)];
                     on_success(for_stmt,set_location_info);
                 }
                 {
                     return_stmt.name("return_statement");
                     return_stmt = ("return" > expression)
-                                 [qi::_val = qi_make_shared<ast::ReturnStatement>(qi::_1)]
+                                 [qi::_val = alloc_memory<ast::ReturnStatement>(memory,qi::_1)]
                                 ;
                     on_success(return_stmt,set_location_info);
                 }
                 {
                     probe_stmt.name("probe_statement");
                     probe_stmt = ("probe" > expression)
-                        [qi::_val = qi_make_shared<ast::ProbeStatement>(qi::_1)]
+                        [qi::_val = alloc_memory<ast::ProbeStatement>(memory,qi::_1)]
                                 ;
                     on_success(probe_stmt,set_location_info);
                 }
                 {
                     assert_stmt.name("assert_statement");
                     assert_stmt = ("assert" > expression)
-                                 [qi::_val = qi_make_shared<ast::AssertStatement>(qi::_1)]
+                                 [qi::_val = alloc_memory<ast::AssertStatement>(memory,qi::_1)]
                                 ;
                     on_success(assert_stmt,set_location_info);
                 }
                 {
                     block.name("block");
-                    block = (lit("{") [qi::_val = qi_make_shared<ast::Block>()])
+                    block = (lit("{") [qi::_val = alloc_memory<ast::Block>(memory)])
                         > *(statement
                            [ph::bind(&ast::Block::add_statement,*qi::_val,qi::_1)]
                          | (lit("pre") > block)
@@ -246,7 +247,7 @@ namespace shiranui{
                 {
                     assignment.name("assignment");
                     assignment = (identifier >> "<-" >> expression)
-                                  [qi::_val = qi_make_shared<ast::Assignment>(qi::_1,qi::_2)]
+                                  [qi::_val = alloc_memory<ast::Assignment>(memory,qi::_1,qi::_2)]
                                ;
                     on_success(assignment,set_location_info);
                 }
@@ -276,7 +277,7 @@ namespace shiranui{
                 {
                     ref_expr.name("ref expression");
                     ref_expr = ("ref" >> expression)
-                        [qi::_val = qi_make_shared<ast::UnaryOperator>("ref",qi::_1)]
+                        [qi::_val = alloc_memory<ast::UnaryOperator>(memory,"ref",qi::_1)]
                              ;
                     on_success(ref_expr,set_location_info);
                 }
@@ -289,7 +290,7 @@ namespace shiranui{
                     or_test.name("or_test");
                     or_test    = (iter_pos >> and_test) [qi::_val = qi::_2,qi::_a = qi::_1] >>
                                   *(("or" >> and_test >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("or",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"or",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
                                ;
                     on_success(or_test,set_location_info);
                 }
@@ -297,14 +298,14 @@ namespace shiranui{
                     and_test.name("and_test");
                     and_test   = (iter_pos >> not_test) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
                                  *(("and" >> not_test >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("and",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"and",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)])
                                ;
                     on_success(and_test,set_location_info);
                 }
                 {
                     not_test.name("not_test");
                     not_test   = ("not" >> not_test)
-                                  [qi::_val = qi_make_shared<ast::UnaryOperator>("not",qi::_1)]
+                                  [qi::_val = alloc_memory<ast::UnaryOperator>(memory,"not",qi::_1)]
                                | comparison [qi::_val = qi::_1]
                                ;
                     on_success(not_test,set_location_info);
@@ -314,17 +315,17 @@ namespace shiranui{
                     comparison.name("comparison");
                     comparison = (iter_pos >> addi) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
                                  *(("=" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ("/=" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"/=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ("<" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"<", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | (">" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,">", qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | (">=" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>(">=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,">=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ("<=" >> addi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("<=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"<=",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  )
                                ;
                     on_success(comparison,set_location_info);
@@ -334,9 +335,9 @@ namespace shiranui{
                     addi.name("addi");
                     addi       = (iter_pos >> multi) [qi::_val = qi::_2,qi::_a = qi::_1] >> 
                                  *(('+' >> multi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("+",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"+",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ('-' >> multi >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("-",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"-",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                   )
                                ;
                     on_success(addi,set_location_info);
@@ -346,11 +347,11 @@ namespace shiranui{
                     multi.name("multi");
                     multi      = (iter_pos >> unary) [qi::_val = qi::_2,qi::_a = qi::_1] >>
                                  *(('*' >> unary >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("*",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"*",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ('/' >> unary >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("/",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"/",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ('%' >> unary >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("%",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"%",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                   )
                                ;
                     on_success(multi,set_location_info);
@@ -359,11 +360,11 @@ namespace shiranui{
                     unary.name("unary");
                     unary      = power [qi::_val = qi::_1]
                                | ("+" >> power)
-                                  [qi::_val = qi_make_shared<ast::UnaryOperator>("+",qi::_1)]
+                                  [qi::_val = alloc_memory<ast::UnaryOperator>(memory,"+",qi::_1)]
                                | ("-" >> power)
-                                  [qi::_val = qi_make_shared<ast::UnaryOperator>("-",qi::_1)]
+                                  [qi::_val = alloc_memory<ast::UnaryOperator>(memory,"-",qi::_1)]
                                | ("!" >> power)
-                                  [qi::_val = qi_make_shared<ast::UnaryOperator>("!",qi::_1)]
+                                  [qi::_val = alloc_memory<ast::UnaryOperator>(memory,"!",qi::_1)]
                                ;
                     on_success(unary,set_location_info);
                 }
@@ -371,11 +372,11 @@ namespace shiranui{
                     power.name("power");
                     power      = (iter_pos >> atom) [qi::_val = qi::_2,qi::_a = qi::_1] >>
                                  *(('^' >> atom >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::BinaryOperator>("^",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::BinaryOperator>(memory,"^",qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | ('(' >> (expression % ',') >> ')' >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::FunctionCall>(qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
+                                   [qi::_val = alloc_memory<ast::FunctionCall>(memory,qi::_val,qi::_1),annotate(qi::_val,qi::_a,qi::_2)]
                                  | (lit('(') >> ')' >> iter_pos)
-                                   [qi::_val = qi_make_shared<ast::FunctionCall>(
+                                   [qi::_val = alloc_memory<ast::FunctionCall>(memory,
                                                         qi::_val,std::vector<sp<ast::Expression>>()),annotate(qi::_val,qi::_a,qi::_1)]
                                   )
                                ;
@@ -408,13 +409,13 @@ namespace shiranui{
                     // do not use no_skip contains expression
                     flyline.name("flyline");
                     flyline = ("#-" >> expression >> "->" >> expression >> "||" >> expression >> ";")
-                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2,qi::_3)]
+                               [qi::_val = alloc_memory<ast::TestFlyLine>(memory,qi::_1,qi::_2,qi::_3)]
                             | ("#-" >> expression >> "->" >> expression >> ";")
-                               [qi::_val = qi_make_shared<ast::TestFlyLine>(qi::_1,qi::_2,nullptr)]
+                               [qi::_val = alloc_memory<ast::TestFlyLine>(memory,qi::_1,qi::_2,nullptr)]
                             | ("#+" >> expression >> "->" >> expression >> ";")
-                               [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,qi::_2)]
+                               [qi::_val = alloc_memory<ast::IdleFlyLine>(memory,qi::_1,qi::_2)]
                             | ("#+" > expression > "->" > ";")
-                               [qi::_val = qi_make_shared<ast::IdleFlyLine>(qi::_1,nullptr)]
+                               [qi::_val = alloc_memory<ast::IdleFlyLine>(memory,qi::_1,nullptr)]
                             ;
                     on_success(flyline,set_location_info);
                 }
@@ -422,15 +423,15 @@ namespace shiranui{
                 {
                     flymark.name("flymark");
                     flymark = ("#*" >> expression >> "->" >> ";")
-                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1)]
+                                [qi::_val = alloc_memory<ast::FlyMark>(memory,qi::_1)]
                             | ("#*" >> expression >> "->" >> (expression % ",") >> ";")
-                                [qi::_val = qi_make_shared<ast::FlyMark>(qi::_1,qi::_2)]
+                                [qi::_val = alloc_memory<ast::FlyMark>(memory,qi::_1,qi::_2)]
                             ;
                     on_success(flymark,set_location_info);
                 }
                 {
                     source.name("source");
-                    source = qi::eps [qi::_val = qi_make_shared<ast::SourceCode>()]
+                    source = qi::eps [qi::_val = alloc_memory<ast::SourceCode>(memory)]
                           > *(statement
                                 [ph::bind(&ast::SourceCode::add_statement,*qi::_val,qi::_1)]
                               |flyline
@@ -444,7 +445,7 @@ namespace shiranui{
                 {
                     data_dsl.name("dsl for data");
                     data_dsl = ("<|" > dsl_exp > "|>")
-                               [qi::_val = qi_make_shared<ast::DSL::DataDSL>(qi::_1)];
+                               [qi::_val = alloc_memory<ast::DSL::DataDSL>(memory,qi::_1)];
                     on_success(data_dsl,set_location_info);
 
                     dsl_exp.name("dsl exp");
@@ -465,56 +466,56 @@ namespace shiranui{
                     on_success(dsl_immediate,set_location_info);
 
                     dsl_number.name("dsl name");
-                    dsl_number = qi::int_ [qi::_val = qi_make_shared<ast::DSL::DSLInteger>(qi::_1)];
+                    dsl_number = qi::int_ [qi::_val = alloc_memory<ast::DSL::DSLInteger>(memory,qi::_1)];
                     on_success(dsl_number,set_location_info);
 
                     dsl_string.name("dsl name");
                     dsl_string = lit("\"") >
                                boost::spirit::as_string[*(char_ - "\"")]
-                                [qi::_val = qi_make_shared<ast::DSL::DSLString>(qi::_1)]
+                                [qi::_val = alloc_memory<ast::DSL::DSLString>(memory,qi::_1)]
                                > lit("\"");
                     on_success(dsl_string,set_location_info);
 
                     dsl_boolean.name("dsl boolean");
                     dsl_boolean = lit("true")
-                                   [qi::_val = qi_make_shared<ast::DSL::DSLBoolean>(true)]
+                                   [qi::_val = alloc_memory<ast::DSL::DSLBoolean>(memory,true)]
                                 | lit("false")
-                                   [qi::_val = qi_make_shared<ast::DSL::DSLBoolean>(false)]
+                                   [qi::_val = alloc_memory<ast::DSL::DSLBoolean>(memory,false)]
                             ;
                     on_success(dsl_boolean,set_location_info);
 
                     dsl_ref.name("dsl ref");
                     dsl_ref = lit("ref") > dsl_exp
-                               [qi::_val = qi_make_shared<ast::DSL::DSLRef>(qi::_1)]
+                               [qi::_val = alloc_memory<ast::DSL::DSLRef>(memory,qi::_1)]
                             ;
                     on_success(dsl_ref,set_location_info);
 
                     dsl_var.name("dsl var");
                     dsl_var = boost::spirit::as_string[(alpha >> *(alnum | char_('_')))]
-                             [qi::_val = qi_make_shared<ast::DSL::DSLVariable>(qi::_1)];
+                             [qi::_val = alloc_memory<ast::DSL::DSLVariable>(memory,qi::_1)];
                     on_success(dsl_var,set_location_info);
 
                     dsl_define_var.name("dsl define var");
                     dsl_define_var = (dsl_var >> "=" >> dsl_immediate)
-                                     [qi::_val = qi_make_shared<ast::DSL::DSLDefine>(qi::_1,qi::_2)];
+                                     [qi::_val = alloc_memory<ast::DSL::DSLDefine>(memory,qi::_1,qi::_2)];
                     on_success(dsl_define_var,set_location_info);
 
                     dsl_array.name("dsl array");
                     dsl_array = (qi::lexeme["["] >> "]")
-                                 [qi::_val = qi_make_shared<ast::DSL::DSLArray>()]
+                                 [qi::_val = alloc_memory<ast::DSL::DSLArray>(memory)]
                               | ("[" >> (dsl_exp % ",") >> "]")
-                                [qi::_val = qi_make_shared<ast::DSL::DSLArray>(qi::_1)];
+                                [qi::_val = alloc_memory<ast::DSL::DSLArray>(memory,qi::_1)];
                     on_success(dsl_array,set_location_info);
 
                     dsl_env_bind.name("dsl env bind");
                     dsl_env_bind = (dsl_var >> "->" >> dsl_exp);
                                      // [qi::_val = std::make_pair(qi::_1,qi::_2)];
                     dsl_function = (qi::lexeme["$"] >> "(" >> ")" >> dsl_var)
-                                     [qi::_val = qi_make_shared<ast::DSL::DSLFunction>(
+                                     [qi::_val = alloc_memory<ast::DSL::DSLFunction>(memory,
                                                                   std::vector<std::pair<sp<ast::DSL::DSLVariable>,
                                                                                         sp<ast::DSL::DSLInner> > >(),qi::_1)]
                                  | (qi::lexeme["$"] >> "(" >> (dsl_env_bind % ",") >> ")" >> dsl_var)
-                                     [qi::_val = qi_make_shared<ast::DSL::DSLFunction>(qi::_1,qi::_2)]
+                                     [qi::_val = alloc_memory<ast::DSL::DSLFunction>(memory,qi::_1,qi::_2)]
                                  ;
                 }
             }

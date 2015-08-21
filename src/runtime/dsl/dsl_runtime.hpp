@@ -11,7 +11,8 @@
 namespace shiranui{
     namespace runtime{
         namespace DSL{
-            sp<value::Value> run_dsl(sp<syntax::ast::DSL::DSLInner>,
+            sp<value::Value> run_dsl(Memory*,
+                                     sp<syntax::ast::DSL::DSLInner>,
                                      const std::map<syntax::ast::Identifier,sp<syntax::ast::Function> >&,
                                      sp<environment::Environment>);
         }
