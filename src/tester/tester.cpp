@@ -150,7 +150,7 @@ namespace shiranui{
 
             ps.on_change_command(make_change(1,0,tosend),1);
             wait(1000);
-            for(int i=0;i<10;i++){
+            for(int i=0;i<3;i++){
                 cerr << "t:" << i << " m:" << ps.mem_manager.chunks.size() << endl;
                 ps.on_change_command(make_change(1,tosend.size(),tosend),1);
                 wait(300);
@@ -870,7 +870,16 @@ string long_code =
                 ps.on_change_command(make_change(1,0,s),i+1);
             }
         }
+        void run_stackoverflow_test(){
+            stringstream in;
+            PipeServer ps(in,cerr);
+            std::string s = "#+ f(10000) -> ;"
+                            "let f = \\(n){ return f(n-1); };";
+            ps.on_change_command(make_change(1,0,s),0);
+            wait(1000);
+        }
         void run_test(){
+            run_stackoverflow_test();
             // run_alloc_test(); 
             // run_rec_test();
             // run_rec_test2();
@@ -879,7 +888,7 @@ string long_code =
             // to_repr_test();
             // free_var();
             // run_memory_test2();
-            run_memory_test3();
+            // run_memory_test3();
             // run_check_leak();
             // run_memory_test4();
             // parser_time_test();
